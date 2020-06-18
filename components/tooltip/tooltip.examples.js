@@ -1,12 +1,13 @@
 import React, {Fragment} from 'react';
 
 import reactDecorator from '../../.storybook/react-decorator';
-import Button from '../button/button';
 
-import Tooltip from './tooltip';
+import Button from '@jetbrains/ring-ui/components/button/button';
+
+import Tooltip from '@jetbrains/ring-ui/components/tooltip/tooltip';
 
 export default {
-  title: 'Components|Tooltip',
+  title: 'Components/Tooltip',
   decorators: [reactDecorator()],
 
   parameters: {
@@ -29,6 +30,7 @@ basic.story = {
     hermione: {
       actions: [
         {type: 'mouseEvent', selector: '[data-test~=ring-tooltip]', eventname: 'mouseover'},
+        {type: 'wait', delay: 500},
         {type: 'capture', name: '', selector: '#root'}
       ]
     }
@@ -82,6 +84,40 @@ displayedWhenNecessary.story = {
         {type: 'capture', name: 'full text element', selector: '#root'},
         {type: 'mouseEvent', selector: '.lorem-ipsum__text_overflow', eventname: 'mouseover'},
         {type: 'capture', name: 'cut text element', selector: '#root'}
+      ]
+    }
+  }
+};
+
+export const nested = () => (
+  <div style={{paddingBottom: '100px'}}>
+    <Tooltip title="Explanation">
+      Some text with an explanation.
+
+      <Tooltip title="Nested Explanation">
+        <strong> Some text inside with a separate explanation. </strong>
+
+        <Tooltip title="Nested Nested Explanation">
+          <Button id="button-with-tooltip">Inline button that requires an explanation too</Button>
+        </Tooltip>
+
+        <strong> Some text inside with a separate explanation. </strong>
+      </Tooltip>
+
+      Some text with an explanation.
+    </Tooltip>
+  </div>
+);
+
+nested.story = {
+  name: 'nested',
+
+  parameters: {
+    hermione: {
+      actions: [
+        {type: 'mouseEvent', selector: '[data-test~=ring-tooltip]', eventname: 'mouseover'},
+        {type: 'wait', delay: 500},
+        {type: 'capture', name: '', selector: '#root'}
       ]
     }
   }

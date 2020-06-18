@@ -6,22 +6,15 @@ import {shallow, mount} from 'enzyme';
 
 import List from '../list/list';
 import Input from '../input/input';
-import sniffr from '../global/sniffer';
 import simulateCombo from '../../test-helpers/simulate-combo';
 
 import Select from './select';
 import styles from './select.css';
 
-const isIE11 = sniffr.browser.name === 'ie' && sniffr.browser.versionString === '11.0';
-
 function simulateInput(target, value) {
   target.value = value;
 
   Simulate.change(target, {target});
-
-  if (isIE11) {
-    Simulate.input(target, {target: {value}});
-  }
 }
 
 const selectedIconSelector = `.${styles.selectedIcon.split(/\s/)[0]}`;
@@ -77,7 +70,7 @@ describe('Select', () => {
   });
 
   it('Should take provided className', () => {
-    const wrapper = shallowSelect({className: 'foo-bar'});
+    const wrapper = mountSelect({className: 'foo-bar'});
     wrapper.should.have.className('foo-bar');
   });
 
@@ -317,7 +310,7 @@ describe('Select', () => {
 
   describe('DOM', () => {
     it('Should place select button inside container', () => {
-      const wrapper = shallowSelect();
+      const wrapper = mountSelect();
       wrapper.should.have.className(styles.select);
     });
 
@@ -337,17 +330,17 @@ describe('Select', () => {
     });
 
     it('Should place input inside in INPUT mode', () => {
-      const wrapper = shallowSelect({type: Select.Type.INPUT});
+      const wrapper = mountSelect({type: Select.Type.INPUT});
       wrapper.should.have.descendants(Input);
     });
 
     it('Should place icons inside', () => {
-      const wrapper = shallowSelect();
+      const wrapper = mountSelect();
       wrapper.should.have.descendants(`.${styles.icons}`);
     });
 
     it('Should add selected item icon to button', () => {
-      const wrapper = shallowSelect({
+      const wrapper = mountSelect({
         selected: {
           key: 1,
           label: 'test',
@@ -375,15 +368,15 @@ describe('Select', () => {
     });
 
     it('Should place icons inside in INPUT mode', () => {
-      const wrapper = shallowSelect({type: Select.Type.INPUT});
+      const wrapper = mountSelect({type: Select.Type.INPUT});
       wrapper.should.have.descendants(`.${styles.icons}`);
     });
 
     it('Should open select dropdown on click', () => {
-      const wrapper = shallowSelect();
+      const wrapper = mountSelect();
       const instance = wrapper.instance();
       sandbox.spy(instance, '_showPopup');
-      wrapper.find('button').simulate('click');
+      wrapper.find('button').first().simulate('click');
 
       instance._showPopup.should.be.called;
     });
@@ -702,6 +695,12 @@ describe('Select', () => {
       const instance = wrapper.instance();
       instance.clear();
       wrapper.state('selected').length.should.equal(0);
+    });
+
+    it('Should not draw "clear" button if multiple and nothing selected', () => {
+      const wrapper = shallowSelectMultiple();
+      wrapper.setProps({clear: true, selected: []});
+      wrapper.should.not.have.descendants('[data-test~="ring-clear-select"]');
     });
 
     it('Should call onChange on clearing', () => {

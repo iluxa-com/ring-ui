@@ -1,13 +1,15 @@
 import angular from 'angular';
 
-import angularDecorator, {APP_NAME} from '../../.storybook/angular-decorator';
-import IconNG from '../icon-ng/icon-ng';
-import {WarningIcon} from '../icon';
+import warningIcon from '@jetbrains/icons/warning.svg';
 
-import TooltipNG from './tooltip-ng';
+import angularDecorator, {APP_NAME} from '../../.storybook/angular-decorator';
+
+import IconNG from '@jetbrains/ring-ui/components/icon-ng/icon-ng';
+
+import TooltipNG from '@jetbrains/ring-ui/components/tooltip-ng/tooltip-ng';
 
 export default {
-  title: 'Legacy Angular|Tooltip Ng',
+  title: 'Legacy Angular/Tooltip Ng',
   decorators: [angularDecorator()],
 
   parameters: {
@@ -17,7 +19,7 @@ export default {
 
 export const basic = () => {
   angular.module(APP_NAME, [IconNG, TooltipNG]).controller('testController', function ctrl() {
-    this.warningIcon = WarningIcon;
+    this.warningIcon = warningIcon;
     this.testMessageWithQuote = "It's a message with a single quotation mark";
   });
 

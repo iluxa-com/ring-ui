@@ -3,10 +3,10 @@ import classNames from 'classnames';
 
 import reactDecorator from '../../.storybook/react-decorator';
 
-import Popup from './popup';
+import Popup from '@jetbrains/ring-ui/components/popup/popup';
 
 export default {
-  title: 'Components|Popup',
+  title: 'Components/Popup',
   decorators: [reactDecorator()],
 
   parameters: {
@@ -264,7 +264,7 @@ export const insideAScrollableContainer = () => (
   <div className="container" tabIndex={0}>
     <div className="example">
       <div className="anchor">
-          Popup anchor
+        Popup anchor
         <Popup>Popup content</Popup>
       </div>
     </div>

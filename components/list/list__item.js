@@ -5,9 +5,10 @@ import classNames from 'classnames';
 import dataTests from '../global/data-tests';
 import Avatar, {Size as AvatarSize} from '../avatar/avatar';
 import Checkbox from '../checkbox/checkbox';
-import Icon from '../icon';
+import Icon from '../icon/icon';
 
 import getUID from '../global/get-uid';
+import globalStyles from '../global/global.css';
 
 import styles from './list.css';
 
@@ -35,6 +36,7 @@ export default class ListItem extends PureComponent {
       PropTypes.array
     ]),
     avatar: PropTypes.string,
+    subavatar: PropTypes.string,
     glyph: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     icon: PropTypes.string,
     iconSize: PropTypes.number,
@@ -74,6 +76,7 @@ export default class ListItem extends PureComponent {
       disabled,
       checkbox,
       avatar,
+      subavatar,
       glyph,
       icon,
       rightGlyph,
@@ -99,7 +102,7 @@ export default class ListItem extends PureComponent {
     const hasLeftNodes = leftNodes || glyph || avatar;
     const showCheckbox = checkable && (checkbox || !hasLeftNodes || (hover && !disabled));
 
-    const classes = classNames(styles.item, className, {
+    const classes = classNames(styles.item, globalStyles.resetButton, className, {
       [styles.action]: !disabled,
       [styles.hover]: hover && !disabled,
       [styles.compact]: compact,
@@ -142,9 +145,10 @@ export default class ListItem extends PureComponent {
           >
             <Checkbox
               aria-labelledby={this.id}
-              onClick={this.stopBubbling}
               checked={checkbox}
+              disabled={disabled}
               onChange={onCheckboxChange}
+              onClick={this.stopBubbling}
             />
           </div>
         )}
@@ -175,6 +179,7 @@ export default class ListItem extends PureComponent {
                     className={styles.avatar}
                     url={avatar}
                     size={AvatarSize.Size20}
+                    subavatar={subavatar}
                   />
                 )}
               </div>

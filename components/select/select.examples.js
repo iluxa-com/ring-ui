@@ -1,25 +1,26 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {action} from '@storybook/addon-actions';
+import warningIcon from '@jetbrains/icons/warning.svg';
 
 import reactDecorator from '../../.storybook/react-decorator';
 import hubConfig from '../../.storybook/hub-config';
-import {WarningIcon} from '../icon';
-import Link from '../link/link';
-import Popup from '../popup/popup';
-import List from '../list/list';
-import Dropdown from '../dropdown/dropdown';
-import Auth from '../auth/auth';
-import Source from '../list/list__users-groups-source';
-import '../input-size/input-size.scss';
 
-import Select from './select';
+import Link from '@jetbrains/ring-ui/components/link/link';
+import Popup from '@jetbrains/ring-ui/components/popup/popup';
+import List from '@jetbrains/ring-ui/components/list/list';
+import Dropdown from '@jetbrains/ring-ui/components/dropdown/dropdown';
+import Auth from '@jetbrains/ring-ui/components/auth/auth';
+import Source from '@jetbrains/ring-ui/components/list/list__users-groups-source';
+import '@jetbrains/ring-ui/components/input-size/input-size.scss';
+
+import Select from '@jetbrains/ring-ui/components/select/select';
 
 const FLAG_DE_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAUCAIAAACMMcMmAAAAKklEQVRIx2NgGAWjgAbAh/aI4S7t0agdI9COzx00Rwz/z9Ecjdox8uwAACkGSkKIaGlAAAAAAElFTkSuQmCC';
 
 export default {
-  title: 'Components|Select',
+  title: 'Components/Select',
   decorators: [reactDecorator()],
 
   parameters: {
@@ -37,7 +38,7 @@ export const withAFilterAndTags = () => {
       reset: {
         separator: true,
         label: 'Reset the list',
-        glyph: WarningIcon
+        glyph: warningIcon
       }
     }
   };
@@ -599,9 +600,6 @@ withALargeDatasetAndDisabledScrollToActiveItem.story = {
     hermione: {
       actions: [
         {type: 'click', selector: '[data-test~=ring-select]'},
-        {type: 'scroll', selector: '.ReactVirtualized__List', y: 1000},
-        {type: 'click', selector: ':nth-child(2) > * > [data-test~=ring-list-item-action]'},
-        {type: 'click', selector: '[data-test~=ring-select]'},
         {
           type: 'capture',
           name: 'selectWithPopup',
@@ -1080,7 +1078,8 @@ export const multipleWithSelectAllAndDisabledItem = () => {
     {label: 'One long label', key: '1'},
     {label: 'Two long label', key: '2'},
     {label: 'Three long label', key: '3'},
-    {label: 'Four long label', key: '4', disabled: true}
+    {label: 'Four long label', key: '4', disabled: true},
+    {label: 'Four long selected and disabled', key: '5', disabled: true}
   ];
 
   const multipleConfig = {selectAll: true};
@@ -1089,7 +1088,7 @@ export const multipleWithSelectAllAndDisabledItem = () => {
     <Select
       filter
       multiple={multipleConfig}
-      selected={[data[1]]}
+      selected={[data[1], data[4]]}
       data={data}
       onSelect={action('selected')}
       onDeselect={action('deselected')}

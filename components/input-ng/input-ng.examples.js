@@ -2,10 +2,10 @@ import angular from 'angular';
 
 import angularDecorator, {APP_NAME} from '../../.storybook/angular-decorator';
 
-import InputNG from './input-ng';
+import InputNG from '@jetbrains/ring-ui/components/input-ng/input-ng';
 
 export default {
-  title: 'Legacy Angular|Input Ng',
+  title: 'Legacy Angular/Input Ng',
   decorators: [angularDecorator()],
 
   parameters: {

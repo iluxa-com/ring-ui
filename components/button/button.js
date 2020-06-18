@@ -4,16 +4,17 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import chevronDown from '@jetbrains/icons/chevron-10px.svg';
 
-import Icon, {Size} from '../icon';
-import Theme from '../global/theme';
+import Icon, {Size} from '../icon/icon';
+import Theme, {withTheme} from '../global/theme';
 import ClickableLink from '../link/clickableLink';
 
 import styles from './button.css';
+import {getButtonClasses} from './button__classes';
 
 /**
  * @name Button
  */
-export default class Button extends PureComponent {
+class Button extends PureComponent {
   static propTypes = {
     theme: PropTypes.string,
     active: PropTypes.bool,
@@ -33,6 +34,7 @@ export default class Button extends PureComponent {
     dropdown: PropTypes.bool,
 
     href: PropTypes.string,
+    target: PropTypes.string,
 
     icon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     iconSize: PropTypes.number,
@@ -42,10 +44,6 @@ export default class Button extends PureComponent {
     className: PropTypes.string,
 
     children: PropTypes.node
-  };
-
-  static defaultProps = {
-    theme: Theme.LIGHT
   };
 
   static IconSize = Size;
@@ -76,29 +74,8 @@ export default class Button extends PureComponent {
       ...props
     } = this.props;
 
-    const classes = classNames(
-      styles.button,
-      className,
-      styles[theme],
-      {
-        [styles.active]: active,
-        [styles.danger]: danger,
-        [styles.delayed]: delayed,
-        [styles.withIcon]: icon,
-        [styles.onlyIcon]: icon && !children,
-        [styles.withNormalIconLight]: (
-          icon && !active && !danger && !primary && theme === Theme.LIGHT
-        ),
-        [styles.withDangerIconLight]: (
-          icon && danger && theme === Theme.LIGHT
-        ),
-        [styles.loader]: loader && !icon,
-        [styles.primary]: primary || blue,
-        [styles.short]: short,
-        [styles.text]: text,
-        [styles.inline]: inline
-      }
-    );
+    const classes = getButtonClasses({className, active, danger, delayed, icon, theme, loader,
+      primary: primary || blue, short, text, inline});
 
     const content = (
       <span className={styles.content}>
@@ -141,3 +118,5 @@ export default class Button extends PureComponent {
 }
 
 export {Size as IconSize};
+
+export default withTheme()(Button);

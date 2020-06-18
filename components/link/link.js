@@ -1,7 +1,7 @@
-import React, {Component} from 'react';
+import 'focus-visible';
+import React, {Component, memo} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import {pure} from 'recompose';
 
 import memoize from '../global/memoize';
 import dataTests from '../global/data-tests';
@@ -20,7 +20,7 @@ export function setCompatibilityMode(isEnabled) {
 }
 
 const makeWrapText = memoize(innerClassName => {
-  const WrapText = pure(function WrapText({className, children}) {
+  const WrapText = memo(function WrapText({className, children}) {
     const classes = classNames(styles.inner, className, innerClassName);
     return <span className={classes}>{children}</span>;
   });
@@ -80,7 +80,8 @@ export function linkHOC(ComposedComponent) {
         [styles.inherit]: inherit,
         [styles.hover]: hover,
         [styles.compatibilityUnderlineMode]: isCompatibilityMode,
-        [styles.pseudo]: useButton
+        [styles.pseudo]: useButton,
+        [styles.text]: typeof children !== 'function'
       });
 
       if (isCustom && !props.activeClassName) {

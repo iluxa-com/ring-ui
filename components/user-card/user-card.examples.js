@@ -3,13 +3,15 @@ import React from 'react';
 import reactDecorator from '../../.storybook/react-decorator';
 import hubConfig from '../../.storybook/hub-config';
 
-import Auth from '../auth/auth';
-import {createHubUserCardSource} from '../hub-source/hub-source__user';
+import Auth from '@jetbrains/ring-ui/components/auth/auth';
+import {createHubUserCardSource} from '@jetbrains/ring-ui/components/hub-source/hub-source__user';
 
-import {UserCard, UserCardTooltip, SmartUserCardTooltip} from './user-card';
+import {avatarDataUri} from '@jetbrains/ring-ui/components/avatar/avatar-example-datauri';
+
+import {UserCard, UserCardTooltip, SmartUserCardTooltip} from '@jetbrains/ring-ui/components/user-card/user-card';
 
 export default {
-  title: 'Components|User Card',
+  title: 'Components/User Card',
   decorators: [reactDecorator()],
 
   parameters: {
@@ -22,7 +24,7 @@ export const inline = () => {
     login: 'testuser',
     name: 'Test User',
     email: 'testuser@mail.com',
-    avatarUrl: `${hubConfig.serverUri}/api/rest/avatar/default?username=Jet%20Brains`,
+    avatarUrl: avatarDataUri,
     href: `${hubConfig.serverUri}/users/0`
   };
 
@@ -47,7 +49,7 @@ export const smartTooltip = () => {
     login: 'testuser',
     name: 'Test User',
     email: 'testuser@mail.com',
-    avatarUrl: `${hubConfig.serverUri}/api/rest/avatar/default?username=Jet%20Brains`,
+    avatarUrl: avatarDataUri,
     href: `${hubConfig.serverUri}/users/0`,
     banned: true,
     online: false,

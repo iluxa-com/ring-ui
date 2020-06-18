@@ -7,7 +7,7 @@ import closeIcon from '@jetbrains/icons/close.svg';
 import {Anchor} from '../dropdown/dropdown';
 import Avatar, {Size as AvatarSize} from '../avatar/avatar';
 import Popup from '../popup/popup';
-import List from '../list/list';
+import List, {ActiveItemContext} from '../list/list';
 import Input, {Size} from '../input/input';
 import Shortcuts from '../shortcuts/shortcuts';
 import Button from '../button/button';
@@ -15,7 +15,7 @@ import buttonStyles from '../button/button.css';
 import getUID from '../global/get-uid';
 import rerenderHOC from '../global/rerender-hoc';
 import fuzzyHighlight from '../global/fuzzy-highlight';
-import Theme from '../global/theme';
+import Theme, {ThemeContext} from '../global/theme';
 import memoize from '../global/memoize';
 import getEventKey from '../global/get-event-key';
 
@@ -87,7 +87,12 @@ function getFilterFn(filter) {
     );
 }
 
-const buildMultipleMap = selected => Object.fromEntries(selected.map(({key}) => [key, true]));
+const buildMultipleMap = selected => (
+  selected.reduce((acc, item) => {
+    acc[item.key] = true;
+    return acc;
+  }, {})
+);
 
 function getListItems(props, state, rawFilterString, data = props.data) {
   let filterString = rawFilterString.trim();
@@ -245,7 +250,11 @@ export default class Select extends Component {
     disabled: PropTypes.bool,
     hideSelected: PropTypes.bool,
     label: PropTypes.string,
-    selectedLabel: PropTypes.string,
+    selectedLabel: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.node),
+      PropTypes.node
+    ]),
     inputPlaceholder: PropTypes.string,
     clear: PropTypes.bool,
     hideArrow: PropTypes.bool,
@@ -314,7 +323,6 @@ export default class Select extends Component {
     tags: null,
     onRemoveTag: noop,
     ringPopupTarget: null,
-    theme: Theme.LIGHT,
     dir: 'ltr'
   };
 
@@ -405,7 +413,9 @@ export default class Select extends Component {
   static Size = Size;
   static Theme = Theme;
 
-  shortcutsScope = getUID('select-');
+  id = getUID('select-');
+  shortcutsScope = this.id;
+  listId = `${this.id}:list`;
   _focusHandler = () => {
     this.props.onFocus();
 
@@ -507,24 +517,35 @@ export default class Select extends Component {
     }
 
     const {reset} = this.props.tags;
+
+    const resetHandler = (item, event) => {
+      this.clear(event);
+      this.clearFilter();
+      this.props.onFilter('');
+      this.setState(prevState => ({
+        shownData: prevState.shownData.slice(reset.separator ? 2 : 1),
+        multipleMap: {}
+      }));
+      this._redrawPopup();
+    };
+
     return {
       isResetItem: true,
       separator: reset.separator,
       key: reset.label,
       rgItemType: List.ListProps.Type.ITEM,
-      label: reset.label,
+      label: (
+        <Button
+          text
+          className={styles.button}
+          onClick={resetHandler}
+          data-test="ring-select-reset-tags-button"
+        >
+          {reset.label}
+        </Button>
+      ),
       glyph: reset.glyph,
-      className: 'ring-select__clear-tags',
-      onClick: (item, event) => {
-        this.clear(event);
-        this.clearFilter();
-        this.props.onFilter('');
-        this.setState(prevState => ({
-          shownData: prevState.shownData.slice(reset.separator ? 2 : 1),
-          multipleMap: {}
-        }));
-        this._redrawPopup();
-      }
+      onClick: resetHandler
     };
   }
 
@@ -591,6 +612,7 @@ export default class Select extends Component {
         disableScrollToActive={this.props.disableScrollToActive}
         dir={this.props.dir}
         onEmptyPopupEnter={this.onEmptyPopupEnter}
+        listId={this.listId}
       />
     );
   }
@@ -956,9 +978,11 @@ export default class Select extends Component {
   }
 
   _getIcons() {
+    const {selected} = this.state;
+    const {disabled, clear, hideArrow} = this.props;
     const icons = [];
 
-    if (this.state.selected && this.state.selected.icon) {
+    if (selected?.icon) {
       icons.push(
         <button
           title="Toggle options popup"
@@ -966,15 +990,16 @@ export default class Select extends Component {
           className={styles.selectedIcon}
           key="selected"
           onClick={this._clickHandler}
-          style={{backgroundImage: `url(${this.state.selected.icon})`}}
+          style={{backgroundImage: `url(${selected.icon})`}}
         />
       );
     }
 
-    if (this.props.clear && !this.props.disabled && this.state.selected) {
+    if (clear && !disabled && !this._selectionIsEmpty()) {
       icons.push(
         <Button
           title="Clear selection"
+          data-test="ring-clear-select"
           className={styles.clearIcon}
           key="close"
           onClick={this.clear}
@@ -983,7 +1008,7 @@ export default class Select extends Component {
       );
     }
 
-    if (!this.props.hideArrow) {
+    if (!hideArrow) {
       icons.push(
         <Button
           title="Toggle options popup"
@@ -1035,7 +1060,7 @@ export default class Select extends Component {
     };
   }
 
-  render() {
+  renderSelect(activeItemId) {
     const {shortcutsEnabled} = this.state;
     const classes = classNames(styles.select, 'ring-js-shortcuts', this.props.className, {
       [styles[`size${this.props.size}`]]: this.props.type !== Type.INLINE,
@@ -1047,6 +1072,12 @@ export default class Select extends Component {
     const style = getStyle(icons.length);
 
     const iconsNode = <span className={styles.icons}>{icons}</span>;
+    const ariaProps = this.state.showPopup
+      ? {
+        'aria-owns': this.listId,
+        'aria-activedescendant': activeItemId
+      }
+      : {};
 
     switch (this.props.type) {
       case Type.INPUT_WITHOUT_CONTROLS:
@@ -1063,6 +1094,8 @@ export default class Select extends Component {
             />
           )}
           <Input
+            {...ariaProps}
+            autoComplete="off"
             id={this.props.id}
             onClick={this._clickHandler}
             inputRef={this.filterRef}
@@ -1097,28 +1130,33 @@ export default class Select extends Component {
                 scope={this.shortcutsScope}
               />
             )}
-            <div
-              id={this.props.id}
-              onClick={this._clickHandler}
-              onKeyPress={this._selectButtonKeyboardHack}
-              className={classNames(
-                buttonStyles.button,
-                buttonStyles[this.props.theme],
-                styles.buttonValue,
-                {
-                  [styles.buttonValueOpen]: this.state.showPopup
-                })
-              }
-              role="button"
-              tabIndex={0}
-              disabled={this.props.disabled}
-              style={style}
-              data-test="ring-select__button ring-select__focus"
-            >
-              {this._getAvatar()}
-              {this._selectionIsEmpty() ? this._getLabel() : this._getSelectedString()}
-              {iconsNode}
-            </div>
+            <ThemeContext.Consumer>
+              {contextTheme => (
+                <div
+                  {...ariaProps}
+                  id={this.props.id}
+                  onClick={this._clickHandler}
+                  onKeyPress={this._selectButtonKeyboardHack}
+                  className={classNames(
+                    buttonStyles.button,
+                    buttonStyles[this.props.theme || contextTheme || Theme.LIGHT],
+                    styles.buttonValue,
+                    {
+                      [styles.buttonValueOpen]: this.state.showPopup
+                    })
+                  }
+                  role="button"
+                  tabIndex={0}
+                  disabled={this.props.disabled}
+                  style={style}
+                  data-test="ring-select__button ring-select__focus"
+                >
+                  {this._getAvatar()}
+                  {this._selectionIsEmpty() ? this._getLabel() : this._getSelectedString()}
+                  {iconsNode}
+                </div>
+              )}
+            </ThemeContext.Consumer>
             {this._renderPopup()}
           </div>
         );
@@ -1140,6 +1178,7 @@ export default class Select extends Component {
               <span className={styles.selectedLabel}>{this.props.selectedLabel}</span>
             )}
             <button
+              {...ariaProps}
               id={this.props.id}
               onClick={this._clickHandler}
               type="button"
@@ -1174,10 +1213,12 @@ export default class Select extends Component {
               />
             )}
             <Anchor
+              {...ariaProps}
               id={this.props.id}
               onClick={this._clickHandler}
               data-test="ring-select__focus"
               disabled={this.props.disabled}
+              active={this.state.showPopup}
             >
               {this._selectionIsEmpty() ? this._getLabel() : this._getSelectedString()}
             </Anchor>
@@ -1200,6 +1241,7 @@ export default class Select extends Component {
                   'data-test': 'ring-select'
                 },
                 buttonProps: {
+                  ...ariaProps,
                   id: this.props.id,
                   onClick: this._clickHandler,
                   disabled: this.props.disabled,
@@ -1217,6 +1259,16 @@ export default class Select extends Component {
           </span>
         );
     }
+  }
+
+  render() {
+    return (
+      <ActiveItemContext.Provider>
+        <ActiveItemContext.ValueContext.Consumer>
+          {activeItemId => this.renderSelect(activeItemId)}
+        </ActiveItemContext.ValueContext.Consumer>
+      </ActiveItemContext.Provider>
+    );
   }
 }
 

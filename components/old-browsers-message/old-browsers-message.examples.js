@@ -1,8 +1,8 @@
-import './old-browsers-message.css';
-import './old-browsers-message';
+import '@jetbrains/ring-ui/components/old-browsers-message/old-browsers-message.css';
+import {stop} from '@jetbrains/ring-ui/components/old-browsers-message/old-browsers-message';
 
 export default {
-  title: 'Style-only|Old Browsers Message',
+  title: 'Style-only/Old Browsers Message',
 
   parameters: {
     notes: `
@@ -17,6 +17,7 @@ Once loaded, it attaches a global error handler. When your app finishes loading 
 export const basic = () => {
   function triggerGlobalError() {
     Object.unknownMethodToTriggerOldBrowsersMessage();
+    setTimeout(stop);
   }
 
   setTimeout(triggerGlobalError);

@@ -1,7 +1,7 @@
-import './island-legacy.scss';
+import '@jetbrains/ring-ui/components/island-legacy/island-legacy.scss';
 
 export default {
-  title: 'Style-only|Island',
+  title: 'Style-only/Island',
 
   parameters: {
     notes: 'Displays an island.'

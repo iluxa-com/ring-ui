@@ -4,13 +4,15 @@ import angularDecorator, {APP_NAME} from '../../.storybook/angular-decorator';
 
 import hubConfig from '../../.storybook/hub-config';
 
-import Auth from '../auth/auth';
-import {createHubUserCardSource} from '../hub-source/hub-source__user';
+import Auth from '@jetbrains/ring-ui/components/auth/auth';
+import {createHubUserCardSource} from '@jetbrains/ring-ui/components/hub-source/hub-source__user';
 
-import UserCardNG from './user-card-ng';
+import {avatarDataUri} from '@jetbrains/ring-ui/components/avatar/avatar-example-datauri';
+
+import UserCardNG from '@jetbrains/ring-ui/components/user-card-ng/user-card-ng';
 
 export default {
-  title: 'Legacy Angular|User Card Ng',
+  title: 'Legacy Angular/User Card Ng',
   decorators: [angularDecorator()],
 
   parameters: {
@@ -25,7 +27,7 @@ export const basic = () => {
       login: 'testuser',
       name: 'Test User',
       email: 'testuser@mail.com',
-      avatarUrl: `${hubConfig.serverUri}/api/rest/avatar/default?username=Jet%20Brains`,
+      avatarUrl: avatarDataUri,
       href: `${hubConfig.serverUri}/users/0`
     };
   });

@@ -2,7 +2,7 @@ import React from 'react';
 
 import reactDecorator from '../../.storybook/react-decorator';
 
-import Heading, {H1, H2, H3, H4} from './heading';
+import Heading, {H1, H2, H3, H4} from '@jetbrains/ring-ui/components/heading/heading';
 
 const lorem = (
   <div>
@@ -14,7 +14,7 @@ const lorem = (
 );
 
 export default {
-  title: 'Components|Heading',
+  title: 'Components/Heading',
   decorators: [reactDecorator()],
 
   parameters: {

@@ -14,6 +14,8 @@ import {Listeners, getStyles} from '../global/dom';
 import Shortcuts from '../shortcuts/shortcuts';
 import dataTests from '../global/data-tests';
 
+import TabTrap from '../tab-trap/tab-trap';
+
 import position, {
   DEFAULT_DIRECTIONS,
   Dimension,
@@ -27,7 +29,7 @@ import styles from './popup.css';
 
 const stop = e => e.stopPropagation();
 
-const PopupTargetContext = createContext();
+export const PopupTargetContext = createContext();
 export const PopupTarget = forwardRef(
   function PopupTarget({id, children, ...restProps}, ref) {
     const isFunctionChild = typeof children === 'function';
@@ -52,6 +54,8 @@ PopupTarget.propTypes = {
   children: PropTypes.oneOfType([PropTypes.node, PropTypes.func])
 };
 
+export const getPopupContainer = target => document.querySelector(`[data-portaltarget=${target}]`);
+
 /**
  * @constructor
  * @name Popup
@@ -69,10 +73,7 @@ export default class Popup extends PureComponent {
     // onCloseAttempt is a common callback for ESC pressing and outside clicking.
     // Use it if you don't need different behaviors for this cases.
     onCloseAttempt: PropTypes.func,
-    children: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.node),
-      PropTypes.node
-    ]),
+    children: PropTypes.node.isRequired,
     dontCloseOnAnchorClick: PropTypes.bool,
     shortcuts: PropTypes.bool,
     keepMounted: PropTypes.bool, // pass this prop to preserve the popup's DOM state while hidden
@@ -96,7 +97,10 @@ export default class Popup extends PureComponent {
     onMouseOut: PropTypes.func,
     onContextMenu: PropTypes.func,
     onDirectionChange: PropTypes.func,
-    onShow: PropTypes.func
+    onShow: PropTypes.func,
+    // set to true whenever popup contains focusable and scrollable content
+    trapFocus: PropTypes.bool,
+    autoFocusFirst: PropTypes.bool
   };
 
   static defaultProps = {
@@ -117,6 +121,8 @@ export default class Popup extends PureComponent {
     sidePadding: 8,
 
     attached: false,
+    trapFocus: false,
+    autoFocusFirst: false,
 
     legacy: false
   };
@@ -202,7 +208,7 @@ export default class Popup extends PureComponent {
 
   getContainer() {
     const target = this.props.target || this.ringPopupTarget;
-    return target && document.querySelector(`[data-portaltarget=${target}]`);
+    return target && getPopupContainer(target);
   }
 
   position() {
@@ -324,7 +330,12 @@ export default class Popup extends PureComponent {
   };
 
   getInternalContent() {
-    return this.props.children;
+    const {trapFocus, autoFocusFirst, children} = this.props;
+    return trapFocus ? (
+      <TabTrap autoFocusFirst={autoFocusFirst} focusBackOnExit>
+        {children}
+      </TabTrap>
+    ) : children;
   }
 
   shortcutsScope = this.uid;

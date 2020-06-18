@@ -2,10 +2,10 @@ import React from 'react';
 
 import reactDecorator from '../../.storybook/react-decorator';
 
-import {Grid, Row, Col} from './grid';
+import {Grid, Row, Col} from '@jetbrains/ring-ui/components/grid/grid';
 
 export default {
-  title: 'Components|Grid',
+  title: 'Components/Grid',
   decorators: [reactDecorator()],
 
   parameters: {

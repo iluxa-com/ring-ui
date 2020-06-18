@@ -2,10 +2,10 @@ import React from 'react';
 
 import reactDecorator from '../../.storybook/react-decorator';
 
-import Footer from './footer';
+import Footer from '@jetbrains/ring-ui/components/footer/footer';
 
 export default {
-  title: 'Components|Footer',
+  title: 'Components/Footer',
   decorators: [reactDecorator()],
 
   parameters: {

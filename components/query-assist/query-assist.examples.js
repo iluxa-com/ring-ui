@@ -1,20 +1,23 @@
 import React, {Component} from 'react';
 import {action} from '@storybook/addon-actions';
+import permissionIcon from '@jetbrains/icons/permission.svg';
 
 import hubConfig from '../../.storybook/hub-config';
-import Auth from '../auth/auth';
-import HTTP from '../http/http';
-import List from '../list/list';
-import {PermissionIcon} from '../icon';
 
 import reactDecorator from '../../.storybook/react-decorator';
 
-import QueryAssist from './query-assist';
+import Auth from '@jetbrains/ring-ui/components/auth/auth';
+import HTTP from '@jetbrains/ring-ui/components/http/http';
+import List from '@jetbrains/ring-ui/components/list/list';
+import Icon from '@jetbrains/ring-ui/components/icon/icon';
+
+
+import QueryAssist from '@jetbrains/ring-ui/components/query-assist/query-assist';
 
 const queryAssistLog = action('queryAssistLog');
 
 export default {
-  title: 'Components|Query Assist',
+  title: 'Components/Query Assist',
   decorators: [reactDecorator()],
 
   parameters: {
@@ -381,7 +384,7 @@ export const withCustomActions = () => {
           hintOnSelection="lol selected"
           popupClassName="test"
           dataSource={this.dataSource}
-          actions={[<PermissionIcon key="custom-action"/>]}
+          actions={[<Icon glyph={permissionIcon} key="custom-action"/>]}
         />
       );
     }

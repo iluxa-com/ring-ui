@@ -2,14 +2,14 @@ import React, {Component} from 'react';
 
 import reactDecorator from '../../.storybook/react-decorator';
 
-import Theme from '../global/theme';
+import Theme from '@jetbrains/ring-ui/components/global/theme';
 
-import ProgressBar from './progress-bar';
+import ProgressBar from '@jetbrains/ring-ui/components/progress-bar/progress-bar';
 
 const disableAnimations = window.location.search.includes('block-animations');
 
 export default {
-  title: 'Components|Progress Bar',
+  title: 'Components/Progress Bar',
   decorators: [reactDecorator()]
 };
 
@@ -23,11 +23,10 @@ export const basic = () => {
       if (disableAnimations) {
         return;
       }
-      setInterval(() => {
-        // eslint-disable-next-line react/no-access-state-in-setstate
-        const value = this.state.value >= 1 ? 0 : this.state.value + 0.1;
-        this.setState({value});
-      }, 500);
+      setInterval(
+        () => this.setState(({value}) => ({value: value >= 1 ? 0 : value + 0.1})),
+        500
+      );
     }
 
     render() {
@@ -36,15 +35,15 @@ export const basic = () => {
       return (
         <div>
           <div style={{height: '25px', paddingTop: '25px'}}>
-            <ProgressBar value={value}/>
+            <ProgressBar value={value} style={{width: 288}}/>
           </div>
 
           <div style={{height: '25px', paddingTop: '25px', background: '#000'}}>
-            <ProgressBar value={value} theme={Theme.DARK}/>
+            <ProgressBar value={value} theme={Theme.DARK} style={{width: 288}}/>
           </div>
 
           <div style={{height: '25px', paddingTop: '25px', background: '#F0F0F0'}}>
-            <ProgressBar value={value}/>
+            <ProgressBar value={value} style={{width: 288}}/>
           </div>
         </div>
       );

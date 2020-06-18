@@ -1,13 +1,15 @@
 import angular from 'angular';
 
 import angularDecorator, {APP_NAME} from '../../.storybook/angular-decorator';
-import hubConfig from '../../.storybook/hub-config';
-import {Size as AvatarSize} from '../avatar/avatar';
 
-import AvatarNG from './avatar-ng';
+import {Size as AvatarSize} from '@jetbrains/ring-ui/components/avatar/avatar';
+
+import {avatarDataUri} from '@jetbrains/ring-ui/components/avatar/avatar-example-datauri';
+
+import AvatarNG from '@jetbrains/ring-ui/components/avatar-ng/avatar-ng';
 
 export default {
-  title: 'Legacy Angular|Avatar Ng',
+  title: 'Legacy Angular/Avatar Ng',
   decorators: [angularDecorator()],
 
   parameters: {
@@ -18,7 +20,7 @@ export default {
 export const basic = () => {
   angular.module(APP_NAME, [AvatarNG]).controller('testCtrl', function controller() {
     this.AvatarSize = AvatarSize;
-    this.avatarUrl = `${hubConfig.serverUri}/api/rest/avatar/default?username=Jet%20Brains`;
+    this.avatarUrl = avatarDataUri;
   });
 
   return `

@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 
 import reactDecorator from '../../.storybook/react-decorator';
 
-import Pager from './pager';
+import Pager from '@jetbrains/ring-ui/components/pager/pager';
 
 function getDataFromUrl(name, defaultValue) {
   const params = new URLSearchParams(location.search);
@@ -20,7 +20,7 @@ function hrefGenerator(linkPageNumber, pageSize) {
 }
 
 export default {
-  title: 'Components|Pager',
+  title: 'Components/Pager',
   decorators: [reactDecorator()],
 
   parameters: {

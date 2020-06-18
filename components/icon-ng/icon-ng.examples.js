@@ -1,12 +1,14 @@
 import angular from 'angular';
 
-import angularDecorator, {APP_NAME} from '../../.storybook/angular-decorator';
-import {CheckmarkIcon, WarningIcon} from '../icon';
+import checkmarkIcon from '@jetbrains/icons/checkmark.svg';
+import warningIcon from '@jetbrains/icons/warning.svg';
 
-import IconNG from './icon-ng';
+import angularDecorator, {APP_NAME} from '../../.storybook/angular-decorator';
+
+import IconNG from '@jetbrains/ring-ui/components/icon-ng/icon-ng';
 
 export default {
-  title: 'Legacy Angular|Icon Ng',
+  title: 'Legacy Angular/Icon Ng',
   decorators: [angularDecorator()],
 
   parameters: {
@@ -16,8 +18,8 @@ export default {
 
 export const basic = () => {
   angular.module(APP_NAME, [IconNG]).controller('testCtrl', function ctrl() {
-    this.icon = CheckmarkIcon;
-    this.error = WarningIcon;
+    this.icon = checkmarkIcon;
+    this.error = warningIcon;
   });
 
   return `

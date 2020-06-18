@@ -1,13 +1,13 @@
 import React from 'react';
 
 import reactDecorator from '../../.storybook/react-decorator';
-import Link from '../link/link';
-import Button from '../button/button';
 
-import Alert, {Container} from './alert';
+import Link from '@jetbrains/ring-ui/components/link/link';
+import Button from '@jetbrains/ring-ui/components/button/button';
+import Alert, {Container} from '@jetbrains/ring-ui/components/alert/alert';
 
 export default {
-  title: 'Components|Alert',
+  title: 'Components/Alert',
   decorators: [reactDecorator()],
 
   parameters: {
@@ -55,7 +55,8 @@ export const simple = () => {
 };
 
 simple.story = {
-  name: 'simple'
+  name: 'simple',
+  parameters: {hermione: {skip: false}}
 };
 
 export const alertContainer = () => {

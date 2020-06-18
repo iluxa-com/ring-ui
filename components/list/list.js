@@ -3,14 +3,16 @@
  */
 
 import 'dom4';
-import React, {Component, cloneElement} from 'react';
+import React, {cloneElement, Component} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import VirtualizedList from 'react-virtualized/dist/es/List';
 import AutoSizer from 'react-virtualized/dist/es/AutoSizer';
 import WindowScroller from 'react-virtualized/dist/es/WindowScroller';
-import {CellMeasurer, CellMeasurerCache} from 'react-virtualized/dist/es/CellMeasurer';
+// TODO move back when https://github.com/bvaughn/react-virtualized/pull/1477 is merged and released
+import {CellMeasurer, CellMeasurerCache} from '@hypnosphi/react-virtualized/dist/es/CellMeasurer';
 import deprecate from 'util-deprecate';
+import memoizeOne from 'memoize-one';
 
 import dataTests from '../global/data-tests';
 import getUID from '../global/get-uid';
@@ -19,6 +21,8 @@ import memoize from '../global/memoize';
 import {preventDefault} from '../global/dom';
 import Shortcuts from '../shortcuts/shortcuts';
 
+import createStatefulContext from '../global/create-stateful-context';
+
 import styles from './list.css';
 import ListItem from './list__item';
 import ListCustom from './list__custom';
@@ -26,35 +30,10 @@ import ListLink from './list__link';
 import ListTitle from './list__title';
 import ListSeparator from './list__separator';
 import ListHint from './list__hint';
+import {DEFAULT_ITEM_TYPE, Dimension, Type} from './consts';
 
 const scheduleScrollListener = scheduleRAF();
 const scheduleHoverListener = scheduleRAF();
-/**
- * @enum {number}
- */
-const Type = {
-  SEPARATOR: 0,
-  LINK: 1,
-  ITEM: 2,
-  HINT: 3,
-  CUSTOM: 4,
-  TITLE: 5,
-  MARGIN: 6
-};
-
-const Dimension = {
-  ITEM_PADDING: 16,
-  ITEM_HEIGHT: 32,
-  COMPACT_ITEM_HEIGHT: 24,
-  SEPARATOR_HEIGHT: 25,
-  SEPARATOR_FIRST_HEIGHT: 16,
-  SEPARATOR_TEXT_HEIGHT: 18,
-  TITLE_HEIGHT: 42,
-  INNER_PADDING: 8,
-  MARGIN: 8
-};
-
-const DEFAULT_ITEM_TYPE = Type.ITEM;
 
 function noop() {}
 
@@ -75,12 +54,20 @@ function isItemType(listItemType, item) {
   return type === listItemType;
 }
 
+const nonActivatableTypes = [
+  Type.SEPARATOR,
+  Type.TITLE,
+  Type.MARGIN
+];
+
 function isActivatable(item) {
-  return !(item.rgItemType === Type.HINT ||
-    item.rgItemType === Type.SEPARATOR ||
-    item.rgItemType === Type.TITLE ||
-    item.disabled);
+  return item != null && !nonActivatableTypes.includes(item.rgItemType) && !item.disabled;
 }
+
+const shouldActivateFirstItem = props => props.activateFirstItem ||
+    props.activateSingleItem && props.data.length === 1;
+
+export const ActiveItemContext = createStatefulContext();
 
 /**
  * @name List
@@ -89,6 +76,7 @@ function isActivatable(item) {
  */
 export default class List extends Component {
   static propTypes = {
+    id: PropTypes.string,
     className: PropTypes.string,
     hint: PropTypes.string,
     hintOnSelection: PropTypes.string,
@@ -112,7 +100,8 @@ export default class List extends Component {
     disableMoveOverflow: PropTypes.bool,
     disableMoveDownOverflow: PropTypes.bool,
     compact: PropTypes.bool,
-    disableScrollToActive: PropTypes.bool
+    disableScrollToActive: PropTypes.bool,
+    hidden: PropTypes.bool
   };
 
   static defaultProps = {
@@ -131,6 +120,8 @@ export default class List extends Component {
 
   state = {
     activeIndex: null,
+    prevActiveIndex: null,
+    prevData: [],
     activeItem: null,
     needScrollToActive: false,
     scrolling: false,
@@ -139,84 +130,61 @@ export default class List extends Component {
     scrolledToBottom: false
   };
 
-  UNSAFE_componentWillMount() {
-    const {data, activeIndex} = this.props;
-    this.checkActivatableItems(data);
-    if (activeIndex != null && data[this.props.activeIndex]) {
-      this.setState({
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const {prevActiveIndex, prevData, activeItem} = prevState;
+    const {data, activeIndex, restoreActiveIndex} = nextProps;
+    const nextState = {prevActiveIndex: activeIndex, prevData: data};
+
+    if (data !== prevData) {
+      Object.assign(nextState, {
+        activeIndex: null,
+        activeItem: null
+      });
+    }
+
+    if (activeIndex != null && activeIndex !== prevActiveIndex && data[activeIndex] != null) {
+      Object.assign(nextState, {
         activeIndex,
         activeItem: data[activeIndex],
         needScrollToActive: true
       });
     } else if (
+      data !== prevData &&
+      restoreActiveIndex &&
+      activeItem != null &&
+      activeItem.key != null
+    ) {
+      // Restore active index if there is an item with the same "key" property
+      const index = data.findIndex(item => item.key === activeItem.key);
+      if (index >= 0) {
+        Object.assign(nextState, {
+          activeIndex: index,
+          activeItem: data[index]
+        });
+      }
+    }
+
+    if (
       activeIndex == null &&
-      this.shouldActivateFirstItem(this.props) &&
-      this.hasActivatableItems()
+      prevState.activeIndex == null &&
+      shouldActivateFirstItem(nextProps)
     ) {
       const firstActivatableIndex = data.findIndex(isActivatable);
-      this.setState({
-        activeIndex: firstActivatableIndex,
-        activeItem: data[firstActivatableIndex],
-        needScrollToActive: true
-      });
+      if (firstActivatableIndex >= 0) {
+        Object.assign(nextState, {
+          activeIndex: firstActivatableIndex,
+          activeItem: data[firstActivatableIndex],
+          needScrollToActive: true
+        });
+      }
     }
+
+    return nextState;
   }
 
   componentDidMount() {
     document.addEventListener('mousemove', this.onDocumentMouseMove);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
-  }
-
-  UNSAFE_componentWillReceiveProps(props) {
-    if (props.data) {
-      //TODO investigate (https://youtrack.jetbrains.com/issue/RG-772)
-      //props.data = props.data.map(normalizeListItemType);
-
-      this.checkActivatableItems(props.data);
-
-      this.setState(prevState => {
-        let activeIndex = null;
-        let activeItem = null;
-
-        if (
-          props.restoreActiveIndex &&
-          prevState.activeItem &&
-          prevState.activeItem.key != null
-        ) {
-          for (let i = 0; i < props.data.length; i++) {
-            // Restore active index if there is an item with the same "key" property
-            if (props.data[i].key !== undefined && props.data[i].key === prevState.activeItem.key) {
-              activeIndex = i;
-              activeItem = props.data[i];
-              break;
-            }
-          }
-        }
-
-        if (
-          activeIndex === null &&
-          this.shouldActivateFirstItem(props) &&
-          this.hasActivatableItems()
-        ) {
-          activeIndex = props.data.findIndex(isActivatable);
-          activeItem = props.data[activeIndex];
-        } else if (
-          props.activeIndex != null &&
-          props.activeIndex !== this.props.activeIndex &&
-          props.data[props.activeIndex]
-        ) {
-          activeIndex = props.activeIndex;
-          activeItem = props.data[props.activeIndex];
-        }
-
-        return {
-          activeIndex,
-          activeItem,
-          needScrollToActive:
-            activeIndex !== prevState.activeIndex ? true : prevState.needScrollToActive
-        };
-      });
-    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -299,18 +267,9 @@ export default class List extends Component {
     keyMapper: this.sizeCacheKey
   });
 
+  _hasActivatableItems = memoizeOne(items => items.some(isActivatable));
   hasActivatableItems() {
-    return this._activatableItems;
-  }
-
-  checkActivatableItems(items) {
-    this._activatableItems = false;
-    for (let i = 0; i < items.length; i++) {
-      if (isActivatable(items[i])) {
-        this._activatableItems = true;
-        return;
-      }
-    }
+    return this._hasActivatableItems(this.props.data);
   }
 
   selectHandler = memoize(index => (event, tryKeepOpen = false) => {
@@ -464,11 +423,6 @@ export default class List extends Component {
     return this.props.compact ? Dimension.COMPACT_ITEM_HEIGHT : Dimension.ITEM_HEIGHT;
   }
 
-  shouldActivateFirstItem(props) {
-    return props.activateFirstItem ||
-      props.activateSingleItem && props.data.length === 1;
-  }
-
   scrollEndHandler = () => scheduleScrollListener(() => {
     const innerContainer = this.inner;
     if (innerContainer) {
@@ -509,6 +463,10 @@ export default class List extends Component {
     return `${itemProps.rgItemType}_${identificator}`;
   }
 
+  getId(item) {
+    return item != null ? `${this.id}:${item.key || this._deprecatedGenerateKeyFromContent(item)}` : null;
+  }
+
   renderItem = ({index, style, isScrolling, parent, key}) => {
     let itemKey;
     let el;
@@ -517,6 +475,7 @@ export default class List extends Component {
 
     const item = this.props.data[realIndex];
 
+    const itemId = this.getId(item);
     // top and bottom margins
     if (index === 0 || index === this.props.data.length + 1 || item.rgItemType === Type.MARGIN) {
       itemKey = key || `${Type.MARGIN}_${index}`;
@@ -534,7 +493,7 @@ export default class List extends Component {
         itemProps.rgItemType = Type.LINK;
       }
 
-      itemKey = key || itemProps.key || this._deprecatedGenerateKeyFromContent(itemProps);
+      itemKey = key || itemId;
 
       itemProps.hover = (realIndex === this.state.activeIndex);
       if (itemProps.hoverClassName != null && itemProps.hover) {
@@ -595,11 +554,13 @@ export default class List extends Component {
         rowIndex={index}
         columnIndex={0}
       >
-        <div style={style} role="row">
-          <div role="cell">
-            {el}
+        {({registerChild}) => (
+          <div ref={registerChild} style={style} role="row" id={itemId}>
+            <div role="cell">
+              {el}
+            </div>
           </div>
-        </div>
+        )}
       </CellMeasurer>
     ) : cloneElement(el, {key: itemKey});
   };
@@ -619,7 +580,7 @@ export default class List extends Component {
 
   get inner() {
     if (!this._inner) {
-      this._inner = this.container && this.container.query('.ring-list__i');
+      this._inner = this.container && this.container.querySelector('.ring-list__i');
     }
     return this._inner;
   }
@@ -631,46 +592,49 @@ export default class List extends Component {
     rowCount,
     isScrolling,
     onChildScroll = noop,
-    scrollTop
+    scrollTop,
+    registerChild
   }) {
     const dirOverride = {direction: 'auto'}; // Virtualized sets "direction: ltr" by defaulthttps://github.com/bvaughn/react-virtualized/issues/457
     return (
       <AutoSizer disableHeight onResize={this.props.onResize}>
         {({width}) => (
-          <VirtualizedList
-            ref={this.virtualizedListRef}
-            className="ring-list__i"
-            autoHeight={autoHeight}
-            style={maxHeight ? {maxHeight, height: 'auto', ...dirOverride} : dirOverride}
-            autoContainerWidth
-            height={height}
-            width={width}
-            isScrolling={isScrolling}
-            onScroll={e => {
-              onChildScroll(e);
-              this.scrollEndHandler(e);
-            }}
-            scrollTop={scrollTop}
-            rowCount={rowCount}
-            estimatedRowSize={this.defaultItemHeight()}
-            rowHeight={this._cache.rowHeight}
-            rowRenderer={this.renderItem}
-            overscanRowCount={this._bufferSize}
+          <div ref={registerChild}>
+            <VirtualizedList
+              ref={this.virtualizedListRef}
+              className="ring-list__i"
+              autoHeight={autoHeight}
+              style={maxHeight ? {maxHeight, height: 'auto', ...dirOverride} : dirOverride}
+              autoContainerWidth
+              height={height}
+              width={width}
+              isScrolling={isScrolling}
+              onScroll={e => {
+                onChildScroll(e);
+                this.scrollEndHandler(e);
+              }}
+              scrollTop={scrollTop}
+              rowCount={rowCount}
+              estimatedRowSize={this.defaultItemHeight()}
+              rowHeight={this._cache.rowHeight}
+              rowRenderer={this.renderItem}
+              overscanRowCount={this._bufferSize}
 
-            // ensure rerendering
-            noop={() => {}}
+              // ensure rerendering
+              noop={() => {}}
 
-            scrollToIndex={
-              !this.props.disableScrollToActive &&
-                this.state.needScrollToActive &&
-                this.state.activeIndex != null
-                ? this.state.activeIndex + 1
-                : undefined
-            }
-            scrollToAlignment="center"
-            deferredMeasurementCache={this._cache}
-            onRowsRendered={this.checkOverflow}
-          />
+              scrollToIndex={
+                !this.props.disableScrollToActive &&
+                  this.state.needScrollToActive &&
+                  this.state.activeIndex != null
+                  ? this.state.activeIndex + 1
+                  : undefined
+              }
+              scrollToAlignment="center"
+              deferredMeasurementCache={this._cache}
+              onRowsRendered={this.checkOverflow}
+            />
+          </div>
         )}
       </AutoSizer>
     );
@@ -716,7 +680,8 @@ export default class List extends Component {
     );
   }
 
-  shortcutsScope = getUID('list-');
+  id = getUID('list-');
+  shortcutsScope = this.id;
   shortcutsMap = {
     up: this.upHandler,
     down: this.downHandler,
@@ -741,38 +706,45 @@ export default class List extends Component {
     const classes = classNames(styles.list, this.props.className);
 
     return (
-      <div
-        ref={this.containerRef}
-        className={classes}
-        onMouseOut={this.props.onMouseOut}
-        onBlur={this.props.onMouseOut}
-        onMouseLeave={this.clearSelected}
-        data-test="ring-list"
-      >
-        {this.props.shortcuts &&
-        (
-          <Shortcuts
-            map={this.shortcutsMap}
-            scope={this.shortcutsScope}
-          />
-        )
-        }
-        {this.props.renderOptimization
-          ? this.renderVirtualized(maxHeight, rowCount)
-          : this.renderSimple(maxHeight, rowCount)
-        }
-        {this.state.hasOverflow && !this.state.scrolledToBottom && (
-          <div
-            className={styles.fade}
-            style={fadeStyles}
-          />
-        )}
-        {hint && (
-          <ListHint
-            label={hint}
-          />
-        )}
-      </div>
+      <>
+        <ActiveItemContext.Updater
+          value={this.getId(this.state.activeItem)}
+          skipUpdate={this.props.hidden || !isActivatable(this.state.activeItem)}
+        />
+        <div
+          id={this.props.id}
+          ref={this.containerRef}
+          className={classes}
+          onMouseOut={this.props.onMouseOut}
+          onBlur={this.props.onMouseOut}
+          onMouseLeave={this.clearSelected}
+          data-test="ring-list"
+        >
+          {this.props.shortcuts &&
+          (
+            <Shortcuts
+              map={this.shortcutsMap}
+              scope={this.shortcutsScope}
+            />
+          )
+          }
+          {this.props.renderOptimization
+            ? this.renderVirtualized(maxHeight, rowCount)
+            : this.renderSimple(maxHeight, rowCount)
+          }
+          {this.state.hasOverflow && !this.state.scrolledToBottom && (
+            <div
+              className={styles.fade}
+              style={fadeStyles}
+            />
+          )}
+          {hint && (
+            <ListHint
+              label={hint}
+            />
+          )}
+        </div>
+      </>
     );
   }
 }

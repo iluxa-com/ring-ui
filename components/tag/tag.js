@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import closeIcon from '@jetbrains/icons/close.svg';
 
-import Icon from '../icon';
+import Icon from '../icon/icon';
 import Button from '../button/button';
 
 import styles from './tag.css';
@@ -41,14 +41,15 @@ export default class Tag extends PureComponent {
     focused: false
   };
 
-  UNSAFE_componentWillReceiveProps(props) {
-    this.updateStateFromProps(props);
-  }
-
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
+    if (this.props.focused !== prevProps.focused) {
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({focused: this.props.focused});
+    }
     if (this.state.focused) {
       this.tagNode.focus();
     }
+    this.setDocumentClickListener(this.state.focused);
   }
 
   componentWillUnmount() {
@@ -72,11 +73,6 @@ export default class Tag extends PureComponent {
     } else {
       document.removeEventListener('click', this.onDocumentClick);
     }
-  }
-
-  updateStateFromProps(props) {
-    this.setState({focused: props.focused});
-    this.setDocumentClickListener(props.focused);
   }
 
   renderCustomIcon() {

@@ -8,7 +8,7 @@ import checkmarkIcon from '@jetbrains/icons/checkmark.svg';
 import warningIcon from '@jetbrains/icons/warning.svg';
 import closeIcon from '@jetbrains/icons/close.svg';
 
-import Icon from '../icon';
+import Icon from '../icon/icon';
 import Loader from '../loader-inline/loader-inline';
 import {getRect} from '../global/dom';
 import dataTests from '../global/data-tests';
@@ -149,7 +149,9 @@ export default class Alert extends PureComponent {
   _getCaption() {
     return (
       <span
-        className={classNames(styles.caption, this.props.captionClassName)}
+        className={classNames(styles.caption, this.props.captionClassName, {
+          [styles.withCloseButton]: this.props.closeable
+        })}
         onClick={this._handleCaptionsLinksClick}
         // We only process clicks on `a` elements, see above
         role="presentation"

@@ -1,18 +1,18 @@
 import React from 'react';
+import chevronDownIcon from '@jetbrains/icons/chevron-down.svg';
 
 import reactDecorator from '../../.storybook/react-decorator';
-import {ChevronDownIcon} from '../icon';
 
-import Popup from '../popup/popup';
-import PopupMenu from '../popup-menu/popup-menu';
-import Button from '../button/button';
-import Link from '../link/link';
-import {Input} from '../input/input';
+import Popup from '@jetbrains/ring-ui/components/popup/popup';
+import PopupMenu from '@jetbrains/ring-ui/components/popup-menu/popup-menu';
+import Button from '@jetbrains/ring-ui/components/button/button';
+import Link from '@jetbrains/ring-ui/components/link/link';
+import {Input} from '@jetbrains/ring-ui/components/input/input';
 
-import Dropdown from './dropdown';
+import Dropdown from '@jetbrains/ring-ui/components/dropdown/dropdown';
 
 export default {
-  title: 'Components|Dropdown',
+  title: 'Components/Dropdown',
   decorators: [reactDecorator()],
 
   parameters: {
@@ -55,7 +55,7 @@ export const withActiveClassName = () => (
   <Dropdown
     className="chevron"
     activeClassName="rotated"
-    anchor={<Button title="Details" icon={ChevronDownIcon}/>}
+    anchor={<Button title="Details" icon={chevronDownIcon}/>}
   >
     <Popup>Popup content</Popup>
   </Dropdown>
@@ -107,8 +107,8 @@ export const autofocusOnOpen = () => (
   <div>
     <div style={{height: '90vh'}}/>
     <Dropdown anchor="Scroll and then click me">
-      <Popup>
-        <Input autoFocus/>
+      <Popup trapFocus autoFocusFirst>
+        <Input className="ring-js-shortcuts"/>
       </Popup>
     </Dropdown>
     <div style={{height: '50vh'}}/>

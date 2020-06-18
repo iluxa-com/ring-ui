@@ -1,5 +1,4 @@
-import React from 'react';
-import {pure} from 'recompose';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 
 import Link from '../link/link';
@@ -26,7 +25,7 @@ function TabLink({isSelected, title, ...restProps}) {
 
 TabLink.propTypes = {
   isSelected: PropTypes.bool,
-  title: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType])
+  title: PropTypes.oneOfType([PropTypes.func, PropTypes.string, PropTypes.node])
 };
 
-export default pure(TabLink);
+export default memo(TabLink);

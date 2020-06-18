@@ -6,6 +6,7 @@ import closeIcon from '@jetbrains/icons/close.svg';
 
 import {AdaptiveIsland} from '../island/island';
 import getUID from '../global/get-uid';
+import dataTests from '../global/data-tests';
 import Shortcuts from '../shortcuts/shortcuts';
 import TabTrap from '../tab-trap/tab-trap';
 import Button from '../button/button';
@@ -30,6 +31,7 @@ export default class Dialog extends PureComponent {
     ]),
     show: PropTypes.bool.isRequired,
     showCloseButton: PropTypes.bool,
+    closeButtonInside: PropTypes.bool,
     onOverlayClick: PropTypes.func,
     onEscPress: PropTypes.func,
     onCloseClick: PropTypes.func,
@@ -38,7 +40,8 @@ export default class Dialog extends PureComponent {
     onCloseAttempt: PropTypes.func,
     // focusTrap may break popups inside dialog, so use it carefully
     trapFocus: PropTypes.bool,
-    autoFocusFirst: PropTypes.bool
+    autoFocusFirst: PropTypes.bool,
+    'data-test': PropTypes.string
   };
 
   static defaultProps = {
@@ -47,6 +50,7 @@ export default class Dialog extends PureComponent {
     onCloseClick: noop,
     onCloseAttempt: noop,
     showCloseButton: false,
+    closeButtonInside: false,
     trapFocus: false,
     autoFocusFirst: true
   };
@@ -108,7 +112,8 @@ export default class Dialog extends PureComponent {
 
   render() {
     const {show, showCloseButton, onOverlayClick, onCloseAttempt, onEscPress, onCloseClick,
-      children, className, contentClassName, trapFocus, ...restProps} = this.props;
+      children, className, contentClassName, trapFocus, 'data-test': dataTest, closeButtonInside,
+      ...restProps} = this.props;
     const classes = classNames(styles.container, className);
     const shortcutsMap = this.getShortcutsMap();
 
@@ -118,7 +123,7 @@ export default class Dialog extends PureComponent {
           target => (
             <TabTrap
               trapDisabled={!trapFocus}
-              data-test="ring-dialog-container"
+              data-test={dataTests('ring-dialog-container', dataTest)}
               ref={this.dialogRef}
               className={classes}
               role="presentation"
@@ -148,7 +153,10 @@ export default class Dialog extends PureComponent {
                       <Button
                         icon={closeIcon}
                         data-test="ring-dialog-close-button"
-                        className={styles.closeButton}
+                        className={classNames(styles.closeButton, {
+                          [styles.closeButtonOutside]: !closeButtonInside,
+                          [styles.closeButtonInside]: closeButtonInside
+                        })}
                         iconClassName={styles.closeIcon}
                         onClick={this.onCloseClick}
                         aria-label="close dialog"

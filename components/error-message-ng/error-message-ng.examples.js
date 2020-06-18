@@ -1,13 +1,13 @@
 import angular from 'angular';
 
+import frownIcon from '@jetbrains/icons/frown.svg';
+
 import angularDecorator, {APP_NAME} from '../../.storybook/angular-decorator';
 
-import {FrownIcon} from '../icon';
-
-import ErrorMessageNG from './error-message-ng';
+import ErrorMessageNG from '@jetbrains/ring-ui/components/error-message-ng/error-message-ng';
 
 export default {
-  title: 'Legacy Angular|Error Message Ng',
+  title: 'Legacy Angular/Error Message Ng',
   decorators: [angularDecorator()],
 
   parameters: {
@@ -18,7 +18,7 @@ export default {
 
 export const basic = () => {
   angular.module(APP_NAME, [ErrorMessageNG]).controller('DemoCtrl', function ctrl() {
-    this.errorIcon = FrownIcon;
+    this.errorIcon = frownIcon;
   });
 
   return `

@@ -4,6 +4,8 @@ import jetbrains.buildServer.configs.kotlin.v2018_2.*
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildFeatures.CommitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildFeatures.investigationsAutoAssigner
+import jetbrains.buildServer.configs.kotlin.v2018_2.triggers.RetryBuildTrigger
+import jetbrains.buildServer.configs.kotlin.v2018_2.triggers.retryBuild
 import jetbrains.buildServer.configs.kotlin.v2018_2.ui.*
 
 /*
@@ -14,7 +16,18 @@ accordingly, and delete the patch script.
 changeBuildType(RelativeId("UnitTestsAndBuild")) {
     params {
         add {
-            param("env.ELECTRON_ENABLE_LOGGING", "true")
+            param("env.ELECTRON_ENABLE_LOGGING", "false")
+        }
+    }
+
+    triggers {
+        val trigger1 = find<RetryBuildTrigger> {
+            retryBuild {
+                delaySeconds = 60
+            }
+        }
+        trigger1.apply {
+            enabled = false
         }
     }
 
