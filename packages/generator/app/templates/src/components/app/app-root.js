@@ -1,16 +1,15 @@
 import React, {Component} from 'react';
-import Link from '@jetbrains/ring-ui/components/link/link';
 import Header, {
+  Logo,
   Tray,
   SmartProfile,
   SmartServices
 } from '@jetbrains/ring-ui/components/header/header';
 import Auth from '@jetbrains/ring-ui/components/auth/auth';
 import Footer from '@jetbrains/ring-ui/components/footer/footer';
-import Icon from '@jetbrains/ring-ui/components/icon';
 import hubLogo from '@jetbrains/logos/hub/hub.svg';
 
-import styles from './app.css';
+import './app.css';
 
 export default class AppRoot extends Component {
   componentDidMount() {
@@ -28,18 +27,18 @@ export default class AppRoot extends Component {
     return (
       <div>
         <Header>
-          <Link href="/">
-            <Icon
+          <a href="/">
+            <Logo
               glyph={hubLogo}
-              size={Icon.Size.Size48}
+              size={Logo.Size.Size48}
             />
-          </Link>
+          </a>
           <Tray>
             <SmartServices auth={this.auth}/>
             <SmartProfile auth={this.auth}/>
           </Tray>
         </Header>
-        <div className={styles.content}>
+        <div className="app-content">
           {'App content'}
         </div>
         <Footer/>

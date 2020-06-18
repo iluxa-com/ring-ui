@@ -1,4 +1,6 @@
-@value unit from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .buttonSet {
   position: relative;
@@ -9,11 +11,11 @@
 
   font-size: 0;
 
-  & :global(.ring-button) {
+  & .button {
     margin: 0 unit 0 0;
   }
 
-  & > :global(.ring-button:last-child) {
+  & > .button:last-child {
     margin-right: 0;
   }
 }

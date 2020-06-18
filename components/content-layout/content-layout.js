@@ -7,23 +7,18 @@ import styles from './content-layout.css';
 
 /**
  * @name Content Layout
- * @category Components
- * @framework React
- * @constructor
- * @description A component for simple content layout.
- * @example-file ./content-layout.examples.html
  */
 
 export default class ContentLayout extends Component {
-  static defaultProps = {
-    responsive: true
-  };
-
   static propTypes = {
     children: PropTypes.node,
     className: PropTypes.string,
     contentClassName: PropTypes.string,
     responsive: PropTypes.bool
+  };
+
+  static defaultProps = {
+    responsive: true
   };
 
   state = {};

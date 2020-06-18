@@ -1,6 +1,6 @@
 import 'dom4';
 
-import sniffer from '../global/sniffer';
+import sniffer from './sniffer';
 
 import {
   encodeURL,
@@ -94,7 +94,6 @@ describe('Url', () => {
       }
     );
 
-    // eslint-disable-next-line max-len
     it('should resolve url fragment relative to the base url when <base> tag (not standards-compliant)', () => {
       if (standardsCompliantRelativeSVG) {
         return;
@@ -148,7 +147,7 @@ describe('Url', () => {
         should.be.equal('hub?a=a&b=b');
     });
 
-    it('should not encode nulls and undefineds', () => {
+    it('should not encode null and undefined values', () => {
       encodeURL('hub', {a: 'a', b: null, c: undefined, d: '', e: false}).
         should.be.equal('hub?a=a&d=&e=false');
     });

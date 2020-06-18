@@ -1,12 +1,14 @@
-@value unit from  "../global/global.css";
+@import "../global/variables.css";
 
 .errorMessage {
   display: flex;
   align-items: center;
-  flex-flow: row wrap;
+  flex-direction: row;
   justify-content: center;
 
+  max-width: 600px;
   height: 100%;
+  margin: 0 auto;
 }
 
 .title {
@@ -18,9 +20,9 @@
 }
 
 .content {
-  flex-flow: column wrap;
+  flex-direction: column;
 
-  color: #444; /* should we use scss vars here? */
+  color: var(--ring-text-color);
 }
 
 .content > .title,
@@ -30,4 +32,6 @@
 
 .icon {
   margin: 0 16px 24px 0;
+
+  color: var(--ring-icon-secondary-color);
 }

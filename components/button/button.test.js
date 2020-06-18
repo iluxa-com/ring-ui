@@ -1,9 +1,11 @@
 import React from 'react';
 import {shallow, mount, render} from 'enzyme';
+import caretDownSVG from '@jetbrains/icons/caret-down-10px.svg';
 
-import {CaretDownIcon} from '../icon';
+import {CaretDown10pxIcon} from '../icon';
 
 import Button from './button';
+import styles from './button.css';
 
 describe('Button', () => {
   const shallowButton = props => shallow(<Button {...props}/>);
@@ -15,13 +17,12 @@ describe('Button', () => {
   });
 
   it('should set _default modifier', () => {
-    shallowButton().should.have.className('ring-button_default');
+    shallowButton().should.have.className(styles.button);
   });
 
   it('should set modifiers', () => {
     const wrapper = shallowButton({
       active: true,
-      blue: true,
       danger: true,
       delayed: true,
       loader: true,
@@ -29,23 +30,21 @@ describe('Button', () => {
       short: true
     });
 
-    wrapper.should.have.className('ring-button_active');
-    wrapper.should.have.className('ring-button_blue');
-    wrapper.should.have.className('ring-button_danger');
-    wrapper.should.have.className('ring-button_delayed');
-    wrapper.should.have.className('ring-button_loader');
-    wrapper.should.have.className('ring-button_primary');
-    wrapper.should.have.className('ring-button_short');
+    wrapper.should.have.className(styles.active);
+    wrapper.should.have.className(styles.danger);
+    wrapper.should.have.className(styles.delayed);
+    wrapper.should.have.className(styles.loader);
+    wrapper.should.have.className(styles.primary);
+    wrapper.should.have.className(styles.short);
   });
 
   it('should add icon', () => {
     const wrapper = renderButton({
-      icon: CaretDownIcon
+      icon: CaretDown10pxIcon
     });
 
-    wrapper.should.have.className('ring-button_icon');
-    wrapper.should.have.descendants('svg[style*="16"]');
-    wrapper.find('use').should.have.attr('href', '#caret-down');
+    wrapper.should.have.className(styles.withIcon);
+    caretDownSVG.should.include(wrapper.find('svg').html());
   });
 
   it('should set custom class', () => {
@@ -56,5 +55,12 @@ describe('Button', () => {
     });
 
     wrapper.should.have.className(CUSTOM_CLASS);
+  });
+
+  it('should render link instead of button if href specified', () => {
+    const linkButton = shallow(<Button href="http://www.jetbrains.com"/>);
+    linkButton.should.have.tagName('a');
+    linkButton.should.not.have.tagName('button');
+    linkButton.should.have.attr('href', 'http://www.jetbrains.com');
   });
 });

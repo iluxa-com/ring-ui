@@ -2,15 +2,12 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+import dataTests from '../global/data-tests';
+
 import style from './badge.css';
 
 /**
  * @name Badge
- * @category Components
- * @constructor
- * @description Displays a badge.
- * @extends {PureComponent}
- * @example-file ./badge.examples.html
  */
 export default class Badge extends PureComponent {
   static propTypes = {
@@ -19,11 +16,8 @@ export default class Badge extends PureComponent {
     invalid: PropTypes.bool,
     disabled: PropTypes.bool,
     className: PropTypes.string,
-    children: PropTypes.node
-  };
-
-  static defaultProps = {
-    'data-test': 'ring-badge'
+    children: PropTypes.node,
+    'data-test': PropTypes.string
   };
 
   render() {
@@ -37,6 +31,7 @@ export default class Badge extends PureComponent {
       // Props
       className,
       children,
+      'data-test': dataTest,
       ...props
     } = this.props;
 
@@ -54,6 +49,7 @@ export default class Badge extends PureComponent {
     return (
       <span
         {...props}
+        data-test={dataTests('ring-badge', dataTest)}
         className={classes}
       >
         {children}

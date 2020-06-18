@@ -2,64 +2,56 @@ import React, {PureComponent} from 'react';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
-import './loader-inline.scss';
+import Theme from '../global/theme';
+import dataTests from '../global/data-tests';
+
+import styles from './loader-inline.css';
+import injectStyles from './inject-styles';
 
 /**
  * @name Loader Inline
- * @category Components
- * @constructor
- * @description Displays a small animated loader, shown inline with text. Use case: contextual loading animation.
- * @extends {ReactComponent}
- * @example
-   <example name="Inline loader">
-     <file name="index.html">
-        <span>some text on top</span>
-        <div>before <span id="loader-inline"></span> some text after</div>
-        <div>some text under loader</div>
-     </file>
-
-     <file name="index.js" webpack="true">
-       import React from 'react';
-       import {render} from 'react-dom';
-       import Loader from '@jetbrains/ring-ui/components/loader-inline/loader-inline';
-
-       render(<Loader/>, document.getElementById('loader-inline'));
-     </file>
-   </example>
-    <example name="Inline loader without React">
-     <file name="index.html">
-       <div class="ring-loader-inline">
-         <div class="ring-loader-inline__ball"></div>
-         <div class="ring-loader-inline__ball ring-loader-inline__ball_second"></div>
-         <div class="ring-loader-inline__ball ring-loader-inline__ball_third"></div>
-       </div>
-     </file>
-      <file name="index.js" webpack="true">
-        import '@jetbrains/ring-ui/components/loader-inline/loader-inline';
-      </file>
-   </example>
  */
 
 export default class LoaderInline extends PureComponent {
   static propTypes = {
-    className: PropTypes.string
+    theme: PropTypes.oneOf(Object.values(Theme)),
+    className: PropTypes.string,
+    'data-test': PropTypes.string,
+    children: PropTypes.node
   };
 
+  static defaultProps = {
+    theme: Theme.LIGHT
+  };
+
+  componentDidMount() {
+    injectStyles();
+  }
+
+  static Theme = Theme;
+
   render() {
+    const {className, theme, 'data-test': dataTest, children, ...restProps} = this.props;
+
     const classes = classNames(
-      'ring-loader-inline',
-      this.props.className
+      styles.loader,
+      className,
+      `${styles.loader}_${theme}`
     );
 
-    return (
+    const loader = (
       <div
-        {...this.props}
+        {...restProps}
+        data-test={dataTests('ring-loader-inline', dataTest)}
         className={classes}
-      >
-        <div className="ring-loader-inline__ball"/>
-        <div className="ring-loader-inline__ball ring-loader-inline__ball_second"/>
-        <div className="ring-loader-inline__ball ring-loader-inline__ball_third"/>
-      </div>
+      />
     );
+
+    return children ? (
+      <>
+        {loader}
+        <span className={styles.children}>{children}</span>
+      </>
+    ) : loader;
   }
 }

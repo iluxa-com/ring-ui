@@ -1,8 +1,10 @@
-@value unit, gray-color, link-hover-color, overlay-z-index, border-radius from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .container {
   position: fixed;
-  z-index: overlay-z-index;
+  z-index: var(--ring-overlay-z-index);
   top: 0;
   right: 0;
   bottom: 0;
@@ -10,11 +12,19 @@
 
   display: flex;
   overflow: auto;
-  align-content: center;
   align-items: center;
   justify-content: center;
 
+  padding: calc(unit * 4) unit;
+
   background-color: rgba(255, 255, 255, 0.4);
+}
+
+.innerContainer {
+  display: flex;
+  flex-direction: column;
+
+  max-height: 100%;
 }
 
 .content {
@@ -22,58 +32,80 @@
 
   width: calc(unit * 58);
   min-height: calc(unit * 15);
-  max-height: calc(100% - calc(calc(unit * 8) + 2px));
-  margin: calc(unit * 4) 0;
+  margin: auto;
+
+  cursor: default;
   overflow-wrap: break-word;
 
-  &.content {
-    box-shadow: 0 2px 16px rgba(0, 42, 76, 0.15);
-  }
-
-  & :global(.ring-panel) {
+  & .panel {
     margin-top: 0;
-    padding: calc(unit * 2) calc(unit * 4);
-    padding-top: calc(unit * 1.5);
+    padding-right: calc(unit * 4);
+    padding-left: calc(unit * 4);
+
+    border-top: none;
 
     background-color: transparent;
   }
 
   /* stylelint-disable-next-line selector-max-specificity */
-  & :global(.ring-panel .ring-button) {
+  & .panel button {
     margin-right: unit;
   }
+}
 
-  & :global(.ring-form__label) {
-    max-width: calc(unit * 14);
-  }
+.content.content {
+  box-shadow: 0 2px 16px var(--ring-popup-shadow-color);
+}
 
-  & .islandScrollableWrapperInsideDialog {
-    padding-bottom: calc(calc(unit * 2.5) - 1px);
-  }
+.clickableOverlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  cursor: pointer;
+}
+
+.clickableOverlay:hover + * .closeIcon {
+  color: var(--ring-border-hover-color);
+}
+
+.closeButton:hover .closeIcon {
+  color: var(--ring-border-hover-color);
+}
+
+.clickableOverlay:active + * .closeIcon {
+  color: var(--ring-main-color);
+}
+
+.closeButton:active .closeIcon {
+  color: var(--ring-main-color);
 }
 
 .closeButton {
   position: absolute;
-  right: calc(unit * -6);
-
-  cursor: pointer;
-
-  transition: opacity 0.3s ease-in;
-
-  opacity: 0.3;
-  color: gray-color;
-  border: none;
-  background: transparent;
-
-  &:hover,
-  &:focus {
-    opacity: 1;
-    color: link-hover-color;
-  }
+  top: 0;
+  right: calc(unit * -4);
 }
 
 .bodyWithoutScroll {
   overflow: hidden;
 
   height: 100%;
+}
+
+.popupTarget {
+  position: fixed;
+  z-index: var(--ring-overlay-z-index);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  pointer-events: none;
+
+  & > :not(.popupTarget) {
+    pointer-events: initial;
+  }
 }

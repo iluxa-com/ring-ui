@@ -5,9 +5,9 @@
     <scripts>
       <script value="gemini-gather" />
     </scripts>
-    <arguments value="../../components/query-assist/*.gemini.js" />
+    <arguments value="../../components/**/*.gemini.js" />
     <node-interpreter value="project" />
     <envs />
-    <method />
+    <method v="2" />
   </configuration>
 </component>

@@ -2,7 +2,6 @@
 
 .shortcuts-hint {
   margin-bottom: $ring-unit * 2;
-  margin-top: $ring-unit * 2;
   width: 900px;
 }
 
@@ -45,20 +44,16 @@
   width: $ring-unit * 30;
 }
 
-.shortcuts-hint__search-input {
-
-}
-
 .shortcuts-hint__search-icon {
   position: absolute;
-  top: 0;
+  top: 18px;
   right: 0;
   height: $ring-unit*2;
   width: $ring-unit*2;
 
   padding: 3px 4px 3px 5px;
 
-  color: $ring-gray-color;
+  color: var(--ring-disabled-color);
   user-select: none;
 }
 
@@ -80,7 +75,7 @@
 
 .shortcuts-hint__shortcut {
   white-space: nowrap;
-  color: $ring-dark-gray-color;
+  color: var(--ring-secondary-color);
   font-family: monospace;
 }
 
@@ -93,7 +88,7 @@
   display: table-cell;
   padding-left: $ring-unit;
   font-size: 12px;
-  color: $ring-dark-gray-color;
+  color: var(--ring-secondary-color);
   text-transform: uppercase;
   letter-spacing: 1.5px;
 }

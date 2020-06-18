@@ -15,7 +15,7 @@ describe('Tags List', () => {
     });
 
     it('should render passed label inside tags', () => {
-      renderTagsList().find('.ring-tag').should.have.text('test1');
+      renderTagsList().find('[data-test~="ring-tag"]').should.have.text('test1');
     });
 
     it('should render custom tag', () => {

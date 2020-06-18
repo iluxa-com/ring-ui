@@ -3,26 +3,26 @@
         'ring-avatar-editor_controlled': controlled,
         'ring-avatar-editor': !ngDisabled
     }" ng-show="model || default">
-    <img class="ring-avatar-editor__img" ng-src="{{ model }}" ng-show="model">
-    <img class="ring-avatar-editor__img" ng-src="{{ default }}"
+    <img alt="Avatar" class="ring-avatar-editor__img" ng-src="{{ model }}" ng-show="model">
+    <img alt="Default avatar" class="ring-avatar-editor__img" ng-src="{{ default }}"
          ng-show="!model && default" ng-click="!ngDisabled && controls.select()">
-    <rg-icon glyph="{{editIcon}}" size="14" class="ring-avatar-editor__icon" ng-if="!ngDisabled"></rg-icon>
+    <rg-icon glyph="{{editIcon}}" size="16" class="ring-avatar-editor__icon" ng-if="!ngDisabled"></rg-icon>
   </div>
   <input class="ring-avatar-editor__file-input" rg-avatar-editor-file-input type="file" ng-model="fileInput" accept="image/*" ng-if="!ngDisabled">
 
-  <button
+  <rg-button
     delayed="true"
-    class="ring-button ring-button_delayed-action"
     ng-disabled="ngDisabled"
-    ng-show="!model && !default"
+    ng-if="showAddButton && !model && !default"
     ng-click="controls.select()"
-  >{{ addMessage }}</button>
+  >{{ getAddMessage() }}</rg-button>
 
-  <button
-    ng-if="model && !ngDisabled"
-    class="ring-button ring-button_danger ring-avatar-editor__remove"
+  <rg-button
+    ng-if="showDeleteButton&& model && !ngDisabled"
+    danger="true"
+    class="ring-avatar-editor__remove"
     ng-click="controls.remove()"
   >
-    <span translate>{{ deleteMessage }}</span>
-  </button>
+    <span translate>{{ getDeleteLabel() }}</span>
+  </rg-button>
 </div>

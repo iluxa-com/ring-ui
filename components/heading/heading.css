@@ -1,37 +1,32 @@
-@value font, font-size, line-height, unit from  "../global/global.css";
+@import "../global/variables.css";
 
 .heading {
-  composes: font;
+  composes: font from "../global/global.css";
 
-  margin-top: line-height;
+  margin-top: var(--ring-line-height);
 
   &:first-child {
     margin-top: 0;
   }
 
   @nest h1&, h2& {
-    color: #222;
-  }
-
-  @nest h1& {
     margin-bottom: 8px;
+
+    color: var(--ring-heading-color);
 
     font-size: 24px;
     line-height: 28px;
   }
 
   @nest h2& {
-    margin-bottom: 4px;
-
-    font-size: 20px;
-    line-height: 24px;
+    font-weight: 200;
   }
 
   @nest h3& {
-    margin-bottom: 1px;
+    margin-bottom: 0;
 
-    font-size: 16px;
-    line-height: 20px;
+    font-size: inherit;
+    line-height: inherit;
   }
 
   @nest h4& {
@@ -43,13 +38,6 @@
     font-size: 12px;
     font-weight: normal;
     line-height: 16px;
-  }
-
-  @nest h5&, h6& {
-    margin-bottom: 1px;
-
-    font-size: 13px;
-    line-height: 18px;
   }
 }
 

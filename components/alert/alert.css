@@ -1,9 +1,14 @@
-@value unit, border-color, border-radius, error-color, gray-color, link-hover-color, font-size from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 @value animation-duration: 300ms;
 @value animation-easing: ease-out;
 
 .alert {
   position: relative;
+
+  display: flex;
+  align-items: baseline;
 
   box-sizing: border-box;
   min-height: calc(unit * 5);
@@ -12,16 +17,16 @@
 
   transition:
     transform animation-duration animation-easing,
-    margin-top animation-duration animation-easing,
+    margin-bottom animation-duration animation-easing,
     opacity animation-duration animation-easing;
   white-space: nowrap;
   pointer-events: auto;
 
-  border: solid 1px border-color;
-  border-radius: border-radius;
-  background: #fff;
+  border-radius: var(--ring-border-radius);
+  background-color: var(--ring-message-background-color);
+  box-shadow: 0 2px 16px var(--ring-popup-shadow-color);
 
-  font-size: font-size;
+  font-size: var(--ring-font-size);
   line-height: calc(unit * 5);
 }
 
@@ -32,28 +37,31 @@
 .error {
   word-wrap: break-word;
 
-  color: error-color;
+  color: var(--ring-error-color);
 }
 
 .icon {
-  display: inline-block;
-
   margin-right: unit;
-
-  vertical-align: top;
 }
 
 .caption {
-  display: inline-block;
+  overflow: hidden;
 
   max-width: calc(100% - calc(unit * 5));
 
   margin: 12px calc(unit * 5) 12px 0;
 
-  vertical-align: middle;
   white-space: normal;
 
+  color: var(--ring-dark-text-color);
+
   line-height: 20px;
+
+  & :global(.ring-link),
+  /* This link styles are used in link.css */
+  & .link {
+    color: var(--ring-main-color);
+  }
 }
 
 .badge {
@@ -63,7 +71,7 @@
 }
 
 .loader {
-  top: 3px;
+  top: 2px;
 
   margin-right: unit;
 }
@@ -78,7 +86,7 @@
 
   cursor: pointer;
 
-  color: gray-color;
+  color: var(--ring-dark-secondary-color);
   border: none;
   background: transparent;
 
@@ -87,21 +95,44 @@
 
   &:hover,
   &:focus {
-    color: link-hover-color;
+    color: var(--ring-link-hover-color);
   }
 }
 
 @keyframes show {
   from {
-    transform: scale(0);
+    transform: translateY(100%);
 
     opacity: 0;
   }
 
   to {
-    transform: scale(1);
+    transform: translateY(0);
 
     opacity: 1;
+  }
+}
+
+@keyframes shaking {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+
+  40%,
+  60% {
+    transform: translateX(4px);
   }
 }
 
@@ -111,9 +142,12 @@
 }
 
 .animationClosing {
-  z-index: -1;
-
-  transform: scale(0);
+  z-index: var(--ring-invisible-element-z-index);
 
   opacity: 0;
+}
+
+.animationShaking {
+  animation-name: shaking;
+  animation-duration: 500ms;
 }

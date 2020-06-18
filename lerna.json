@@ -1,19 +1,21 @@
 {
-  "lerna": "2.5.1",
   "packages": [
     "components/*",
     "packages/*",
     "."
   ],
+  "npmClient": "yarn",
   "version": "independent",
   "command": {
+    "bootstrap": {
+      "npmClientArgs": ["--force", "--check-files"]
+    },
     "init": {
       "exact": true
     },
     "publish": {
-      "ignore": [
-        "@ring-ui/docs",
-        "@ring-ui/gemini"
+      "ignoreChanges": [
+        "@ring-ui/hermione"
       ]
     }
   }

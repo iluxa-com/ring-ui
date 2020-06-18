@@ -2,20 +2,21 @@ import React, {cloneElement, Component} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+import dataTests from '../global/data-tests';
+
 import Anchor from './anchor';
 import styles from './dropdown.css';
 
 /**
  * @name Dropdown
- * @category Components
- * @framework React
- * @constructor
- * @description A stateful popup with a clickable anchor.
- * @example-file ./dropdown.examples.html
  */
 
 export default class Dropdown extends Component {
   static propTypes = {
+    /**
+     * Can be string, React element, or a function accepting an object with {active, pinned} properties and returning a React element
+     * React element should render some interactive HTML element like `button` or `a`
+     */
     anchor: PropTypes.oneOfType([PropTypes.node, PropTypes.func]).isRequired,
     children: PropTypes.element.isRequired,
     initShown: PropTypes.bool,
@@ -28,7 +29,8 @@ export default class Dropdown extends Component {
     onShow: PropTypes.func,
     onHide: PropTypes.func,
     onMouseEnter: PropTypes.func,
-    onMouseLeave: PropTypes.func
+    onMouseLeave: PropTypes.func,
+    'data-test': PropTypes.string
   };
 
   static defaultProps = {
@@ -103,10 +105,8 @@ export default class Dropdown extends Component {
     }, this.props.hoverHideTimeOut);
   };
 
-  onContextMenu = () => {
-    if (!this.state.pinned) {
-      this.setState({pinned: true});
-    }
+  handlePopupInteraction = () => {
+    this.setState(({pinned}) => (pinned ? null : {pinned: true}));
   };
 
   toggle(show = !this.state.show) {
@@ -127,8 +127,9 @@ export default class Dropdown extends Component {
   render() {
     const {show, pinned} = this.state;
     const {
-      initShown, onShow, onHide, hoverShowTimeOut, hoverHideTimeOut, // eslint-disable-line no-unused-vars
-      children, anchor, className, activeClassName, hoverMode, clickMode, ...restProps
+      initShown, onShow, onHide, hoverShowTimeOut, hoverHideTimeOut,
+      children, anchor, className, activeClassName, hoverMode, clickMode, 'data-test': dataTest,
+      ...restProps
     } = this.props;
 
     const classes = classNames(styles.dropdown, className, {
@@ -151,22 +152,22 @@ export default class Dropdown extends Component {
 
     return (
       <div
-        data-test="ring-dropdown"
+        data-test={dataTests('ring-dropdown', dataTest)}
         {...restProps}
         onClick={clickMode ? this.onClick : undefined}
+        // anchorElement should be a `button` or an `a`
+        role="presentation"
         onMouseEnter={hoverMode ? this.onMouseEnter : undefined}
         onMouseLeave={hoverMode ? this.onMouseLeave : undefined}
-        onContextMenu={hoverMode ? this.onContextMenu : undefined}
         className={classes}
       >
         {anchorElement}
         {cloneElement(children, {
           hidden: !show,
           onCloseAttempt: this.onChildCloseAttempt,
-          dontCloseOnAnchorClick: true,
-          onMouseOver: hoverMode ? this.onMouseEnter : undefined,
-          onMouseOut: hoverMode ? this.onMouseLeave : undefined,
-          onContextMenu: hoverMode ? this.onContextMenu : undefined
+          onMouseDown: hoverMode ? this.handlePopupInteraction : undefined,
+          onContextMenu: hoverMode ? this.handlePopupInteraction : undefined,
+          dontCloseOnAnchorClick: true
         })}
       </div>
     );

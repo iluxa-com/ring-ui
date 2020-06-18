@@ -1,32 +1,30 @@
 import React, {PureComponent} from 'react';
-import classNames from 'classnames';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
 
-import './button-group.scss';
+import Caption from './caption';
+import styles from './button-group.css';
 
 /**
  * @name Button Group
- * @category Components
- * @constructor
- * @description Allows to group several buttons.
- * @extends {ReactComponent}
- * @example-file ./button-group.examples.html
  */
 export default class ButtonGroup extends PureComponent {
   static propTypes = {
     children: PropTypes.node,
     className: PropTypes.string
-  };
+  }
 
   render() {
-    const classes = classNames('ring-button-group', this.props.className);
+    const {className} = this.props;
+    const classes = classNames(styles.buttonGroup, className);
+
     return (
       <div
         {...this.props}
         className={classes}
-      >
-        {this.props.children}
-      </div>
+      />
     );
   }
 }
+
+export {Caption};

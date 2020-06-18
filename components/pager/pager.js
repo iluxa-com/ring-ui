@@ -1,10 +1,5 @@
 /**
  * @name Pager
- * @category Components
- * @framework React
- * @extends {ReactComponent}
- * @description The pager.
- * @example-file ./pager.examples.html
  */
 
 /* eslint-disable react/jsx-no-literals */
@@ -13,14 +8,17 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import chevronLeftIcon from '@jetbrains/icons/chevron-left.svg';
+import chevronRightIcon from '@jetbrains/icons/chevron-right.svg';
 
 import Button from '../button/button';
 import ButtonGroup from '../button-group/button-group';
 import ButtonToolbar from '../button-toolbar/button-toolbar';
 import Select from '../select/select';
 import memoize from '../global/memoize';
+import Link from '../link/link';
+import Icon from '../icon/icon';
 
-import '../link/link.scss';
 import style from './pager.css';
 
 export default class Pager extends PureComponent {
@@ -31,10 +29,15 @@ export default class Pager extends PureComponent {
     pageSizes: PropTypes.arrayOf(PropTypes.number),
     visiblePagesLimit: PropTypes.number,
     disablePageSizeSelector: PropTypes.bool,
-    onPageChange: PropTypes.func.isRequired,
+    openTotal: PropTypes.bool,
+    canLoadLastPageWithOpenTotal: PropTypes.bool,
+    onPageChange: PropTypes.func,
     onPageSizeChange: PropTypes.func,
+    onLoadPage: PropTypes.func,
     className: PropTypes.string,
-    translations: PropTypes.object
+    translations: PropTypes.object,
+    loader: PropTypes.bool,
+    hrefFunc: PropTypes.func //function which generates href for all pager's buttons based on pager state passed as a function parameter, either this function or onPageChange should be provided
   };
 
   static defaultProps = {
@@ -43,19 +46,26 @@ export default class Pager extends PureComponent {
     pageSizes: [20, 50, 100],
     visiblePagesLimit: 7,
     disablePageSizeSelector: false,
+    openTotal: false,
+    canLoadLastPageWithOpenTotal: false,
     translations: {
       perPage: 'per page',
       firstPage: 'First page',
       lastPage: 'Last page',
-      nextPage: 'next page',
-      previousPage: 'previous'
+      nextPage: 'Next page',
+      previousPage: 'Previous'
     },
-    onPageSizeChange: () => {}
+    loader: false,
+    onPageSizeChange: () => {},
+    onLoadPage: () => {}
   };
 
   getSelectOptions() {
     const {pageSize, pageSizes} = this.props;
-    const data = pageSizes.map(size => ({key: size, label: `${size} ${this.props.translations.perPage}`}));
+    const data = pageSizes.map(size => ({
+      key: size,
+      label: `${size} ${this.props.translations.perPage}`
+    }));
     const selected = data.find(it => it.key === pageSize);
     return {selected, data};
   }
@@ -70,32 +80,169 @@ export default class Pager extends PureComponent {
   };
 
   handlePrevClick = () => {
-    const {currentPage, onPageChange} = this.props;
+    const {currentPage} = this.props;
     if (currentPage !== 1) {
-      onPageChange(currentPage - 1);
+      const prevPage = currentPage - 1;
+      this.props.onPageChange(prevPage);
     }
   };
 
   handleNextClick = () => {
-    const {currentPage, onPageChange} = this.props;
-    if (currentPage !== this.getTotal()) {
-      onPageChange(currentPage + 1);
+    const {currentPage, onLoadPage} = this.props;
+    const nextPage = currentPage + 1;
+    const total = this.getTotal();
+    if (currentPage !== total) {
+      this.props.onPageChange(nextPage);
+    } else if (this.props.openTotal) {
+      onLoadPage(nextPage);
     }
   };
 
-  handlePageChange = memoize(i => () => this.props.onPageChange(i));
+  handlePageChange = memoize(i => event => {
+    this.props.onPageChange(i, event);
+  });
 
-  render() {
-    const {currentPage, visiblePagesLimit, className} = this.props;
+  handleLoadMore = memoize(i => () => {
+    this.props.onLoadPage(i);
+  });
+
+  getButton(page, content, key, active) {
+    return (
+      <Button
+        href={this.generateHref(page)}
+        key={key}
+        active={active}
+        disabled={this.props.loader && !active}
+        loader={this.props.loader && active}
+        {...this.getClickProps(this.handlePageChange(page))}
+      >
+        {content}
+      </Button>
+    );
+  }
+
+  getClickProps(onClick) {
+    const {hrefFunc, onPageChange} = this.props;
+
+    if (!onPageChange) {
+      return {};
+    } else if (hrefFunc) {
+      return {onPlainLeftClick: onClick};
+    } else {
+      return {onClick};
+    }
+  }
+
+  getPageSizeSelector() {
+
+    const selectOptions = this.getSelectOptions();
+
+    return !this.props.disablePageSizeSelector &&
+      (
+        <div data-test="ring-pager-page-size-selector" style={{float: 'right'}}>
+          <Select
+            data={selectOptions.data}
+            selected={selectOptions.selected}
+            onSelect={this.handlePageSizeChange}
+            type={Select.Type.INLINE}
+            disabled={this.props.loader}
+          />
+        </div>
+      );
+  }
+
+  getPagerLinks() {
+
+    const prevLinkAvailable = this.props.currentPage !== 1;
+
+    const nextLinkAvailable = this.props.openTotal || this.props.currentPage !== this.getTotal();
+
+    const nextIcon = (
+      <Icon glyph={chevronRightIcon} key="icon"/>
+    );
+
+    const prevIcon = (
+      <Icon glyph={chevronLeftIcon} key="icon"/>
+    );
+
+    const prevText = this.props.translations.previousPage;
+
+    const nextText = this.props.translations.nextPage;
+
+    const nextLinkContent = WrapText => [
+      <span key="text"><WrapText>{nextText}</WrapText></span>,
+      nextIcon
+    ];
+
+    const prevLinkContent = WrapText => [
+      prevIcon,
+      <span key="text"><WrapText>{prevText}</WrapText></span>
+    ];
+
+    const prevLinkHref = this.generateHref(this.props.currentPage - 1);
+
+    const nextLinkHref = this.generateHref(this.props.currentPage + 1);
+
+    const disabledLinkClasses = classNames({
+      [style.link]: true,
+      [style.linkDisabled]: true
+    });
+
+    return (
+      <div className={style.links}>
+        {prevLinkAvailable && !this.props.loader
+          ? (
+            <Link
+              href={prevLinkHref}
+              className={style.link}
+              {...this.getClickProps(this.handlePrevClick)}
+            >{prevLinkContent}</Link>
+          )
+          : (
+            <span className={disabledLinkClasses}>
+              {prevIcon}<span key="text">{prevText}</span>
+            </span>
+          )
+        }
+
+        {nextLinkAvailable && !this.props.loader
+          ? (
+            <Link
+              href={nextLinkHref}
+              className={style.link}
+              {...this.getClickProps(this.handleNextClick)}
+            >{nextLinkContent}</Link>
+          )
+          : (
+            <span className={disabledLinkClasses}>
+              <span key="text">{nextText}</span>{nextIcon}
+            </span>
+          )
+        }
+      </div>
+    );
+  }
+
+  generateHref(page) {
+    if (this.props.hrefFunc === undefined) {
+      return undefined;
+    }
+    const pageSize = this.props.disablePageSizeSelector ? undefined : this.props.pageSize;
+    return this.props.hrefFunc(page, pageSize);
+  }
+
+  getPagerContent() {
+    const {currentPage, visiblePagesLimit} = this.props;
     const totalPages = this.getTotal();
 
-    let start;
-    let end;
+    if (totalPages < 2 && !this.props.openTotal) {
+      return null;
+    }
 
-    if (totalPages < visiblePagesLimit + 6) {
-      start = 1;
-      end = totalPages;
-    } else {
+    let start = 1;
+    let end = totalPages;
+
+    if (totalPages >= visiblePagesLimit + 6) {
       const leftHalfFrameSize = Math.ceil(visiblePagesLimit / 2) - 1;
       const rightHalfFrameSize = visiblePagesLimit - leftHalfFrameSize - 1;
 
@@ -119,111 +266,70 @@ export default class Pager extends PureComponent {
       }
     }
 
-    const selectOptions = this.getSelectOptions();
+    const buttons = [];
+    for (let i = start; i <= end; i++) {
+      buttons.push(this.getButton(i, i, i, i === currentPage));
+    }
 
-    const classes = classNames(style.pager, className);
+    const lastPageButtonAvailable = (end < totalPages && !this.props.openTotal) ||
+      (this.props.openTotal && this.props.canLoadLastPageWithOpenTotal);
 
-    const prevLinkClasses = classNames({
-      'ring-link': currentPage !== 1,
-      [style.link]: true,
-      [style.linkDisabled]: currentPage === 1
-    });
+    return (
+      <div>
+        {this.getPagerLinks()}
 
-    const nextLinkClasses = classNames({
-      'ring-link': currentPage !== totalPages,
-      [style.link]: true,
-      [style.linkDisabled]: currentPage === totalPages
-    });
+        <ButtonToolbar>
+          {start > 1 &&
+        (
+          <ButtonGroup>
+            {this.getButton(1, this.props.translations.firstPage)}
+          </ButtonGroup>
+        )
+          }
 
-    const getPageSizeSelector = () => {
-      if (this.props.disablePageSizeSelector) {
-        return null;
-      } else {
-        return (
-          <div
-            data-test="ring-pager-page-size-selector"
-            style={{float: 'right'}}
-          >
-            <Select
-              data={selectOptions.data}
-              selected={selectOptions.selected}
-              onSelect={this.handlePageSizeChange}
-            />
-          </div>
-        );
-      }
-    };
+          <ButtonGroup>
+            {start > 1 && this.getButton(start - 1, '...')}
 
-    const getPager = () => {
-      if (totalPages < 2) {
-        return null;
-      }
+            {buttons}
 
-      const buttons = [];
-      for (let i = start; i <= end; i++) {
-        const button = (
-          <Button
-            key={i}
-            active={i === currentPage}
-            onClick={this.handlePageChange(i)}
-          >{i}</Button>
-        );
+            {end < totalPages && this.getButton(end + 1, '...')}
 
-        buttons.push(button);
-      }
+            {end === totalPages && this.props.openTotal && (
+              <Button
+                href={this.generateHref(end + 1)}
+                disabled={this.props.loader}
+                {...this.getClickProps(this.handleLoadMore(end + 1))}
+              >...</Button>
+            )}
+          </ButtonGroup>
 
-      return (
-        <div>
-          <div className={style.links}>
-            <span
-              className={prevLinkClasses}
-              onClick={this.handlePrevClick}
-            >← {this.props.translations.previousPage}</span>
+          {lastPageButtonAvailable &&
+        (
+          <ButtonGroup>
+            {this.getButton(
+              this.props.openTotal ? -1 : totalPages,
+              this.props.translations.lastPage
+            )}
+          </ButtonGroup>
+        )
+          }
+        </ButtonToolbar>
 
-            <span
-              className={nextLinkClasses}
-              onClick={this.handleNextClick}
-            >{this.props.translations.nextPage} →</span>
-          </div>
+        {this.getPageSizeSelector()}
 
-          <ButtonToolbar>
-            {start > 1 &&
-              <ButtonGroup>
-                <Button onClick={this.handlePageChange(1)}>
-                  {this.props.translations.firstPage}
-                </Button>
-              </ButtonGroup>
-            }
+      </div>
+    );
+  }
 
-            <ButtonGroup>
-              {start > 1 ? <Button onClick={this.handlePageChange(start - 1)}>...</Button> : ''}
+  render() {
 
-              {buttons}
-
-              {end < totalPages
-                ? <Button onClick={this.handlePageChange(end + 1)}>...</Button>
-                : ''}
-            </ButtonGroup>
-
-            {end < totalPages &&
-              <ButtonGroup>
-                <Button onClick={this.handlePageChange(totalPages)}>
-                  {this.props.translations.lastPage}
-                </Button>
-              </ButtonGroup>
-            }
-          </ButtonToolbar>
-
-          {getPageSizeSelector()}
-        </div>
-      );
-    };
+    const classes = classNames(style.pager, this.props.className);
 
     return (
       <div data-test="ring-pager" className={classes}>
-        {totalPages > 1
-          ? getPager()
-          : getPageSizeSelector()
+        {this.props.total > 1
+          ? this.getPagerContent()
+          : this.getPageSizeSelector()
         }
       </div>
     );

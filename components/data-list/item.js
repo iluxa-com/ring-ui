@@ -1,20 +1,17 @@
-/* @flow */
 /* eslint-disable react/jsx-no-literals */
-import React, {PureComponent, Element} from 'react';
-import classNames from 'classnames';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
+import chevronRightIcon from '@jetbrains/icons/chevron-right.svg';
+import chevronDownIcon from '@jetbrains/icons/chevron-down.svg';
 
 import Link from '../link/link';
 import Text from '../text/text';
 import LoaderInline from '../loader-inline/loader-inline';
 
-import {
-  CollapseIcon,
-  ExpandIcon
-} from '../icon';
+import Button from '../button/button';
 
-import Selection from './selection';
 import Title from './title';
-import type {ItemType} from './types';
+
 import styles from './data-list.css';
 
 export const moreLessButtonStates = {
@@ -24,40 +21,38 @@ export const moreLessButtonStates = {
   LESS: 3
 };
 
-const ITEM_LEFT_OFFSET = 30;
+const ITEM_LEFT_OFFSET = 32;
+const LIST_LEFT_OFFSET = 24;
 
-export type MoreLessButtonState = typeof moreLessButtonStates.UNUSED |
-  typeof moreLessButtonStates.MORE | typeof moreLessButtonStates.MORE_LOADING |
-  typeof moreLessButtonStates.LESS;
-
-type Props = {
-  item: any,
-  title: string,
-  items: any[],
-  className?: string,
-  level: number,
-  parentShift?: number,
-
-  itemFormatter: (item: any) => ItemType,
-
-  collapsible: boolean,
-  collapsed: boolean,
-  onCollapse: () => void,
-  onExpand: () => void,
-
-  showFocus: boolean,
-  onFocus: (item: ItemType) => void,
-
-  selection: Selection,
-  selectable: boolean,
-  selected: boolean,
-  onSelect: (item: ItemType, selected: boolean) => void,
-
-  showMoreLessButton: MoreLessButtonState,
-  onItemMoreLess: (item?: ItemType, more?: boolean) => void
-};
 
 export default class Item extends PureComponent {
+  static propTypes = {
+    item: PropTypes.object,
+    title: PropTypes.node,
+    items: PropTypes.array,
+    className: PropTypes.string,
+    level: PropTypes.number,
+    parentShift: PropTypes.number,
+
+    itemFormatter: PropTypes.func,
+
+    collapsible: PropTypes.bool,
+    collapsed: PropTypes.bool,
+    onCollapse: PropTypes.func,
+    onExpand: PropTypes.func,
+
+    showFocus: PropTypes.bool,
+    onFocus: PropTypes.func,
+
+    selection: PropTypes.object,
+    selectable: PropTypes.bool,
+    selected: PropTypes.bool,
+    onSelect: PropTypes.func,
+
+    showMoreLessButton: PropTypes.number,
+    onItemMoreLess: PropTypes.func
+  };
+
   static defaultProps = {
     items: [],
     level: 0,
@@ -66,29 +61,28 @@ export default class Item extends PureComponent {
     onItemMoreLess: () => {}
   };
 
-  props: Props;
 
-  onShowMore = (): void => {
+  onShowMore = () => {
     const {onItemMoreLess, item} = this.props;
     onItemMoreLess(item, true);
   };
 
-  onShowLess = (): void => {
+  onShowLess = () => {
     const {onItemMoreLess, item} = this.props;
     onItemMoreLess(item, false);
   };
 
-  onFocus = (): void => {
+  onFocus = () => {
     const {onFocus, item} = this.props;
     onFocus(item);
   };
 
-  onSelect = (selected: boolean): void => {
+  onSelect = selected => {
     const {onSelect, item} = this.props;
     onSelect(item, selected);
   };
 
-  renderItem = (model: any, parentShift: number): Element<any> => {
+  renderItem = (model, parentShift) => {
     const {
       onFocus, onSelect, selection, level,
       itemFormatter
@@ -98,7 +92,7 @@ export default class Item extends PureComponent {
 
     return (
       <Item
-        key={item.id}
+        key={item.key || item.id}
         item={model}
         title={item.title}
         items={item.items}
@@ -124,7 +118,7 @@ export default class Item extends PureComponent {
     );
   };
 
-  render(): Element<any> {
+  render() {
     const {
       title, items, showMoreLessButton,
       level, parentShift, showFocus,
@@ -163,37 +157,34 @@ export default class Item extends PureComponent {
     if (collapsible) {
       if (collapsed) {
         collapserExpander = (
-          <ExpandIcon
-            className={styles.collapseIcon}
-            size={13}
+          <Button
+            title="Expand"
             onClick={onExpand}
+            icon={chevronRightIcon}
+            className={styles.collapseButton}
+            iconClassName={styles.collapseIcon}
+            data-test="ring-data-list-expand"
           />
         );
       } else {
         collapserExpander = (
-          <CollapseIcon
-            className={styles.collapseIcon}
-            size={13}
+          <Button
+            title="Collapse"
             onClick={onCollapse}
+            icon={chevronDownIcon}
+            className={styles.collapseButton}
+            iconClassName={styles.collapseIcon}
+            data-test="ring-data-list-collapse"
           />
         );
       }
     }
 
-    const itemIsNested = level > 0;
     const itemIsEmpty = !items.length || (collapsible && collapsed);
-
-    const offset = level * ITEM_LEFT_OFFSET + ITEM_LEFT_OFFSET + parentShift;
-    const itemShift = ((selectable && collapserExpander) ? ITEM_LEFT_OFFSET : 0) + parentShift;
+    const offset = level * LIST_LEFT_OFFSET + ITEM_LEFT_OFFSET + parentShift;
 
     return (
-      <li
-        className={classNames(styles.item, {
-          [styles.itemEmpty]: itemIsEmpty && !itemIsNested,
-          [styles.itemFocused]: showFocus,
-          [styles.itemNested]: itemIsNested
-        })}
-      >
+      <li>
         <Title
           title={title}
           focused={showFocus}
@@ -208,7 +199,7 @@ export default class Item extends PureComponent {
 
         {!itemIsEmpty ? (
           <ul className={styles.itemContent}>
-            {items.map(model => this.renderItem(model, itemShift))}
+            {items.map(model => this.renderItem(model, parentShift))}
 
             {showMoreLessButton !== moreLessButtonStates.UNUSED
               ? <li className={styles.showMore}>{moreLessButton}</li>

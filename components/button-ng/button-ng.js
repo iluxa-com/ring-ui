@@ -1,39 +1,64 @@
 import angular from 'angular';
+
 import 'dom4';
-import 'core-js/modules/es7.array.includes';
+import classNames from 'classnames';
 
 import RingAngularComponent from '../global/ring-angular-component';
+import {addClasses, applyMethodToClasses, removeClasses} from '../global/dom';
 import IconNG from '../icon-ng/icon-ng';
+import Theme, {applyTheme} from '../global/theme';
+import styles from '../button/button.css';
 
-import '../button/button.scss';
+import overrides from './button-ng.css';
 
-const DEFAULT_ICON_SIZE = 16;
+const {ringIconDefaultColor, iconMarginFix, transcludeSpacer} = overrides;
 
 /**
  * @name Button Ng
- * @category Legacy Angular Components
- * @description Provides an Angular wrapper for Button.
- * @example-file ./button-ng.examples.html
  */
 
 
 const angularModule = angular.module('Ring.button', [IconNG]);
 const ORDER_NOT_DEFINED = '-1';
+const buttonClasses = classNames(
+  styles.button,
+  styles.buttonWithoutIcon,
+  styles.light
+);
+
+export const LOADER_BACKGROUND_SELECTOR = '.js-button-loader';
 
 class ButtonController extends RingAngularComponent {
-  static $inject = ['$element', '$attrs', '$scope', '$compile'];
+  static $inject = ['$element', '$attrs', '$scope', '$compile', '$log'];
 
   constructor(...args) {
     super(...args);
 
     const {$element, $attrs, $scope} = this.$inject;
+    $scope.styles = styles;
     this.element = $element[0];
 
-    const modifiers = ['delayed', 'loader', 'danger', 'short', 'active'];
+    const modifiers = ['delayed', 'loader', 'danger', 'short', 'active', 'text', 'inline', 'narrowRight'];
     const cl = this.element.classList;
+
     modifiers.forEach(mod => {
       $scope.$watch(() => $scope.$eval($attrs[mod]), val => {
-        val ? cl.add(`ring-button_${mod}`) : cl.remove(`ring-button_${mod}`);
+        const attrName = `data-test-${mod}`;
+
+        if (val) {
+          addClasses(cl, styles[mod]);
+          this.element.setAttribute(attrName, true);
+        } else {
+          removeClasses(cl, styles[mod]);
+          this.element.removeAttribute(attrName);
+        }
+
+        if (mod === 'loader') {
+          applyMethodToClasses(val ? 'add' : 'remove')(
+            this.element.querySelector(LOADER_BACKGROUND_SELECTOR).classList,
+            styles.loaderBackground
+          );
+        }
       });
     });
 
@@ -51,66 +76,120 @@ class ButtonController extends RingAngularComponent {
         this.element.removeAttribute('tabindex');
       }
     });
-
-    // A dirty workaround for IE9 :(
-    const updateMode = val => setTimeout(this.updateMode.bind(this, val), 0);
-    const updateIcon = val => setTimeout(this.updateIcon.bind(this, val), 0);
-
-    $attrs.$observe('mode', updateMode);
-    $attrs.$observe('icon', updateIcon);
-    $attrs.$observe('iconSize', updateIcon);
   }
 
-  updateMode(val) {
+  $postLink() {
+    const {$attrs} = this.$inject;
+    if (!$attrs.hasOwnProperty('mode')) {
+      addClasses(this.findTranscludeNode().classList, ringIconDefaultColor);
+    }
+    $attrs.$observe('mode', this.updateMode);
+    $attrs.$observe('icon', this.updateIcon);
+    $attrs.$observe('iconSize', this.updateIcon);
+    $attrs.$observe('theme', this.updateTheme);
+  }
+
+  updateTheme = themeName => {
+    if (isValidTheme(themeName)) {
+      changeTheme(this.element, {currentTheme: themeName});
+    }
+  };
+
+  findTranscludeNode = () => this.element.query('ng-transclude');
+
+  updateMode = val => {
     const cl = this.element.classList;
-    const mode = ['primary', 'blue'].includes(val) ? val : 'default';
+    if (val === 'primary' || val === 'blue') {
+      // Deprecation fallback. Someone please remove this one day.
+      if (val === 'blue') {
+        this.$inject.$log.warn(
+          'Ring UI ButtonNG doesn\'t have "blue" mode anymore. Use "primary" mode instead.',
+          this.element
+        );
+      }
 
-    cl.remove('ring-button_default', 'ring-button_primary', 'ring-button_blue');
-    cl.add(`ring-button_${mode}`);
-  }
+      addClasses(cl, styles.primary);
+    } else {
+      removeClasses(cl, styles.primary);
+    }
+  };
 
-  updateIcon() {
+  updateIcon = () => {
     const {$attrs, $compile, $scope} = this.$inject;
-    const icon = this.element.query('.ring-button__icon');
+    const icon = this.element.query('rg-icon');
+    const transcludeNode = this.findTranscludeNode();
     const glyph = $attrs.icon;
-    const size = $attrs.iconSize || DEFAULT_ICON_SIZE;
+    const size = $attrs.iconSize;
     const cl = this.element.classList;
 
     if (glyph) {
-      cl.add('ring-button_icon');
+      removeClasses(cl, styles.buttonWithoutIcon);
+      addClasses(cl, styles.withIcon);
+      addClasses(transcludeNode.classList, transcludeSpacer);
       icon.setAttribute('glyph', glyph);
-      icon.setAttribute('size', size);
+      if (size) {
+        icon.setAttribute('size', size);
+      }
     } else {
-      cl.remove('ring-button_icon');
+      removeClasses(cl, styles.withIcon);
+      addClasses(cl, styles.buttonWithoutIcon);
+      removeClasses(transcludeNode.classList, transcludeSpacer);
       icon.removeAttribute('glyph');
       icon.removeAttribute('size');
+    }
+
+    if (glyph && !transcludeNode.textContent) {
+      addClasses(cl, styles.onlyIcon);
+    } else {
+      removeClasses(cl, styles.onlyIcon);
     }
 
     $compile(icon)($scope);
   }
 }
 
-function rgButtonDirective() {
-  return {
+
+function isValidTheme(themeName) {
+  return themeName && Object.values(Theme).some(theme => theme === themeName);
+}
+
+function changeTheme(element, data) {
+  return applyTheme({
+    element,
+    prevTheme: data.prevTheme && styles[data.prevTheme] || styles.light,
+    currentTheme: styles[data.currentTheme]
+  });
+}
+
+function createButtonDirective(tagName) {
+  return () => ({
     restrict: 'E',
     transclude: true,
     replace: true,
-    template: require('./button-ng.html'),
-    controller: ButtonController
-  };
+    require: {
+      rgThemeCtrl: '?^^rgTheme'
+    },
+    template: `
+  <${tagName} class="${buttonClasses}">
+  <span class="${styles.content}"
+  ><rg-icon class="${classNames(styles.icon, iconMarginFix)}"></rg-icon
+  ><ng-transclude></ng-transclude
+  ></span
+  ><div class="js-button-loader"></div>
+  </${tagName}>
+    `,
+    controller: ButtonController,
+    link: (scope, element, attrs, {rgThemeCtrl}) => {
+      if (rgThemeCtrl) {
+        changeTheme(element[0], {currentTheme: rgThemeCtrl.theme});
+        rgThemeCtrl.on('change', (event, data) => changeTheme(element[0], data));
+      }
+    }
+  });
 }
 
-function rgButtonLinkDirective() {
-  return {
-    restrict: 'E',
-    transclude: true,
-    replace: true,
-    template: require('./button-link-ng.html'),
-    controller: ButtonController
-  };
-}
 
-angularModule.directive('rgButton', rgButtonDirective);
-angularModule.directive('rgButtonLink', rgButtonLinkDirective);
+angularModule.directive('rgButton', createButtonDirective('button'));
+angularModule.directive('rgButtonLink', createButtonDirective('a'));
 
 export default angularModule.name;

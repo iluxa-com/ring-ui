@@ -1,6 +1,7 @@
 import 'dom4';
-import './loader.scss';
 import {getPixelRatio} from '../global/dom';
+
+import styles from './loader.css';
 
 const INITIAL_TICKS = 100;
 
@@ -36,6 +37,7 @@ class Particle {
 export default class LoaderCore {
   static defaultProps = {
     size: 64,
+    stop: false,
     colors: [
       {r: 215, g: 60, b: 234}, //#D73CEA
       {r: 145, g: 53, b: 224}, //#9135E0
@@ -58,10 +60,17 @@ export default class LoaderCore {
   }
 
   constructor(containerNode, props) {
-    this.isRunning = false;
-
     this.props = Object.assign({}, LoaderCore.defaultProps, props);
-    this.renderInNodeAndStart(containerNode);
+    this.renderInNode(containerNode);
+    this.initializeLoader();
+
+    this.isRunning = !this.props.stop;
+
+    if (this.isRunning) {
+      this.startAnimation();
+    } else {
+      this.draw();
+    }
   }
 
   static getPixelRatio() {
@@ -109,8 +118,6 @@ export default class LoaderCore {
     this.tick = 0;
 
     this.prepareInitialState(INITIAL_TICKS);
-    this.isRunning = true;
-    this.loop();
   }
 
   prepareInitialState(ticks) {
@@ -203,23 +210,34 @@ export default class LoaderCore {
     this.textNode.textContent = text || '';
   }
 
+  stopAnimation() {
+    this.isRunning = false;
+    this.canvas.classList.remove(styles.animate);
+  }
+
+  startAnimation() {
+    this.isRunning = true;
+    this.canvas.classList.add(styles.animate);
+    this.loop();
+  }
+
   destroy() {
     this.isRunning = false;
   }
 
-  renderInNodeAndStart(node) {
+  renderInNode(node) {
     this.canvas = document.createElement('canvas');
-    this.canvas.classList.add('ring-loader__canvas');
+    this.canvas.dataset.test = 'ring-loader';
+    this.canvas.classList.add(styles.canvas);
 
     this.textNode = document.createElement('div');
-    this.textNode.classList.add('ring-loader__text');
+    this.textNode.dataset.test = 'ring-loader-text';
+    this.textNode.classList.add(styles.text);
 
     this.textNode.textContent = this.props.message ? this.props.message : '';
 
     node.appendChild(this.canvas);
     node.appendChild(this.textNode);
-
-    this.initializeLoader();
 
     return node;
   }

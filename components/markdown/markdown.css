@@ -1,68 +1,76 @@
-@value unit, font, font-size, line-height, line-color, dark-gray-color from  "../global/global.css";
-@value baselineCorrection: 6px;
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
+@value p-margin: 10px;
+
+.inline {
+  &,
+  & p {
+    display: inline;
+  }
+}
 
 .markdown {
-  composes: font;
+  composes: font from  "../global/global.css";
 
-  font-size: font-size;
-  line-height: line-height;
+  & ol,
+  & ul {
+    margin: 0;
+  }
 
   & p,
   & blockquote,
-  & ul,
-  & ol,
   & pre {
     margin: 0;
 
-    &:not(:last-child) {
-      margin-bottom: line-height;
+    &:not(:first-child) {
+      margin-top: p-margin;
     }
   }
 
-  & li:not(:last-child) {
-    & > p,
-    & > blockquote,
-    & > ul,
-    & > ol,
-    & > pre {
-      margin-bottom: line-height;
+  & li {
+    margin-top: p-margin;
+  }
+
+  & li {
+    & p,
+    & blockquote,
+    & pre {
+      &:not(:first-child) {
+        margin-top: 6px;
+      }
     }
   }
 
   & hr {
-    margin: calc(0 - baselineCorrection) 0 calc(baselineCorrection - 1px);
+    margin: p-margin 0;
 
     border: none;
-    border-bottom: 1px solid line-color;
+    border-bottom: 1px solid var(--ring-line-color);
   }
 
   & blockquote {
     padding: 0 0 0 calc(2 * unit);
 
-    color: dark-gray-color;
-    box-shadow: inset 2px 0 0 line-color;
+    color: var(--ring-secondary-color);
+    box-shadow: inset 2px 0 0 var(--ring-line-color);
 
     font-size: 12px;
     line-height: 18px;
   }
 
-  & ul,
+  & ul {
+    padding: 0 0 0 calc(2 * unit);
+  }
+
   & ol {
-    padding: 0 0 0 calc(4 * unit);
+    padding: 0;
+
+    list-style-position: inside;
+    font-variant-numeric: tabular-nums;
   }
 
   & ul {
     list-style-type: none;
-
-    & > li {
-      position: relative;
-
-      &::before {
-        position: absolute;
-        left: calc(-2 * unit);
-
-        content: '—';
-      }
-    }
   }
 }

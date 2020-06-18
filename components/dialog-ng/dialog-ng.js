@@ -1,4 +1,7 @@
 import angular from 'angular';
+
+import angularSanitize from 'angular-sanitize';
+
 import 'dom4';
 import createFocusTrap from 'focus-trap';
 
@@ -9,7 +12,6 @@ import RingButton from '../button-ng/button-ng';
 import PromisedClickNg from '../promised-click-ng/promised-click-ng';
 import rgCompilerModuleName from '../compiler-ng/compiler-ng';
 import ScrollPreventer from '../dialog/dialog__body-scroll-preventer';
-import '../button/button.scss';
 import '../form/form.scss';
 import dialogStyles from '../dialog/dialog.css';
 import islandStyles from '../island/island.css';
@@ -18,14 +20,11 @@ import styles from './dialog-ng.css';
 
 /**
  * @name Dialog Ng
- * @category Legacy Angular Components
- * @description Provides an Angular wrapper for Dialog.
- * @example-file ./dialog-ng.examples.html
  */
 
 const angularModule = angular.module(
   'Ring.dialog',
-  [RingButton, PromisedClickNg, rgCompilerModuleName]
+  [angularSanitize, RingButton, PromisedClickNg, rgCompilerModuleName]
 );
 
 class DialogController extends RingAngularComponent {
@@ -238,8 +237,13 @@ class DialogController extends RingAngularComponent {
   }
 
   getErrorMessage(errorResponse) {
-    if (errorResponse && errorResponse.data && errorResponse.data.error_description) {
+    // eslint-disable-next-line camelcase
+    if (errorResponse?.data?.error_description) {
       return errorResponse.data.error_description;
+    }
+
+    if (errorResponse?.data?.error) {
+      return errorResponse.data.error;
     }
 
     return errorResponse;

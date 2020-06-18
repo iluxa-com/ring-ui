@@ -1,23 +1,28 @@
+const path = require('path');
+
 const scssRE = /\.scss$/;
+const EMBRACED_STAGE = 3; // See https://cssdb.org/#staging-process
 
 module.exports = ctx => {
-  const cssNext = {
-    'postcss-cssnext': {
+  const commonPlugins = [
+    require('postcss-preset-env')({
+      stage: EMBRACED_STAGE,
+      importFrom: path.resolve(__dirname, './components/global/variables.css'),
       features: {
-        calc: {
-          mediaQueries: true
-        },
-        customProperties: false
+        'nesting-rules': true,
+        'custom-properties': {
+          preserve: true
+        }
       }
-    }
-  };
-  const cssModules = Object.assign({}, {
-    'postcss-modules-values-replace': {}
-  }, cssNext);
+    }),
+    require('postcss-flexbugs-fixes')(),
+    require('@jetbrains/postcss-require-hover')(),
+    require('postcss-calc')({mediaQueries: true})
+  ];
 
   const plugins = scssRE.test(ctx.file.basename)
-    ? cssNext
-    : cssModules;
+    ? commonPlugins
+    : [require('postcss-modules-values-replace')(), ...commonPlugins];
 
   return {plugins};
 };

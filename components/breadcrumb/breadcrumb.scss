@@ -21,7 +21,7 @@
 // .ring-breadcrumb_small                    - font-size: 13px
 
 .ring-breadcrumb {
-  margin: 20px 0 $ring-unit*2;
+  margin: 20px 0 $ring-unit*3;
   font-size: 0;
 }
 
@@ -34,7 +34,7 @@
     display: inline-block;
     height: $ring-unit*2;
     line-height: 14px;
-    font-size: $ring-font-size;
+    font-size: var(--ring-font-size);
   }
 }
 
@@ -47,7 +47,7 @@
   height: $ring-unit*3;
 
   font-size: 24px;
-  line-height: 20px;
+  line-height: 28px;
   text-decoration: none;
 }
 
@@ -56,7 +56,6 @@
 }
 
 .ring-breadcrumb__element_active, .ring-breadcrumb .active {
-  color: $ring-text-color;
   cursor: default;
 }
 
@@ -69,10 +68,15 @@
   width: 50 * $ring-unit;
   padding-left: 2 * $ring-unit;
 
-  font-size: $ring-font-size;
+  font-size: var(--ring-font-size);
   line-height: 16px;
 }
 
 .ring-breadcrumb__sep {
-  color: $ring-gray-color;
+}
+
+.ring-breadcrumb__sep__icon {
+  margin: 0 2px;
+  margin-top: -14px;
+  color: var(--ring-icon-disabled-color);
 }

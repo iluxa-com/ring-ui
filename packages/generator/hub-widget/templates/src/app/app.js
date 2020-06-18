@@ -1,4 +1,3 @@
-import 'babel-polyfill';
 import DashboardAddons from 'hub-dashboard-addons';
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
@@ -6,10 +5,10 @@ import {render} from 'react-dom';
 import Select from '@jetbrains/ring-ui/components/select/select';
 import Panel from '@jetbrains/ring-ui/components/panel/panel';
 import Button from '@jetbrains/ring-ui/components/button/button';
+import EmptyWidget, {EmptyWidgetFaces} from '@jetbrains/hub-widget-ui/dist/empty-widget';
 
-import 'file-loader?name=[name].[ext]!../../manifest.json'; // eslint-disable-line import/no-unresolved
-import styles from './app.css';
-import sayHello from './sayHello';
+import './app.css';
+import sayHello from './say-hello';
 
 const COLOR_OPTIONS = [
   {key: 'black', label: 'Black'},
@@ -29,7 +28,7 @@ class Widget extends Component {
 
     this.state = {
       isConfiguring: false,
-      selectedColor: COLOR_OPTIONS[0]
+      selectedColor: null
     };
 
     registerWidgetApi({
@@ -66,7 +65,7 @@ class Widget extends Component {
     const {selectedColor} = this.state;
 
     return (
-      <div className={styles.widget}>
+      <div className="widget">
         <Select
           data={COLOR_OPTIONS}
           selected={selectedColor}
@@ -74,7 +73,7 @@ class Widget extends Component {
           label="Select text color"
         />
         <Panel>
-          <Button blue={true} onClick={this.saveConfig}>{'Save'}</Button>
+          <Button primary onClick={this.saveConfig}>{'Save'}</Button>
           <Button onClick={this.cancelConfig}>{'Cancel'}</Button>
         </Panel>
       </div>
@@ -89,9 +88,15 @@ class Widget extends Component {
     }
 
     return (
-      <div className={styles.widget}>
-        <h1 style={{color: selectedColor.key}}>{sayHello()}</h1>
-        <p>{'Select "Edit..." option in widget dropdown to configure text color'}</p>
+      <div className="widget">
+        {selectedColor
+          ? <h1 style={{color: selectedColor.key}}>{sayHello()}</h1>
+          : (
+            <EmptyWidget
+              face={EmptyWidgetFaces.JOY}
+              message={'Select "Edit..." option in widget dropdown to configure text color'}
+            />
+          )}
       </div>
     );
   }

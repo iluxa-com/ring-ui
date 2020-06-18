@@ -1,5 +1,7 @@
-@value global: '../global/global.css';
-@value unit, light-blue-color from global;
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
+@value height, compensate from '../table/table.css';
 
 .dataListWrapper {
   position: relative;
@@ -10,97 +12,69 @@
   padding: 0;
 
   list-style: none;
-
-  background-color: #f0f0f0;
 }
 
 .itemContent {
-  padding: 10px 0;
+  padding: 0;
 
   list-style: none;
-
-  background-color: #ebebeb;
 }
 
 .title {
   display: flex;
   align-items: center;
 
-  height: 38px;
-  padding-right: 30px;
+  box-sizing: content-box;
+  height: height;
+  padding: 0 calc(unit * 5) compensate 0;
 
-  border: solid 0 #e6e6e6;
-  border-width: 1px 0;
   outline: none;
 
-  @nest .itemNested & {
-    height: 30px;
-
-    border-color: #ebebeb;
-  }
-
-  @nest .itemEmpty:not(:last-child) > & {
-    border-bottom: none;
-  }
-
   @nest .dataList:not(.disabledHover) &:hover {
-    background-color: #fff !important;
+    background-color: var(--ring-hover-background-color);
+  }
+
+  &.titleSelected {
+    background-color: var(--ring-selected-background-color);
   }
 
   &.titleFocused {
-    border: 1px none #25b7ff;
-    border-top-style: solid;
-    border-bottom-style: solid;
-  }
-
-  @nest .itemFocused.itemEmpty:not(:last-child) > &.title {
-    border-bottom: none;
-  }
-
-  @nest .itemFocused.itemEmpty + .item > & {
-    border-top: 1px solid #25b7ff;
-  }
-
-  @nest .dataList:not(.multiSelection) &.titleFocused,
-  &.titleSelected {
-    background-color: light-blue-color;
+    background-color: var(--ring-hover-background-color);
+    box-shadow: inset 2px 0 var(--ring-main-color);
   }
 }
 
 .showMore {
   padding: 4px 60px;
 
-  color: #999;
-
-  border: 0 solid #ebebeb;
-  border-width: 1px 0;
+  color: var(--ring-secondary-color);
   outline: none;
 
   font-size: 12px;
 }
 
-.checkboxBox,
-.expanderBox {
-  width: 30px;
+.boxes {
+  display: flex;
 
-  color: #bbb;
+  min-width: calc(unit * 3);
 }
 
-.metaColumn {
-  display: inline-flex;
-
-  align-items: center;
-
-  color: #bbb;
-  justify-items: center;
+.checkboxBox {
+  width: calc(unit * 3);
 }
 
-.collapseIcon {
-  top: -3px;
+.collapseButton {
+  top: 1px;
+  left: -5px;
 
-  &:hover {
-    color: #ff5a00;
-  }
+  height: auto;
+  padding: 0 5px;
+
+  line-height: inherit;
+}
+
+.collapseIcon.collapseIcon {
+  color: var(--ring-icon-secondary-color);
 }
 
 .loadingOverlay {
@@ -118,6 +92,6 @@
 }
 
 .showMoreLoader {
-  top: 3px;
+  top: 1px;
   left: 8px;
 }

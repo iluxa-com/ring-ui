@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 import Input from '../input/input';
+import sniffr from '../global/sniffer';
+
+import styles from './select-popup.css';
 
 function noop() {}
 
@@ -14,21 +17,18 @@ export default class SelectFilter extends Component {
   };
 
   static defaultProps = {
-    placeholder: '',
+    placeholder: 'Filter items',
     inputRef: noop
   };
-
-  componentDidMount() {
-    setTimeout(() => this.focus());
-  }
 
   componentWillUnmount() {
     this.blur();
   }
 
   focus() {
-    if (this.input && this.input !== document.activeElement) {
-      this.input.focus();
+    const {input} = this;
+    if (input && input !== document.activeElement) {
+      sniffr.browser.name === 'firefox' ? input.select() : input.focus();
     }
   }
 
@@ -45,11 +45,13 @@ export default class SelectFilter extends Component {
 
   render() {
     const {className, ...restProps} = this.props;
-    const classes = classNames('ring-input_filter-popup', className);
+    const classes = classNames(styles.filter, className);
 
     return (
       <Input
         {...restProps}
+        autoFocus
+        borderless
         inputRef={this.inputRef}
         className={classes}
       />

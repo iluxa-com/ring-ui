@@ -1,8 +1,11 @@
 coverage
 dist
 docs
-gemini-report
+html-report
 node_modules
 build
-packages/generator/*/templates
+packages/generator/**/templates
 test_gen
+!.eslintrc.js
+!.storybook
+!.hermione.conf.js

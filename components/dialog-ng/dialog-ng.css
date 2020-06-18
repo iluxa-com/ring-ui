@@ -1,4 +1,6 @@
-@value unit, error-color, font-size-smaller from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .dialogContainer {
   position: relative;
@@ -6,7 +8,7 @@
   display: flex;
   flex-direction: column;
 
-  max-height: inherit;
+  min-height: auto;
 
   & :global(.ring-form__group:last-child) {
     margin-bottom: 0;
@@ -28,7 +30,7 @@
 }
 
 .header.header {
-  padding-top: unit;
+  padding-top: calc(unit * 2);
 
   cursor: move;
   user-select: none;
@@ -37,6 +39,8 @@
 }
 
 .inSidebar .header {
+  padding-top: 0;
+
   cursor: default;
   user-select: text;
 }
@@ -49,6 +53,8 @@
   overflow: visible;
 
   width: auto;
+
+  padding-top: calc(unit * 3);
 }
 
 .content.content {
@@ -60,13 +66,12 @@
 
   word-wrap: break-word;
 
-  color: error-color;
+  color: var(--ring-error-color);
 }
 
 .footer {
   height: auto;
   padding: calc(unit * 2) calc(unit * 4);
-  padding-top: calc(calc(unit * 2) - 2px);
 
   text-align: left;
 
@@ -76,7 +81,7 @@
 .footerDescription {
   margin-bottom: calc(unit * 2);
 
-  font-size: font-size-smaller;
+  font-size: var(--ring-font-size-smaller);
 }
 
 .footerItems {
@@ -90,15 +95,6 @@
   * Do not make space using margin-right as it will break spaces between right-sided buttons in dialog's footer
   */
   &:not(:first-child) {
-    margin-left: calc(unit * 2);
-  }
-
-  /* Increase selector specificity when ring buttons are used as footer items */
-  &.ring-button {
     margin-left: unit;
-  }
-
-  &.ring-button:first-of-type {
-    margin-left: 0;
   }
 }

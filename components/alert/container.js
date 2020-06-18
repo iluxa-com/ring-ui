@@ -1,14 +1,12 @@
 import React, {Children, cloneElement, PureComponent} from 'react';
+import {createPortal} from 'react-dom';
 import classNames from 'classnames';
-import Portal from '@jetbrains/react-portal';
 import PropTypes from 'prop-types';
 
 import styles from './container.css';
 
 /**
  * @name Alert Container
- * @constructor
- * @category Components
  * @description Displays a stack of alerts on top of the page.
  * @extends {PureComponent}
  */
@@ -24,24 +22,26 @@ export default class Alerts extends PureComponent {
     const classes = classNames(styles.alertContainer, className);
     const show = Children.count(children) > 0;
 
-    return (
-      <Portal
-        isOpen={show}
-      >
-        <div
-          data-test="alert-container"
-          className={classes}
-          {...restProps}
-        >
-          {Children.map(children, child => {
-            const alertClassNames = classNames(styles.alertInContainer, child.props.className);
+    if (!show) {
+      return null;
+    }
 
-            return cloneElement(child, {
-              className: alertClassNames
-            });
-          })}
-        </div>
-      </Portal>
+    return createPortal(
+      <div
+        data-test="alert-container"
+        className={classes}
+        aria-live="polite"
+        {...restProps}
+      >
+        {Children.map(children, child => {
+          const alertClassNames = classNames(styles.alertInContainer, child.props.className);
+
+          return cloneElement(child, {
+            className: alertClassNames
+          });
+        })}
+      </div>,
+      document.body
     );
   }
 }

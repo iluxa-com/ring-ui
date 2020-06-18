@@ -8,7 +8,7 @@ const pkgConfig = require('./package.json').config;
 const componentsPath = join(__dirname, pkgConfig.components);
 
 // Patch @jetbrains/ring-ui svg-sprite-loader config
-ringUiWebpackConfig.loaders.svgSpriteLoader.include.push(
+ringUiWebpackConfig.loaders.svgInlineLoader.include.push(
   require('@jetbrains/logos'),
   require('@jetbrains/icons')
 );
@@ -26,7 +26,7 @@ const webpackConfig = () => ({
   output: {
     path: resolve(__dirname, pkgConfig.dist),
     filename: '[name].js',
-    publicPath: '/',
+    publicPath: '',
     devtoolModuleFilenameTemplate: '/[absolute-resource-path]'
   },
   module: {
@@ -37,23 +37,20 @@ const webpackConfig = () => ({
         include: componentsPath,
         use: [
           'style-loader',
-          {
-            loader: 'css-loader',
-            options: {
-              modules: true,
-              importLoaders: 1,
-              localIdentName: '[name]__[local]__[hash:base64:7]'
-            }
-          },
-          'postcss-loader'
+          {loader: 'css-loader'},
+          {loader: 'postcss-loader'}
         ]
       },
       {
+        // Loaders for any other external packages styles
+        test: /\.css$/,
+        include: /node_modules/,
+        exclude: ringUiWebpackConfig.componentsPath,
+        use: ['style-loader', 'css-loader']
+      },
+      {
         test: /\.js$/,
-        include: [
-          join(__dirname, 'node_modules/chai-as-promised'),
-          componentsPath
-        ],
+        include: [componentsPath],
         loader: 'babel-loader?cacheDirectory'
       }
     ]
@@ -70,7 +67,7 @@ const webpackConfig = () => ({
   plugins: [
     new HtmlWebpackPlugin({
       template: 'html-loader?interpolate!src/index.html'
-    })
+    })<%- additionalWebpackPlugins %>
   ]
 });
 

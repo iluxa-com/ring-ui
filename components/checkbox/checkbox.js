@@ -1,17 +1,14 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import checkmarkIcon from '@jetbrains/icons/checkmark.svg';
 
-import {CheckIcon} from '../icon';
+import Icon from '../icon/icon';
 
-import './checkbox.scss';
+import styles from './checkbox.css';
 
 /**
  * @name Checkbox
- * @category Components
- * @constructor
- * @extends {ReactComponent}
- * @example-file ./checkbox.examples.html
  */
 export default class Checkbox extends PureComponent {
 
@@ -19,36 +16,11 @@ export default class Checkbox extends PureComponent {
     name: PropTypes.string,
     label: PropTypes.string,
     className: PropTypes.string,
+    defaultChecked: PropTypes.bool,
     checked: PropTypes.bool,
     disabled: PropTypes.bool,
-    onChange: PropTypes.func
-  };
-
-  state = {
-    checked: this.props.checked,
-    disabled: this.props.disabled
-  };
-
-  componentWillReceiveProps({checked, disabled}) {
-    if (checked !== undefined) {
-      this.setState({checked});
-    }
-
-    if (disabled !== undefined) {
-      this.setState({disabled});
-    }
-  }
-
-  inputChange = e => {
-    const newValue = e.target.checked;
-
-    this.setState({
-      checked: newValue
-    }, () => {
-      if (this.props.onChange) {
-        this.props.onChange(newValue);
-      }
-    });
+    onChange: PropTypes.func,
+    children: PropTypes.node
   };
 
   inputRef = el => {
@@ -56,39 +28,31 @@ export default class Checkbox extends PureComponent {
   };
 
   render() {
-    const {label, ...restProps} = this.props;
-    const {checked, disabled} = this.state;
+    const {children, label, ...restProps} = this.props;
 
     const classes = classNames(
-      'ring-checkbox__input',
+      styles.input,
       this.props.className
     );
 
     return (
       <label
-        className="ring-checkbox"
+        className={styles.checkbox}
         data-test="ring-checkbox"
       >
-        <span className="ring-checkbox__input-wrapper">
-          <input
-            {...restProps}
-            ref={this.inputRef}
-            disabled={disabled}
-            onChange={this.inputChange}
-            type="checkbox"
-            className={classes}
-            checked={Boolean(checked)}
+        <input
+          {...restProps}
+          ref={this.inputRef}
+          type="checkbox"
+          className={classes}
+        />
+        <span className={styles.cell}>
+          <Icon
+            glyph={checkmarkIcon}
+            className={styles.icon}
           />
-          <span className="ring-checkbox__icon">
-            {checked &&
-            <CheckIcon
-              className="ring-checkbox__icon__image"
-              color="black"
-              size={CheckIcon.Size.Size18}
-            />}
-          </span>
         </span>
-        <span className="ring-checkbox__label">{label}</span>
+        <span className={styles.label}>{label || children}</span>
       </label>
     );
   }

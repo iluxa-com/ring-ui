@@ -1,49 +1,49 @@
 import React from 'react';
-import {shallow, mount} from 'enzyme';
+import {mount, render} from 'enzyme';
+import defaultIcon from '@jetbrains/icons/umbrella.svg';
 import expandIcon from '@jetbrains/icons/expand.svg';
 
-import {resolveRelativeURL} from '../global/url';
-
 import Icon from './icon';
+import styles from './icon.css';
 
 describe('Icon', () => {
-  const shallowIcon = props => shallow(<Icon {...props}/>);
-  const mountIcon = props => mount(<Icon {...props}/>);
+  const mountIcon = props => mount(<Icon glyph={defaultIcon} {...props}/>);
+  const renderIcon = props => render(<Icon glyph={defaultIcon} {...props}/>);
 
   it('should create component', () => {
     mountIcon().should.have.type(Icon);
   });
 
   it('should render passed glyph', () => {
-    const icon = shallowIcon({glyph: expandIcon});
-    icon.find('use').should.have.attr('xlink:href', resolveRelativeURL(expandIcon.toString()));
+    const icon = renderIcon({glyph: expandIcon});
+    expandIcon.should.include(icon.find('svg').html());
   });
 
-  it('should set size 16', () => {
-    const icon = shallowIcon({glyph: expandIcon, size: Icon.Size.Size16});
-
-    icon.find('svg').should.have.style('width', '16px');
-    icon.find('svg').should.have.style('height', '16px');
-  });
-
-  it('should set one custom dimension', () => {
-    const icon = shallowIcon({glyph: expandIcon, width: 100});
-
-    icon.find('svg').should.have.style('width', '100px');
-    icon.find('svg').should.not.have.style('height');
-  });
-
-  it('should set two custom dimensions', () => {
-    const icon = shallowIcon({glyph: expandIcon, width: 99, height: 66});
-
-    icon.find('svg').should.have.style('width', '99px');
-    icon.find('svg').should.have.style('height', '66px');
+  it('should set compatibility mode if rendering icon without width/height', () => {
+    const icon = renderIcon({glyph: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d=""/></svg>'});
+    icon.find('svg').should.have.className(styles.compatibilityMode);
   });
 
   it('should set custom class', () => {
     const CUSTOM_CSS_CLASS = 'my-icon';
-    const icon = shallowIcon({glyph: expandIcon, className: CUSTOM_CSS_CLASS});
+    const icon = renderIcon({glyph: expandIcon, className: CUSTOM_CSS_CLASS});
 
     icon.should.have.className(CUSTOM_CSS_CLASS);
+  });
+
+  describe('fault tolerance', () => {
+    beforeEach(() => {
+      sandbox.stub(console, 'warn');
+    });
+
+    it('should render nothing if null passed as glyph', () => {
+      const icon = renderIcon({glyph: null});
+      icon.find('svg').should.be.empty;
+    });
+
+    it('should render nothing if null passed as glyph', () => {
+      const icon = renderIcon({glyph: ''});
+      icon.find('svg').should.be.empty;
+    });
   });
 });

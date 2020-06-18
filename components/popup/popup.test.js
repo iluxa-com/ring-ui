@@ -67,8 +67,7 @@ describe('Popup', () => {
     it('should be closed by click outside the element after show', () => {
       const onCloseAttempt = sandbox.stub();
       const wrapper = mountPopup({
-        onCloseAttempt,
-        ...this.state
+        onCloseAttempt
       });
 
       wrapper.setProps({hidden: false}, () => {
@@ -113,6 +112,25 @@ describe('Popup', () => {
         should.equal(elementOffset.left + elementOffset.width - popupElement.clientWidth);
       parseInt(getStyles(popupElement).top, 10).
         should.equal(elementOffset.top - popupElement.clientHeight);
+    });
+
+    it('should limit top by sidePadding if opens to the top', () => {
+      const SIDE_PADDING = 8;
+      const element = document.createElement('div');
+      element.setAttribute(
+        'style',
+        'position: absolute; top: 10px; left: 15px; width: 50px; height: 50px;'
+      );
+      document.body.append(element);
+
+      const instance = mountPopup({
+        directions: [Popup.PopupProps.Directions.TOP_LEFT],
+        anchorElement: element,
+        sidePadding: SIDE_PADDING,
+        children: <div style={{height: '300px'}}>{'foo'}</div>
+      }).instance();
+
+      getStyles(instance.popup).top.should.equal(`${SIDE_PADDING}px`);
     });
 
     it('bottom-right corner', () => {
@@ -178,9 +196,29 @@ describe('Popup', () => {
       element.remove();
     });
 
-    it('Should support minWidth = some number in pixels', () => {
+    it('Should support minWidth = number in pixels if anchor width is less than minWidth', () => {
+      const anchorElement = document.createElement('div');
+      anchorElement.setAttribute('style', 'width: 50px;');
+      document.body.append(anchorElement);
+
       const WIDTH = 345;
-      const instance = mountPopup({minWidth: WIDTH, hidden: false}).instance();
+      const instance = mountPopup({
+        minWidth: WIDTH, hidden: false, anchorElement
+      }).instance();
+
+      parseInt(instance.popup.style.minWidth, 10).should.equal(WIDTH);
+    });
+
+    it('Should use width of anchor if it is bigger than minWidth', () => {
+      const WIDTH = 345;
+
+      const anchorElement = document.createElement('div');
+      anchorElement.setAttribute('style', `width: ${WIDTH}px;`);
+      document.body.append(anchorElement);
+
+      const instance = mountPopup({
+        minWidth: 20, hidden: false, anchorElement
+      }).instance();
 
       parseInt(instance.popup.style.minWidth, 10).should.equal(WIDTH);
     });

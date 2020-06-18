@@ -10,18 +10,13 @@ import styles from './confirm.css';
 
 /**
  * @name Confirm
- * @category Components
- * @framework React
- * @constructor
- * @description A component that shows a confirmation dialog.
- * @example-file ./confirm.examples.html
  */
 
 export default class Confirm extends PureComponent {
   static propTypes = {
     className: PropTypes.string,
     text: PropTypes.string,
-    description: PropTypes.string,
+    description: PropTypes.node,
 
     show: PropTypes.bool,
     rejectOnEsc: PropTypes.bool,
@@ -81,7 +76,7 @@ export default class Confirm extends PureComponent {
         <Panel>
           <Button
             data-test="confirm-ok-button"
-            blue={!cancelIsDefault}
+            primary={!cancelIsDefault}
             loader={inProgress}
             disabled={inProgress}
             onClick={onConfirm}
@@ -92,7 +87,7 @@ export default class Confirm extends PureComponent {
             data-test="confirm-reject-button"
             onClick={onReject}
             disabled={inProgress}
-            blue={cancelIsDefault}
+            primary={cancelIsDefault}
           >
             {rejectLabel}
           </Button>

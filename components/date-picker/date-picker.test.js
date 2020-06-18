@@ -15,8 +15,8 @@ describe('Date Picker', () => {
     mountDatePicker().should.have.type(DatePicker);
   });
 
-  it('should render a button', () => {
-    renderDatePicker().should.have.descendants(`button.${styles.datePicker}`);
+  it('should render a div', () => {
+    shallowDatePicker().should.have.tagName('div');
   });
 
   it('should use passed className', () => {

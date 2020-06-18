@@ -1,52 +1,49 @@
-import React, {Children, Component} from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 import rerenderHOC from '../global/rerender-hoc';
+import Theme from '../global/theme';
 
-import Tray from './tray';
 import styles from './header.css';
 
 /**
  * @name Header
- * @category Components
- * @framework React
- * @constructor
- * @description Displays a configurable page header.
- * @example-file ./header.examples.html
  */
-
-const wrapChild = child => (
-  <div className={styles.item}>
-    {child}
-  </div>
-);
 
 export default class Header extends Component {
   static propTypes = {
     className: PropTypes.string,
-    children: PropTypes.node
+    children: PropTypes.node,
+    spaced: PropTypes.bool,
+    theme: PropTypes.string
+  };
+
+  static defaultProps = {
+    spaced: true,
+    theme: Theme.DARK
   };
 
   render() {
-    const {children, className, ...restProps} = this.props;
-    const classes = classNames(styles.header, className);
+    const {children, className, spaced, theme, ...restProps} = this.props;
+    const classes = classNames(styles.header, styles[theme], className, {
+      [styles.headerSpaced]: spaced
+    });
 
     return (
       <div
         {...restProps}
         className={classes}
       >
-        {Children.map(children, child => (
-          child && child.type === Tray ? child : wrapChild(child)
-        ))}
+        {children}
       </div>
     );
   }
 }
 
 export const RerenderableHeader = rerenderHOC(Header);
-export {Tray};
+export {default as Logo} from './logo';
+export {default as Tray} from './tray';
 export {default as TrayIcon} from './tray-icon';
 export {default as Profile} from './profile';
 export {default as SmartProfile} from './smart-profile';

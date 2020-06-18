@@ -1,24 +1,22 @@
-@value unit, overlay-z-index, white-color, border-radius, font, font-size from  "../global/global.css";
+@import "../global/variables.css";
 
 .popup {
-  composes: font;
+  composes: font from "../global/global.css";
 
-  position: absolute;
-  z-index: overlay-z-index;
+  position: fixed;
+  z-index: var(--ring-overlay-z-index);
+  top: -100vh;
+  left: -100vw;
 
   overflow-y: auto;
 
   box-sizing: border-box;
 
-  text-align: center;
+  border: 1px solid var(--ring-popup-border-color);
+  border-radius: var(--ring-border-radius);
 
-  border: 1px solid rgba(0, 0, 0, 0.2);
-
-  border-radius: border-radius;
-  background-color: #fff;
-  box-shadow: 0 1px 8px 0 rgba(0, 0, 0, 0.2);
-
-  font-size: font-size;
+  background-color: var(--ring-popup-background-color);
+  box-shadow: 0 2px 16px 0 var(--ring-popup-shadow-color);
 }
 
 .hidden {
@@ -27,11 +25,6 @@
 
 .showing {
   opacity: 0;
-}
-
-.filterWrapper {
-  margin: calc(unit * 2) 0 unit;
-  padding: 0 calc(unit * 2);
 }
 
 .attached {

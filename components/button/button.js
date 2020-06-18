@@ -1,39 +1,60 @@
+import 'focus-visible';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import chevronDown from '@jetbrains/icons/chevron-10px.svg';
 
-import Icon from '../icon';
-import './button.scss';
+import Icon, {Size} from '../icon';
+import Theme from '../global/theme';
+import ClickableLink from '../link/clickableLink';
 
-const DEFAULT_ICON_SIZE = Icon.Size.Size16;
+import styles from './button.css';
 
 /**
  * @name Button
- * @category Components
- * @constructor
- * @description Provides styled buttons.
- * @extends {PureComponent}
- * @example-file ./button.examples.html
  */
 export default class Button extends PureComponent {
   static propTypes = {
+    theme: PropTypes.string,
     active: PropTypes.bool,
-    blue: PropTypes.bool,
     danger: PropTypes.bool,
     delayed: PropTypes.bool,
     loader: PropTypes.bool,
     primary: PropTypes.bool,
+    blue(props, propName) {
+      if (propName in props) {
+        return new Error(`"${propName}" prop is deprecated. Use "primary" instead`);
+      }
+      return undefined;
+    },
     short: PropTypes.bool,
-    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    text: PropTypes.bool,
+    inline: PropTypes.bool,
+    dropdown: PropTypes.bool,
+
+    href: PropTypes.string,
+
+    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     iconSize: PropTypes.number,
+    iconClassName: PropTypes.string,
+    iconSuppressSizeWarning: PropTypes.bool,
 
     className: PropTypes.string,
+
     children: PropTypes.node
   };
+
+  static defaultProps = {
+    theme: Theme.LIGHT
+  };
+
+  static IconSize = Size;
+  static Theme = Theme;
 
   render() {
     const {
       // Modifiers
+      theme,
       active,
       blue,
       danger,
@@ -41,51 +62,82 @@ export default class Button extends PureComponent {
       loader,
       primary,
       short,
+      text,
+      inline,
+      dropdown,
 
       // Props
       icon,
       iconSize,
+      iconClassName,
+      iconSuppressSizeWarning,
       className,
       children,
       ...props
     } = this.props;
 
     const classes = classNames(
-      'ring-button',
-      className, {
-        'ring-button_default': !blue && !primary,
-        'ring-button_active': active,
-        'ring-button_blue': blue,
-        'ring-button_danger': danger,
-        'ring-button_delayed': delayed,
-        'ring-button_icon': icon,
-        'ring-button_loader': loader,
-        'ring-button_primary': primary,
-        'ring-button_short': short
+      styles.button,
+      className,
+      styles[theme],
+      {
+        [styles.active]: active,
+        [styles.danger]: danger,
+        [styles.delayed]: delayed,
+        [styles.withIcon]: icon,
+        [styles.onlyIcon]: icon && !children,
+        [styles.withNormalIconLight]: (
+          icon && !active && !danger && !primary && theme === Theme.LIGHT
+        ),
+        [styles.withDangerIconLight]: (
+          icon && danger && theme === Theme.LIGHT
+        ),
+        [styles.loader]: loader && !icon,
+        [styles.primary]: primary || blue,
+        [styles.short]: short,
+        [styles.text]: text,
+        [styles.inline]: inline
       }
     );
 
+    const content = (
+      <span className={styles.content}>
+        {icon && (
+          <span className={classNames(styles.icon, iconClassName)}>
+            <Icon
+              glyph={icon}
+              size={iconSize}
+              loading={loader}
+              suppressSizeWarning={iconSuppressSizeWarning}
+            />
+          </span>
+        )}
+        {children && (
+          <span>{children}</span>
+        )}
+        {dropdown && (
+          <Icon
+            glyph={chevronDown}
+            className={styles.dropdownIcon}
+          />
+        )}
+      </span>
+    );
+    const isLink = !!props.href;
+
+    const Tag = isLink ? ClickableLink : 'button';
     return (
-      <button
-        type="button"
+      <Tag
+        tabIndex={loader ? -1 : 0}
+        type={isLink ? null : 'button'}
         {...props}
         className={classes}
-        tabIndex={loader ? -1 : 0}
       >
-        <span className="ring-button__content">
-          {children}
-          {icon && (
-            <span className="ring-button__icon">
-              <Icon
-                glyph={icon}
-                size={iconSize || DEFAULT_ICON_SIZE}
-              />
-            </span>
-          )}
-        </span>
-
-        <span className="ring-button__loader"/>
-      </button>
+        {loader && !text && !icon && <div className={styles.loaderBackground}/>}
+        {content}
+      </Tag>
     );
   }
 }
+
+export {Size as IconSize};

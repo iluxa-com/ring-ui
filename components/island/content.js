@@ -6,25 +6,28 @@ import createResizeDetector from 'element-resize-detector';
 import scheduleRAF from '../global/schedule-raf';
 
 import styles from './island.css';
+import {ScrollHandlerContext} from './adaptive-island-hoc';
 
 const scheduleScrollAction = scheduleRAF();
 const noop = () => {};
-const resizeDetector = createResizeDetector();
+const END_DISTANCE = 16;
 
-export default class Content extends Component {
+class Content extends Component {
   static propTypes = {
     children: PropTypes.node,
     className: PropTypes.string,
     scrollableWrapperClassName: PropTypes.string,
     fade: PropTypes.bool,
     bottomBorder: PropTypes.bool,
-    onScroll: PropTypes.func
+    onScroll: PropTypes.func,
+    onScrollToBottom: PropTypes.func
   };
 
   static defaultProps = {
     fade: true,
     bottomBorder: false,
-    onScroll: noop
+    onScroll: noop,
+    onScrollToBottom: noop
   };
 
   state = {
@@ -37,15 +40,17 @@ export default class Content extends Component {
     if (!this.wrapperNode) {
       return;
     }
-    resizeDetector.removeAllListeners(this.wrapperNode);
+    this.resizeDetector.removeAllListeners(this.wrapperNode);
   }
+
+  resizeDetector = createResizeDetector({strategy: 'scroll'});
 
   setWrapper = node => {
     if (!node) {
       return;
     }
     this.wrapperNode = node;
-    resizeDetector.listenTo(node, this.calculateScrollPosition);
+    this.resizeDetector.listenTo(node, this.calculateScrollPosition);
   };
 
   calculateScrollPosition = () => scheduleScrollAction(() => {
@@ -55,13 +60,17 @@ export default class Content extends Component {
     }
     const {scrollTop, scrollHeight, offsetHeight} = scrollableNode;
     const scrolledToTop = scrollTop === 0;
-    const scrolledToBottom = offsetHeight + scrollTop >= scrollHeight;
+    const scrolledToBottom = offsetHeight + scrollTop >= scrollHeight - END_DISTANCE;
+
+    if (scrolledToBottom) {
+      this.props.onScrollToBottom();
+    }
+
     this.setState({scrolledToTop, scrolledToBottom});
   });
 
   onScroll = () => {
-    const {scrollTop, scrollHeight} = this.scrollableNode;
-    this.props.onScroll({scrollTop, scrollHeight});
+    this.props.onScroll(this.scrollableNode);
     this.calculateScrollPosition();
   };
 
@@ -74,7 +83,10 @@ export default class Content extends Component {
   };
 
   render() {
-    const {children, className, bottomBorder, scrollableWrapperClassName, onScroll, fade, ...restProps} = this.props; // eslint-disable-line no-unused-vars, max-len
+    const {
+      children, className, bottomBorder, scrollableWrapperClassName,
+      onScroll, onScrollToBottom, fade, ...restProps
+    } = this.props;
     const {scrolledToTop, scrolledToBottom} = this.state;
 
     const classes = classNames(styles.content, className, {
@@ -96,13 +108,19 @@ export default class Content extends Component {
         className={classes}
       >
         <div
+          // it has to be focusable because it can be scrollable
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          data-scrollable-container
           className={scrollableWrapperClasses}
           ref={this.setScrollableNodeAndCalculatePosition}
           onScroll={fade ? this.onScroll : noop}
         >
-          {fade && <div ref={this.setWrapper}>
-            {children}
-          </div>}
+          {fade && (
+            <div ref={this.setWrapper}>
+              {children}
+            </div>
+          )}
 
           {!fade && children}
         </div>
@@ -110,3 +128,14 @@ export default class Content extends Component {
     );
   }
 }
+
+const ContentWrapper = props => (
+  <ScrollHandlerContext.Consumer>
+    {onScroll => {
+      const addProps = onScroll != null ? {onScroll, bottomBorder: true} : {};
+      return <Content {...props} {...addProps}/>;
+    }}
+  </ScrollHandlerContext.Consumer>
+);
+
+export default ContentWrapper;

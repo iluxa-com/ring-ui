@@ -5,9 +5,6 @@ import {encodeURL, joinBaseURLAndPath} from '../global/url';
 
 /**
  * @name HTTP
- * @category Utilities
- * @description Provides a way to perform authorized network requests.
- * @example-file ./http.examples.html
  */
 
 const TOKEN_TYPE = 'Bearer';
@@ -18,7 +15,8 @@ export const defaultFetchConfig = {
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json'
-  }
+  },
+  credentials: 'same-origin'
 };
 
 export class HTTPError extends ExtendableError {
@@ -35,28 +33,33 @@ export const CODE = {
 
 export default class HTTP {
   baseUrl = null;
+  _requestsMeta = new WeakMap();
 
   constructor(auth, baseUrl, fetchConfig = {}) {
     if (auth) {
       this.setAuth(auth);
     }
     this.setBaseUrl(baseUrl);
+
+    const {headers, ...defaultConfig} = defaultFetchConfig;
+
     this.fetchConfig = {
+      ...defaultConfig,
       ...fetchConfig,
       headers: {
-        ...defaultFetchConfig.headers,
+        ...headers,
         ...fetchConfig.headers
       }
     };
   }
 
-  setAuth(auth) {
+  setAuth = auth => {
     this.requestToken = () => auth.requestToken();
     this.shouldRefreshToken = auth.constructor.shouldRefreshToken;
     this.forceTokenUpdate = () => auth.forceTokenUpdate();
   }
 
-  setBaseUrl(baseUrl) {
+  setBaseUrl = baseUrl => {
     this.baseUrl = baseUrl;
   }
 
@@ -70,21 +73,35 @@ export default class HTTP {
   }
 
   _performRequest(url, token, params = {}) {
-    const {headers, body, query = {}, ...fetchConfig} = params;
+    const {headers, body, query = {}, sendRawBody, ...fetchConfig} = params;
+
+    const combinedHeaders = {
+      ...this.fetchConfig.headers,
+      ...(token ? {Authorization: `${TOKEN_TYPE} ${token}`} : {}),
+      ...headers
+    };
+
+    Object.keys(combinedHeaders).forEach(key => {
+      if (combinedHeaders[key] === null || combinedHeaders[key] === undefined) {
+        Reflect.deleteProperty(combinedHeaders, key);
+      }
+    });
 
     return this._fetch(
       this._makeRequestUrl(url, query),
       {
         ...this.fetchConfig,
-        headers: {
-          ...this.fetchConfig.headers,
-          Authorization: `${TOKEN_TYPE} ${token}`,
-          ...headers
-        },
+        headers: combinedHeaders,
         ...fetchConfig,
-        body: body ? JSON.stringify(body) : body
+        body: body && !sendRawBody ? JSON.stringify(body) : body
       }
     );
+  }
+
+  _storeRequestMeta(parsedResponse, rawResponse) {
+    const {headers, ok, redirected, status, statusText, type, url} = rawResponse;
+    this._requestsMeta.
+      set(parsedResponse, {headers, ok, redirected, status, statusText, type, url});
   }
 
   async _processResponse(response) {
@@ -103,7 +120,9 @@ export default class HTTP {
     }
 
     try {
-      return await (isJson ? response.json() : response.text());
+      const parsedResponse = await (isJson ? response.json() : {data: await response.text()});
+      this._storeRequestMeta(parsedResponse, response);
+      return parsedResponse;
     } catch (err) {
       return response;
     }
@@ -113,7 +132,7 @@ export default class HTTP {
     return status < STATUS_OK_IF_MORE_THAN || status >= STATUS_BAD_IF_MORE_THAN;
   }
 
-  async fetch(url, params = {}) {
+  fetch = async (url, params = {}) => {
     const {body, query = {}, ...fetchConfig} = params;
 
     const response = await this._fetch(
@@ -133,7 +152,7 @@ export default class HTTP {
     return this._processResponse(response);
   }
 
-  async request(url, params) {
+  request = async (url, params) => {
     let token = await this.requestToken();
     let response = await this._performRequest(url, token, params);
 
@@ -160,17 +179,19 @@ export default class HTTP {
     }
   }
 
-  get(url, params) {
-    return this.request(url, {
+  getMetaForResponse = response => this._requestsMeta.get(response);
+
+  get = (url, params) => (
+    this.request(url, {
       method: 'GET',
       ...params
-    });
-  }
+    })
+  )
 
-  post(url, params) {
-    return this.request(url, {
+  post = (url, params) => (
+    this.request(url, {
       method: 'POST',
       ...params
-    });
-  }
+    })
+  )
 }

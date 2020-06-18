@@ -1,120 +1,161 @@
-@value unit, blue-color, gray-color, link-hover-color from  "../global/global.css";
+@import "../global/variables.css";
+
+@value unit, resetButton from "../global/global.css";
+@value height: calc(unit * 8);
+@value compensate: 3px;
+@value compensated: calc(height - compensate);
+
+.light {
+  background-color: transparent;
+}
+
+.dark {
+  color: var(--ring-dark-text-color);
+  background-color: var(--ring-navigation-background-color);
+
+  /* override link */
+  & > a {
+    color: var(--ring-dark-secondary-color);
+  }
+}
 
 .header {
   display: flex;
-  align-items: baseline;
+  overflow: hidden;
+  align-items: center;
 
-  height: calc(unit * 7);
-  padding: 0 calc(unit * 4);
+  box-sizing: border-box;
+  height: height;
 
-  line-height: calc(calc(unit * 7) - 5px);
+  line-height: compensated;
+
+  & > * {
+    display: inline-block;
+
+    box-sizing: border-box;
+    height: height;
+    padding: 0 calc(unit * 1.5) compensate;
+  }
 }
 
-.item {
-  margin-right: calc(unit * 4);
+.headerSpaced {
+  & > *:first-child {
+    padding-left: calc(unit * 4);
+  }
+
+  & > *:last-child {
+    padding-right: calc(unit * 4);
+  }
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+
+  height: height;
+
+  color: var(--ring-navigation-background-color);
+
+  line-height: normal;
+
+  & svg {
+    vertical-align: bottom;
+  }
 }
 
 .tray {
-  composes: header;
+  align-items: flex-end;
 
   margin-left: auto;
-  padding: 0;
+  padding: 0 0 compensate;
 }
 
-.trayItem {
-  text-align: center;
+/* override .header > * */
+.tray.tray {
+  display: flex;
 }
 
 .trayItemContent {
-  height: calc(unit * 5);
-}
-
-.iconPosition.iconPosition {
-  width: calc(unit * 5);
-  height: calc(unit * 5);
-
-  vertical-align: baseline;
-
-  /* stylelint-disable-next-line selector-max-specificity */
-  &:global(.ring-icon) {
-    /* Redefine positioning inside ring-link */
-
-    top: 0;
-  }
-}
-
-.iconBehavior {
-  cursor: pointer;
-  transition: all 0.3s ease-out;
-  transform: rotate(0deg);
-  transform-origin: center 27px;
-
-  &:hover {
-    transition: transform 0.3s ease-out;
-
-    color: link-hover-color;
-  }
+  height: compensated;
 }
 
 .icon {
-  composes: iconPosition;
-  composes: iconBehavior;
+  width: calc(unit * 5);
 
-  color: gray-color;
+  text-align: center;
+
+  vertical-align: top;
 }
 
-.activeIcon {
-  composes: icon;
+/* override button */
+.icon.icon {
+  height: compensated;
 
-  @nest &, &:hover {
-    color: blue-color;
-  }
+  padding-top: calc(unit / 2);
+
+  line-height: compensated;
 }
 
-.rotatedIcon {
+.main svg {
+  color: var(--ring-main-color);
+}
+
+.rotatable svg {
+  transition: transform 0.3s ease-out;
+  transform: rotate(0deg);
+  transform-origin: 50% 50%;
+}
+
+.rotated svg {
   transform: rotate(90deg);
 }
 
 .profileEmpty {
-  composes: iconPosition;
+  align-items: center;
 
-  position: relative;
-  top: unit;
+  width: auto;
+  height: compensated;
+  padding-left: unit;
 
-  /* Fix popup vertical positioning */
+  vertical-align: bottom;
+}
 
-  height: calc(unit * 4);
-
-  text-align: right;
+/* override dropdown */
+.profileEmpty.profileEmpty {
+  display: inline-flex;
 }
 
 .profile {
   composes: profileEmpty;
-  composes: iconBehavior;
+
+  height: compensated;
+
+  cursor: pointer;
 }
 
-.loginButton.loginButton {
-  margin-left: unit;
+.avatarWrapper {
+  composes: resetButton;
+
+  line-height: 0;
 }
 
-.profileMenuItem {
-  white-space: nowrap;
-}
+.hasUpdates {
+  position: relative;
 
-.hasUpdates::after {
-  position: absolute;
-  top: 1px;
-  left: 35px;
+  &::after {
+    position: absolute;
+    top: calc(15% - 5px);
+    right: calc(15% - 5px);
 
-  display: block;
+    display: block;
 
-  width: unit;
-  height: unit;
+    width: unit;
+    height: unit;
 
-  content: '';
+    content: '';
 
-  border: 1px solid #fff;
-  border-radius: 50%;
-
-  background-color: link-hover-color;
+    border: 1px solid var(--ring-dark-text-color);
+    border-radius: 50%;
+    background-color: var(--ring-link-hover-color);
+  }
 }

@@ -1,22 +1,20 @@
 import angular from 'angular';
 
+import chevronRight from '@jetbrains/icons/chevron-right.svg';
+import chevronLeft from '@jetbrains/icons/chevron-left.svg';
+
 import PlaceUnder from '../place-under-ng/place-under-ng';
 import IconNG from '../icon-ng/icon-ng';
 import RingAngularComponent from '../global/ring-angular-component';
+import ButtonNG from '../button-ng/button-ng';
 
 import '../sidebar/sidebar.scss';
-import '../button/button.scss';
 
 /**
  * @name Sidebar Ng
- * @category Legacy Angular Components
- * @description Provides an Angular wrapper for Sidebar.
- * To make sidebar have fixed positioning under some other element (e.g. toolbar),
- * a selector for that element should be passed as placeUnderSibling parameter.
- * @example-file ./sidebar-ng.examples.html
  */
 
-const angularModule = angular.module('Ring.sidebar', [PlaceUnder, IconNG]);
+const angularModule = angular.module('Ring.sidebar', [PlaceUnder, IconNG, ButtonNG]);
 
 class SidebarController extends RingAngularComponent {
   static $inject = ['$scope'];
@@ -79,7 +77,10 @@ function rgSidebarToggleButtonDirective() {
     transclude: true,
     replace: true,
     scope: {},
-    controller() {},
+    controller() {
+      this.chevronRight = chevronRight;
+      this.chevronLeft = chevronLeft;
+    },
     bindToController: {
       model: '=',
       dialogIsActive: '=?'

@@ -8,7 +8,10 @@ describe('Loader', () => {
   let createLoader;
   let loaderContainer;
   let loader;
+
   beforeEach(() => {
+    sandbox.stub(LoaderCore.prototype, 'loop').callsFake(() => {});
+
     createLoader = props => {
       loaderContainer = document.createElement('div');
       loader = new LoaderCore(loaderContainer, props);
@@ -16,6 +19,8 @@ describe('Loader', () => {
 
     createLoader({});
   });
+
+  afterEach(() => loader.destroy());
 
   it('Should calculate gradient', () => {
     const middleColor = LoaderCore.calculateGradient(

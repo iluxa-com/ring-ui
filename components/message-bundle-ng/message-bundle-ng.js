@@ -40,6 +40,8 @@ function RingMessageBundle(ringI18n) {
   this.errorpage_offline = () => i18n('There\'s nothing we can do: The server seems to be offline.');
   this.errorpage_disconnected = () => i18n('Disconnected');
   this.errorpage_disconnectedmsg = () => i18n('No, no one\'s there.');
+  this.errorpage_401 = () => i18n('Authorization required');
+  this.errorpage_401msg = () => i18n('You have requested access to a page that requires authorization, but the request is missing valid authentication credentials. It can also mean that your account has been banned.');
   this.errorpage_403 = () => i18n('Woah, you can\'t touch this!');
   this.errorpage_403msg = () => i18n('Unfortunately, you are not allowed to access the page you\'ve requested. It seems you don\'t have sufficient permissions.');
   this.errorpage_404 = () => i18n('Nope, can\'t find it!');
@@ -48,7 +50,7 @@ function RingMessageBundle(ringI18n) {
   this.errorpage_500msg = () => i18n('Despite our best efforts, the server is not working properly.');
   this.select_options_not_found = () => i18n('No options found');
   this.select_loading = () => i18n('Loading...');
-  this.select_label = () => i18n('Please select option');
+  this.select_label = () => i18n('Select an option');
   this.previous_page = () => i18n('previous');
   this.next_page = () => i18n('next page');
   this.first_page = () => i18n('First page');

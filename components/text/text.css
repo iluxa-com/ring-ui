@@ -1,13 +1,9 @@
-@value text-color, gray-color, dark-gray-color from  "../global/global.css";
+@import "../global/variables.css";
 
 .text {
-  color: text-color;
-}
-
-.comment {
-  color: dark-gray-color;
+  color: var(--ring-text-color);
 }
 
 .info {
-  color: gray-color;
+  color: var(--ring-secondary-color);
 }

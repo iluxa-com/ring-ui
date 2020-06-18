@@ -2,13 +2,16 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 
 import formats from './formats';
-import styles from './date-picker.css';
 
-const units = ['unit', 'cellSize', 'calHeight', 'yearHeight'].
-  reduce((obj, key) => {
-    obj[key] = parseInt(styles[key], 10);
-    return obj;
-  }, {});
+const unit = 8; // px;
+const units = {
+  unit,
+  /* eslint-disable no-magic-numbers */
+  cellSize: unit * 3,
+  calHeight: unit * 36,
+  yearHeight: unit * 4
+  /* eslint-enable */
+};
 
 export default units;
 

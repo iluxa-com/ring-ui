@@ -1,4 +1,4 @@
-import React, {PureComponent} from 'react';
+import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
@@ -22,6 +22,11 @@ export default class Profile extends PureComponent {
     onSwitchUser: PropTypes.func,
     profileUrl: PropTypes.string,
     renderPopupItems: PropTypes.func,
+    LinkComponent: PropTypes.oneOfType([
+      PropTypes.instanceOf(Component),
+      PropTypes.func,
+      PropTypes.string
+    ]),
     translations: PropTypes.shape({
       profile: PropTypes.string,
       login: PropTypes.string,
@@ -31,31 +36,53 @@ export default class Profile extends PureComponent {
     }),
     user: PropTypes.shape({
       guest: PropTypes.bool,
-      profile: PropTypes.object
+      profile: PropTypes.object,
+      name: PropTypes.string
     }),
+    size: PropTypes.number,
+    round: PropTypes.bool,
     showLogIn: PropTypes.bool,
     showLogOut: PropTypes.bool,
     showSwitchUser: PropTypes.bool,
     showApplyChangedUser: PropTypes.bool,
-    onRevertPostponement: PropTypes.func
+    onRevertPostponement: PropTypes.func,
+    renderGuest: PropTypes.func
   };
 
   static defaultProps = {
     closeOnSelect: true,
     renderPopupItems: items => items,
-    translations: {}
+    translations: {},
+    size: Size.Size32,
+    renderGuest: ({loading, onLogin, className, translations}) => (
+      <div
+        className={classNames(styles.profileEmpty, className)}
+      >
+        <Button
+          theme={Button.Theme.DARK}
+          primary
+          data-test="ring-header-login-button"
+          disabled={loading}
+          loader={loading}
+          onClick={onLogin}
+        >
+          {translations.login || 'Log in...'}
+        </Button>
+      </div>
+    )
   };
+
+  static Size = Size;
 
   render() {
     const {
       className,
       closeOnSelect,
       hasUpdates,
-      loading,
+      onLogout,
       user,
       profileUrl,
-      onLogin,
-      onLogout,
+      LinkComponent,
       onSwitchUser,
       renderPopupItems,
       onRevertPostponement,
@@ -63,7 +90,11 @@ export default class Profile extends PureComponent {
       showLogIn,
       showLogOut,
       showSwitchUser,
+      renderGuest,
       translations,
+      size,
+      round,
+      loading, onLogin,
       ...props
     } = this.props;
 
@@ -73,43 +104,33 @@ export default class Profile extends PureComponent {
           {...props}
           className={classNames(styles.profileEmpty, className)}
         >
-          <Avatar size={Size.Size24}/>
+          <Avatar size={size} round={round}/>
         </div>
       );
     }
 
     if (user.guest) {
-      return (
-        <Button
-          blue
-          className={classNames(styles.loginButton, className)}
-          data-test="ring-header-login-button"
-          disabled={loading}
-          loader={loading}
-          onClick={onLogin}
-        >
-          {translations.login || 'Log in...'}
-        </Button>
-      );
+      return renderGuest(this.props);
     }
 
-    const anchorClassName = classNames({
+    const anchorClassName = classNames(styles.avatarWrapper, {
       [styles.hasUpdates]: hasUpdates
     });
 
     const anchor = (
-      <span className={anchorClassName}>
+      <button type="button" className={anchorClassName}>
         <Avatar
           url={user.profile && user.profile.avatar && user.profile.avatar.url}
-          size={Size.Size24}
+          size={size}
+          round={round}
         />
-      </span>
+      </button>
     );
 
     const items = [
       showApplyChangedUser && {
         rgItemType,
-        label: translations.applyChangedUser || 'Apply changed user',
+        label: translations.applyChangedUser || 'Apply changeduser',
         className: styles.profileMenuItem,
         onClick: onRevertPostponement
       },
@@ -120,11 +141,12 @@ export default class Profile extends PureComponent {
         onClick: onRevertPostponement
       },
       {
-        rgItemType,
+        rgItemType: PopupMenu.ListProps.Type.LINK,
         label: translations.profile || 'Profile',
-        className: styles.profileMenuItem,
+
         target: '_self', // Full page reload in Angular
-        href: profileUrl
+        href: profileUrl,
+        LinkComponent
       },
       showSwitchUser && {
         rgItemType,
@@ -135,7 +157,7 @@ export default class Profile extends PureComponent {
       showLogOut && {
         rgItemType,
         label: translations.logout || 'Log out',
-        className: styles.profileMenuItem,
+
         onClick: onLogout
       }
     ].filter(it => !!it);
@@ -145,11 +167,15 @@ export default class Profile extends PureComponent {
         {...props}
         title={user.name}
         anchor={anchor}
+        data-test="ring-profile"
         className={classNames(styles.profile, className)}
       >
         <PopupMenu
           closeOnSelect={closeOnSelect}
           data={renderPopupItems(items)}
+          left={-2}
+          top={-8}
+          sidePadding={32}
         />
       </Dropdown>
     );

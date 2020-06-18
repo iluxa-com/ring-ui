@@ -1,10 +1,8 @@
-/* eslint-disable no-magic-numbers */
 import React from 'react';
 import {shallow, mount} from 'enzyme';
-import VirtualizedList from 'react-virtualized/dist/commonjs/List';
+import VirtualizedList from 'react-virtualized/dist/es/List';
 
 import getUID from '../global/get-uid';
-import linkStyles from '../link/link.css';
 import Icon, {CheckmarkIcon} from '../icon';
 
 import List from './list';
@@ -13,6 +11,7 @@ import ListCustom from './list__custom';
 import ListLink from './list__link';
 import ListTitle from './list__title';
 import ListSeparator from './list__separator';
+import styles from './list.css';
 
 describe('List', () => {
   const Type = List.ListProps.Type;
@@ -152,7 +151,8 @@ describe('List', () => {
     let wrapper;
     let instance;
     beforeEach(() => {
-      wrapper = shallowList({
+      sandbox.stub(window, 'requestAnimationFrame').callsFake(cb => cb());
+      wrapper = mountList({
         data: [{key: 0}, {key: 1}, {key: 2}],
         activeIndex: 0,
         restoreActiveIndex: true
@@ -201,8 +201,8 @@ describe('List', () => {
           {}
         ]
       }).instance();
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
-      firstItemWrapper.should.have.className('ring-list__item_action');
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
+      firstItemWrapper.should.have.className(styles.action);
       firstItemWrapper.should.have.text('');
     });
 
@@ -213,7 +213,8 @@ describe('List', () => {
         ]
       }).instance();
 
-      mount(instance.renderItem({index: 1})).should.have.descendants('.ring-list__item');
+      mount(instance.renderItem({index: 1})).
+        should.have.descendants('[data-test~="ring-list-item"]');
     });
 
     it('should render a if href defined', () => {
@@ -225,7 +226,7 @@ describe('List', () => {
 
       const firstItemWrapper = mountFirstItem(instance).find(ListLink);
       firstItemWrapper.should.exist;
-      firstItemWrapper.should.have.className(linkStyles.link);
+      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link ring-list-item');
       firstItemWrapper.should.have.text('Hello!');
       firstItemWrapper.should.have.tagName('a');
       firstItemWrapper.should.have.attr('href', 'http://www.jetbrains.com');
@@ -240,7 +241,7 @@ describe('List', () => {
 
       const firstItemWrapper = mountFirstItem(instance).find(ListLink);
       firstItemWrapper.should.exist;
-      firstItemWrapper.should.have.className(linkStyles.link);
+      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link ring-list-item');
       firstItemWrapper.should.have.text('Hello!');
       firstItemWrapper.should.have.tagName('a');
       firstItemWrapper.should.have.attr('href', 'http://www.jetbrains.com');
@@ -249,13 +250,13 @@ describe('List', () => {
     it('should render separator', () => {
       const instance = shallowList({
         data: [
-          {rgItemType: List.ListProps.Type.SEPARATOR}
+          {rgItemType: List.ListProps.Type.SEPARATOR, label: 'test'}
         ]
       }).instance();
 
       const firstItemWrapper = mountFirstItem(instance).find(ListSeparator);
       firstItemWrapper.should.exist;
-      firstItemWrapper.should.have.className('ring-list__separator');
+      firstItemWrapper.should.have.className(styles.separator);
     });
 
     it('should render title', () => {
@@ -279,10 +280,9 @@ describe('List', () => {
 
       const firstItemWrapper = mountFirstItem(instance).find(ListLink);
       firstItemWrapper.should.exist;
-      firstItemWrapper.should.have.className(linkStyles.link);
-      firstItemWrapper.should.have.className(linkStyles.pseudo);
+      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link ring-list-item');
       firstItemWrapper.should.have.text('Hello!');
-      firstItemWrapper.should.have.tagName('a');
+      firstItemWrapper.should.have.tagName('button');
     });
 
     it('should not render icon if not provided', () => {
@@ -293,7 +293,7 @@ describe('List', () => {
       }).instance();
 
       const firstItemWrapper = mountFirstItem(instance).find(ListItem);
-      firstItemWrapper.should.not.have.descendants('.ring-list__icon');
+      firstItemWrapper.should.not.have.descendants(`.${styles.icon}`);
     });
 
     it('should render icon if provided', () => {
@@ -303,25 +303,8 @@ describe('List', () => {
         ]
       }).instance();
 
-      const icon = mountFirstItem(instance).find('.ring-list__icon');
+      const icon = mountFirstItem(instance).find(`.${styles.icon}`);
       icon.prop('style').backgroundImage.should.contain('http://some.url');
-    });
-
-    it('should render icon of a custom size', () => {
-      const customIconSize = Icon.Size.Size12;
-      const instance = shallowList({
-        data: [
-          {
-            iconSize: customIconSize,
-            label: 'Hello!',
-            glyph: CheckmarkIcon,
-            type: List.ListProps.Type.ITEM
-          }
-        ]
-      }).instance();
-
-      const icon = mountFirstItem(instance).find(Icon);
-      icon.should.have.prop('size', customIconSize);
     });
 
     it('should not render glyph if not provided', () => {
@@ -365,7 +348,7 @@ describe('List', () => {
         ]
       }).instance();
 
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
       firstItemWrapper.simulate('click');
       clicked.should.have.been.called;
     });
@@ -378,7 +361,7 @@ describe('List', () => {
         data: [{label: 'Hello!'}]
       }).instance();
 
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
       firstItemWrapper.simulate('click');
       onSelect.should.have.been.called;
     });
@@ -388,6 +371,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM
           }
         ]
@@ -403,6 +387,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM,
             onClick
           }
@@ -419,6 +404,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM,
             disabled: true
           }
@@ -426,7 +412,7 @@ describe('List', () => {
       }).instance();
 
       const firstItemWrapper = mountFirstItem(instance).find(ListCustom);
-      firstItemWrapper.should.not.have.className('ring-list__item_action');
+      firstItemWrapper.should.not.have.className(styles.action);
     });
   });
 });

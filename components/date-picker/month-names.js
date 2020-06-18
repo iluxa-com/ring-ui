@@ -21,7 +21,8 @@ class MonthName extends PureComponent {
     const {month} = this.props;
 
     return (
-      <div
+      <button
+        type="button"
         className={classNames(
           styles.monthName,
           {
@@ -31,7 +32,7 @@ class MonthName extends PureComponent {
         onClick={this.handleClick}
       >
         {month.format('MMM')}
-      </div>
+      </button>
     );
   }
 }
@@ -77,13 +78,15 @@ export default function MonthNames(props) {
         />
       ))}
       {props.currentRange &&
-        <div
-          className={styles.range}
-          style={{
-            top: top - 1,
-            height: (bottom + 1) - (top - 1)
-          }}
-        />
+        (
+          <div
+            className={styles.range}
+            style={{
+              top: top - 1,
+              height: (bottom + 1) - (top - 1)
+            }}
+          />
+        )
       }
       <MonthSlider
         {...props}

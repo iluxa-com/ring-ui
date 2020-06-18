@@ -51,7 +51,7 @@ describe('Checkbox', () => {
   });
 
   it('should check control', () => {
-    const checkbox = mountCheckbox({checked: true}).instance();
+    const checkbox = mountCheckbox({defaultChecked: true}).instance();
 
     checkbox.input.should.be.checked;
   });

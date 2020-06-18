@@ -1,13 +1,14 @@
-import {Component} from 'react';
+import {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 
-import shortcuts from '../shortcuts/core';
+import shortcuts from './core';
 
-export default class Shortcuts extends Component {
+export default class Shortcuts extends PureComponent {
   static propTypes = {
     map: PropTypes.object.isRequired,
     scope: PropTypes.string.isRequired,
     options: PropTypes.object,
+    disabled: PropTypes.bool,
     children: PropTypes.node
   };
 
@@ -15,13 +16,35 @@ export default class Shortcuts extends Component {
     options: {}
   };
 
-  componentWillMount() {
+  componentDidMount() {
+    if (!this.props.disabled) {
+      this.turnShorcutsOn();
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    const {disabled} = this.props;
+    if (!prevProps.disabled && disabled) {
+      this.turnShorcutsOff();
+    }
+    if (prevProps.disabled && !disabled) {
+      this.turnShorcutsOn();
+    }
+  }
+
+  componentWillUnmount() {
+    if (!this.props.disabled) {
+      this.turnShorcutsOff();
+    }
+  }
+
+  turnShorcutsOn() {
     const {map, scope, options} = this.props;
     shortcuts.bindMap(map, this.props);
     shortcuts.pushScope(scope, options);
   }
 
-  componentWillUnmount() {
+  turnShorcutsOff() {
     const {scope} = this.props;
     shortcuts.unbindScope(scope);
     shortcuts.spliceScope(scope);

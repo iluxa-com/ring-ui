@@ -6,9 +6,11 @@ import {findDOMNode} from 'react-dom';
 import {Simulate} from 'react-dom/test-utils';
 import {mount} from 'enzyme';
 
+
 import simulateCombo from '../../test-helpers/simulate-combo';
 
 import QueryAssist from './query-assist';
+import styles from './query-assist.css';
 
 describe('Query Assist', () => {
   const testQuery = 'oooooooooooo';
@@ -240,7 +242,7 @@ describe('Query Assist', () => {
   });
 
   describe('rendering', () => {
-    const LETTER_CLASS = 'ring-query-assist__letter';
+    const LETTER_CLASS = styles.letter;
 
     it('should render letters', () => {
       const instance = mountQueryAssist().instance();
@@ -309,10 +311,10 @@ describe('Query Assist', () => {
 
       const letters = wrapper.instance().input.queryAll(`.${LETTER_CLASS}`);
 
-      letters[0].should.have.class(`${LETTER_CLASS}_text`);
-      letters[1].should.have.class(`${LETTER_CLASS}_field-value`);
-      letters[2].should.have.class(`${LETTER_CLASS}_field-name`);
-      letters[3].should.have.class(`${LETTER_CLASS}_operator`);
+      letters[0].should.have.class(styles['letter-text']);
+      letters[1].should.have.class(styles['letter-field-value']);
+      letters[2].should.have.class(styles['letter-field-name']);
+      letters[3].should.have.class(styles['letter-operator']);
     });
 
     it('should render last text range with default style when applied', () => {
@@ -330,9 +332,9 @@ describe('Query Assist', () => {
 
       const letters = wrapper.instance().input.queryAll(`.${LETTER_CLASS}`);
 
-      letters[0].should.have.class(`${LETTER_CLASS}_text`);
-      letters[1].should.have.class(`${LETTER_CLASS}_default`);
-      letters[2].should.have.class(`${LETTER_CLASS}_default`);
+      letters[0].should.have.class(styles['letter-text']);
+      letters[1].should.have.class(styles.letterDefault);
+      letters[2].should.have.class(styles.letterDefault);
     });
 
     it('should render last text range with text style when applied', () => {
@@ -349,9 +351,9 @@ describe('Query Assist', () => {
 
       const letters = wrapper.instance().input.queryAll(`.${LETTER_CLASS}`);
 
-      letters[0].should.have.class(`${LETTER_CLASS}_text`);
-      letters[1].should.have.class(`${LETTER_CLASS}_default`);
-      letters[2].should.have.class(`${LETTER_CLASS}_text`);
+      letters[0].should.have.class(styles['letter-text']);
+      letters[1].should.have.class(styles.letterDefault);
+      letters[2].should.have.class(styles['letter-text']);
     });
 
     it('should disable field when component disabled', () => {
@@ -360,7 +362,7 @@ describe('Query Assist', () => {
       }).instance();
 
       instance.input.should.have.attr('contenteditable', 'false');
-      instance.input.should.have.class('ring-input_disabled');
+      instance.input.should.have.class(styles.inputDisabled);
     });
 
     it('should render glass when enabled', () => {
@@ -443,18 +445,18 @@ describe('Query Assist', () => {
     });
 
     it('should close popup with after zero suggestions provided', done => {
+      let currentSuggestions = suggestions;
       const instance = mountQueryAssist({
         dataSource: ({query, caret}) => ({
           query,
           caret,
-          suggestions: this.suggestions
+          suggestions: currentSuggestions
         })
       }).instance();
 
-      this.suggestions = suggestions;
       instance.requestData().
         then(() => {
-          this.suggestions = [];
+          currentSuggestions = [];
           instance.requestData().
             then(() => {
               instance._popup.isVisible().should.be.false;
@@ -476,9 +478,9 @@ describe('Query Assist', () => {
           const list = findDOMNode(instance._popup.list);
           const {length} = suggestions;
 
-          list.queryAll('.ring-list__item').should.have.length(length);
-          list.queryAll('.ring-list__highlight').should.have.length(length);
-          list.queryAll('.ring-list__service').should.have.length(length * TWICE);
+          list.queryAll('[data-test~=ring-list-item]').should.have.length(length);
+          list.queryAll(`.${styles.highlight}`).should.have.length(length);
+          list.queryAll(`.${styles.service}`).should.have.length(length * TWICE);
 
           wrapper.detach();
           document.body.removeChild(container);
@@ -625,7 +627,7 @@ describe('Query Assist', () => {
       wrapper.setProps({
         delay: 100
       }, () => {
-        wrapper.prop('dataSource').reset();
+        wrapper.prop('dataSource').resetHistory();
 
         instance.requestData();
         instance.requestData();
@@ -635,6 +637,21 @@ describe('Query Assist', () => {
         wrapper.prop('dataSource').should.have.been.calledOnce;
       });
 
+    });
+  });
+
+
+  describe('custom actions', () => {
+    it('should allow to pass custom actions', () => {
+      const wrapper = mountQueryAssist({
+        actions: [
+          <div id={'A'} key={'A'}/>,
+          <div id={'B'} key={'B'}/>
+        ]
+      });
+
+      wrapper.find('#A').should.exist;
+      wrapper.find('#B').should.exist;
     });
   });
 });

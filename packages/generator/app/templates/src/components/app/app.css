@@ -1,21 +1,21 @@
-@value unit, font, font-size from "@jetbrains/ring-ui/components/global/global.css";
+@import "@jetbrains/ring-ui/components/global/variables.css";
 
 html,
-.<%= camelCaseName %> {
+.app-root {
   height: 100%;
 }
 
-.<%= camelCaseName %> {
-  composes: font;
-
+.app-root {
   margin: 0;
   padding: 0;
 
-  background: #f0f0f0;
+  background: var(--ring-content-background-color);
 
-  font-size: font-size;
+  font-family: var(--ring-font-family);
+  font-size: var(--ring-font-size);
+  line-height: var(--ring-line-height);
 }
 
-.content {
-  margin: calc(unit * 4);
+.app-content {
+  margin: calc(var(--ring-unit) * 4);
 }

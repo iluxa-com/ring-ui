@@ -5,6 +5,7 @@ import moment from 'moment';
 
 import linearFunction from '../global/linear-function';
 
+
 import units, {dateType, yearScrollSpeed} from './consts';
 import styles from './date-picker.css';
 
@@ -68,7 +69,8 @@ export default class MonthSlider extends PureComponent {
     return (
       <div>
         {years.map(date => (
-          <div
+          <button
+            type="button"
             key={+date}
             className={classes}
             style={{

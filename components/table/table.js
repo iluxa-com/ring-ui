@@ -1,13 +1,6 @@
 /**
  * @name Table
- * @category Components
- * @framework React
- * @extends {ReactComponent}
- * @description Interactive table with selection and keyboard navigation support.
- * @example-file ./table.examples.html
  */
-
-import 'core-js/modules/es6.array.find';
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
@@ -26,16 +19,15 @@ import DraggableRow from './draggable-row';
 import selectionShortcutsHOC from './selection-shortcuts-hoc';
 import disableHoverHOC from './disable-hover-hoc';
 
-export const THEMES = {
-  cleanUI: 'cleanUI'
-};
+const alwaysFalse = () => false;
 
 const DraggableRows = sortableContainer(props => {
   const {
     data, getItemKey, selection, selectable,
     isItemSelectable, onRowFocus, onRowSelect,
-    getItemLevel, isItemCollapsible, isItemCollapsed,
-    onItemCollapse, onItemExpand,
+    getItemLevel, isItemCollapsible, isParentCollapsible,
+    isItemCollapsed, onItemCollapse, onItemExpand,
+    isDisabledSelectionVisible, getCheckboxTooltip,
     ...restProps
   } = props;
 
@@ -54,9 +46,12 @@ const DraggableRows = sortableContainer(props => {
           onFocus={onRowFocus}
           onSelect={onRowSelect}
           collapsible={isItemCollapsible(item)}
+          parentCollapsible={isParentCollapsible(item)}
           collapsed={isItemCollapsed(item)}
           onCollapse={onItemCollapse}
           onExpand={onItemExpand}
+          showDisabledSelection={isDisabledSelectionVisible(item)}
+          checkboxTooltip={getCheckboxTooltip(item)}
           {...restProps}
         />
       ))}
@@ -84,10 +79,12 @@ class Table extends PureComponent {
     alwaysShowDragHandle: PropTypes.bool,
     getItemLevel: PropTypes.func,
     isItemCollapsible: PropTypes.func,
+    isParentCollapsible: PropTypes.func,
     isItemCollapsed: PropTypes.func,
     onItemCollapse: PropTypes.func,
     onItemExpand: PropTypes.func,
-    theme: PropTypes.string,
+    isDisabledSelectionVisible: PropTypes.func,
+    getCheckboxTooltip: PropTypes.func,
 
     // focusSensorHOC
     focused: PropTypes.bool,
@@ -118,11 +115,13 @@ class Table extends PureComponent {
     stickyHeader: true,
     getItemLevel: () => 0,
     isItemCollapsible: () => false,
+    isParentCollapsible: () => false,
     isItemCollapsed: () => false,
     onItemCollapse: () => {},
     onItemExpand: () => {},
-    theme: null,
-    remoteSelection: false
+    remoteSelection: false,
+    isDisabledSelectionVisible: () => {},
+    getCheckboxTooltip: () => {}
   };
 
   state = {
@@ -135,7 +134,7 @@ class Table extends PureComponent {
     document.addEventListener('mouseup', this.onMouseUp);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {data, selection, onSelect, selectable} = this.props;
 
     if (data !== nextProps.data && !this.props.remoteSelection) {
@@ -187,7 +186,8 @@ class Table extends PureComponent {
     this.props.onReorder({data, oldIndex, newIndex});
   };
 
-  onCheckboxChange = checked => {
+  onCheckboxChange = e => {
+    const {checked} = e.target;
     const {selection, onSelect} = this.props;
 
     if (checked) {
@@ -210,9 +210,10 @@ class Table extends PureComponent {
       data, selection, columns, caption, getItemKey, selectable,
       isItemSelectable, getItemLevel, draggable, alwaysShowDragHandle,
       loading, onSort, sortKey, sortOrder, loaderClassName, stickyHeader,
-      stickyHeaderOffset, isItemCollapsible, isItemCollapsed,
-      onItemCollapse, onItemExpand, theme
+      stickyHeaderOffset, isItemCollapsible, isParentCollapsible, isItemCollapsed,
+      onItemCollapse, onItemExpand, isDisabledSelectionVisible, getCheckboxTooltip
     } = this.props;
+
 
     // NOTE: Do not construct new object per render because it causes all rows rerendering
 
@@ -231,58 +232,67 @@ class Table extends PureComponent {
 
     const wrapperClasses = classNames({
       [style.tableWrapper]: true,
-      [style.loading]: loading,
-      [style[theme]]: theme !== null
+      [style.loading]: loading
     });
 
     const classes = classNames(this.props.className, {
       [style.table]: true,
       [style.multiSelection]: selection.getSelected().size > 0,
       [style.userSelectNone]: this.state.userSelectNone,
-      [style.disabledHover]: this.props.disabledHover,
-      [style.selectable]: selectable
+      [style.disabledHover]: this.props.disabledHover
     });
 
     return (
       <div className={wrapperClasses} data-test="ring-table-wrapper">
         {this.state.shortcutsEnabled &&
-          <Shortcuts
-            map={this.props.shortcutsMap}
-            scope={this.state.shortcutsScope}
-          />
+          (
+            <Shortcuts
+              map={this.props.shortcutsMap}
+              scope={this.state.shortcutsScope}
+            />
+          )
         }
 
-        <table className={classes} onMouseDown={this.onMouseDown} data-test="ring-table">
-          <Header {...headerProps}/>
-          <DraggableRows
-            /* Sortable props */
-            useDragHandle
-            disabled={!draggable}
-            helperClass={style.draggingRow}
-            onSortEnd={this.onSortEnd}
-            getItemKey={getItemKey}
+        {/* Handler detects that user holds Shift key */}
+        <div role="presentation" onMouseDown={this.onMouseDown}>
+          <table className={classes} data-test="ring-table">
+            <Header {...headerProps}/>
+            <DraggableRows
+              /* Sortable props */
+              useDragHandle
+              disabled={!draggable}
+              helperClass={style.draggingRow}
+              onSortEnd={this.onSortEnd}
+              getItemKey={getItemKey}
+              shouldCancelStart={alwaysFalse}
 
-            /* Row props */
-            draggable={draggable}
-            alwaysShowDragHandle={alwaysShowDragHandle}
-            data={data}
-            columns={columns}
-            selectable={selectable}
-            isItemSelectable={isItemSelectable}
-            selection={selection}
-            onRowFocus={this.onRowFocus}
-            onRowSelect={this.onRowSelect}
-            getItemLevel={getItemLevel}
-            isItemCollapsible={isItemCollapsible}
-            isItemCollapsed={isItemCollapsed}
-            onItemCollapse={onItemCollapse}
-            onItemExpand={onItemExpand}
-          />
-        </table>
+              /* Row props */
+              draggable={draggable}
+              alwaysShowDragHandle={alwaysShowDragHandle}
+              data={data}
+              columns={columns}
+              selectable={selectable}
+              isItemSelectable={isItemSelectable}
+              selection={selection}
+              onRowFocus={this.onRowFocus}
+              onRowSelect={this.onRowSelect}
+              getItemLevel={getItemLevel}
+              isItemCollapsible={isItemCollapsible}
+              isParentCollapsible={isParentCollapsible}
+              isItemCollapsed={isItemCollapsed}
+              onItemCollapse={onItemCollapse}
+              onItemExpand={onItemExpand}
+              isDisabledSelectionVisible={isDisabledSelectionVisible}
+              getCheckboxTooltip={getCheckboxTooltip}
+            />
+          </table>
+        </div>
 
-        {loading && <div className={style.loadingOverlay}>
-          <Loader className={loaderClassName}/>
-        </div>}
+        {loading && (
+          <div className={style.loadingOverlay}>
+            <Loader className={loaderClassName}/>
+          </div>
+        )}
       </div>
     );
   }

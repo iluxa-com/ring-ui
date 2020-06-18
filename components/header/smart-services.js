@@ -13,9 +13,6 @@ export default class SmartServices extends Component {
     auth: PropTypes.instanceOf(Auth).isRequired
   };
 
-  static allFields = 'id,name,applicationName,homeUrl,iconUrl';
-  static countFields = 'key';
-
   state = {
     visible: true,
     loading: false,
@@ -33,6 +30,9 @@ export default class SmartServices extends Component {
       }
     }).catch(noop);
   }
+
+  static allFields = 'id,name,applicationName,homeUrl,iconUrl';
+  static countFields = 'key';
 
   stopLoading = () => {
     this.setState({loading: false});

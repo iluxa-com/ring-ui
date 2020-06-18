@@ -2,7 +2,14 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
-import Icon, {CheckIcon} from '../icon';
+import dataTests from '../global/data-tests';
+import Avatar, {Size as AvatarSize} from '../avatar/avatar';
+import Checkbox from '../checkbox/checkbox';
+import Icon from '../icon';
+
+import getUID from '../global/get-uid';
+
+import styles from './list.css';
 
 /**
  * @constructor
@@ -11,12 +18,9 @@ import Icon, {CheckIcon} from '../icon';
 
 const RING_UNIT = 8;
 const DEFAULT_PADDING = 16;
+const CHECKBOX_WIDTH = 28;
 
 export default class ListItem extends PureComponent {
-  static defaultProps = {
-    hover: false
-  };
-
   static propTypes = {
     scrolling: PropTypes.bool,
     hover: PropTypes.bool,
@@ -30,7 +34,8 @@ export default class ListItem extends PureComponent {
       PropTypes.element,
       PropTypes.array
     ]),
-    glyph: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    avatar: PropTypes.string,
+    glyph: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     icon: PropTypes.string,
     iconSize: PropTypes.number,
     rightNodes: PropTypes.oneOfType([
@@ -44,92 +49,170 @@ export default class ListItem extends PureComponent {
       PropTypes.array
     ]),
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    title: PropTypes.string,
     level: PropTypes.number,
     rgItemType: PropTypes.number,
-    rightGlyph: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    rightGlyph: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
+    compact: PropTypes.bool,
     onClick: PropTypes.func,
+    onCheckboxChange: PropTypes.func,
     onMouseOver: PropTypes.func,
-    onMouseUp: PropTypes.func
+    onMouseUp: PropTypes.func,
+    'data-test': PropTypes.string
   };
 
-  static defaultProps = {
-    iconSize: Icon.Size.Size18
-  };
+  id = getUID('list-item-');
+
+  stopBubbling = e => e.stopPropagation();
+
+  _isString = val => typeof val === 'string' || val instanceof String;
 
   render() {
-    const {props} = this;
-    const {scrolling, checkbox, glyph, icon, rightGlyph, description, label,
-      details, hover, rgItemType, tabIndex, onClick, onMouseOver, onMouseUp, rightNodes, leftNodes, ...restProps} = props; // eslint-disable-line no-unused-vars, max-len
-    const classes = classNames({
-      'ring-list__item': true,
-      'ring-list__item_action': !props.disabled,
-      'ring-list__item_hover': props.hover && !props.disabled,
-      'ring-list__item_scrolling': scrolling
-    }, props.className);
+    const {
+      scrolling,
+      className,
+      disabled,
+      checkbox,
+      avatar,
+      glyph,
+      icon,
+      rightGlyph,
+      description,
+      label,
+      title,
+      details,
+      hover,
+      rgItemType,
+      level,
+      tabIndex,
+      compact,
+      onClick,
+      onCheckboxChange,
+      onMouseOver,
+      onMouseUp,
+      rightNodes,
+      leftNodes,
+      ...restProps
+    } = this.props;
+
+    const checkable = checkbox !== undefined;
+    const hasLeftNodes = leftNodes || glyph || avatar;
+    const showCheckbox = checkable && (checkbox || !hasLeftNodes || (hover && !disabled));
+
+    const classes = classNames(styles.item, className, {
+      [styles.action]: !disabled,
+      [styles.hover]: hover && !disabled,
+      [styles.compact]: compact,
+      [styles.scrolling]: scrolling,
+      [styles.disabled]: disabled
+    });
+
     const detailsClasses = classNames({
-      'ring-list__item__details': props.details,
-      'ring-list__item__details_padded': props.icon !== undefined ||
-        props.checkbox !== undefined ||
-        props.glyph !== undefined
+      [styles.details]: details,
+      [styles.padded]: icon !== undefined ||
+        checkbox !== undefined ||
+        glyph !== undefined
     });
 
     const style = {
-      paddingLeft: `${(+props.level || 0) * RING_UNIT + DEFAULT_PADDING}px`
+      paddingLeft: `${(+level || 0) * RING_UNIT + DEFAULT_PADDING + (showCheckbox ? CHECKBOX_WIDTH : 0)}px`
     };
 
+    let computedTitle = null;
+    if (this._isString(title)) {
+      // if title is specified and is a string then use it
+      computedTitle = title;
+    } else {
+      // otherwise use label if it is a string;
+      // label can also be an element, use empty string in this case
+      computedTitle = this._isString(label) ? label : '';
+    }
+
+    const dataTest = dataTests({
+      'ring-list-item': (restProps['data-test'] || '').indexOf('ring-list-item') === -1,
+      'ring-list-item-action': !disabled,
+      'ring-list-item-selected': checkbox
+    }, restProps['data-test']);
+
     return (
-      <div
-        tabIndex={tabIndex}
-        onClick={onClick}
-        onMouseOver={onMouseOver}
-        onMouseUp={onMouseUp}
-        className={classes}
-        style={style}
-        data-test="ring-list-item"
-      >
-        <div className="ring-list__item__top">
-          <div className="ring-list__item__left">
-            {checkbox !== undefined && (
-              <CheckIcon
-                className={classNames({
-                  'ring-list__glyph': true,
-                  'ring-list__glyph_checkbox': true,
-                  'ring-list__glyph_hidden': !checkbox
-                })}
-                size={CheckIcon.Size.Size18}
-              />
+      <div className={styles.itemContainer} data-test={dataTest}>
+        {showCheckbox && (
+          <div
+            className={styles.checkboxContainer}
+          >
+            <Checkbox
+              aria-labelledby={this.id}
+              onClick={this.stopBubbling}
+              checked={checkbox}
+              onChange={onCheckboxChange}
+            />
+          </div>
+        )}
+        <button
+          id={this.id}
+          type="button"
+          tabIndex={tabIndex}
+          onClick={onClick}
+          onMouseOver={onMouseOver}
+          onFocus={onMouseOver}
+          onMouseUp={onMouseUp}
+          className={classes}
+          style={style}
+        >
+          <div className={styles.top} onMouseOut={this.stopBubbling} onBlur={this.stopBubbling}>
+            {!showCheckbox && (
+              <div className={styles.left}>
+                {leftNodes}
+                {glyph && (
+                  <Icon
+                    className={styles.glyph}
+                    glyph={glyph}
+                    size={this.props.iconSize}
+                  />
+                )}
+                {avatar && (
+                  <Avatar
+                    className={styles.avatar}
+                    url={avatar}
+                    size={AvatarSize.Size20}
+                  />
+                )}
+              </div>
             )}
-            {glyph && (
-              <Icon
-                className="ring-list__glyph"
-                glyph={glyph}
-                size={this.props.iconSize}
-              />
+
+            <span
+              className={styles.label}
+              title={computedTitle}
+              data-test="ring-list-item-label"
+            >{label}</span>
+
+            {description && (
+              <span
+                className={styles.description}
+                data-test="ring-list-item-description"
+              >{description}</span>
             )}
+
+            <div className={styles.right}>
+              {rightGlyph && (
+                <Icon
+                  className={styles.rightGlyph}
+                  glyph={rightGlyph}
+                  size={this.props.iconSize}
+                />
+              )}
+              {icon && (
+                <div
+                  className={styles.icon}
+                  style={{backgroundImage: `url("${icon}")`}}
+                />
+              )}
+              {rightNodes}
+            </div>
           </div>
 
-          <div className="ring-list__item__label" title={label}>{label}</div>
-          <div className="ring-list__item__description">{description}</div>
-
-          <div className="ring-list__item__right">
-            {rightGlyph && (
-              <Icon
-                className="ring-list__glyph ring-list__glyph_right"
-                glyph={rightGlyph}
-                size={this.props.iconSize}
-              />
-            )}
-            {icon && (
-              <div
-                className="ring-list__icon"
-                style={{backgroundImage: `url("${icon}")`}}
-              />
-            )}
-            {rightNodes}
-          </div>
-        </div>
-
-        {details && <div className={detailsClasses}>{details}</div>}
+          {details && <div className={detailsClasses}>{details}</div>}
+        </button>
       </div>
     );
   }

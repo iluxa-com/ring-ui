@@ -1,12 +1,15 @@
-module.exports = ctx => ({
+module.exports = () => ({
   plugins: [
-    require('postcss-modules-values-replace')({
-      fs: ctx.webpack._compiler.inputFileSystem
-    }),
-    require('postcss-cssnext')({
+    require('postcss-import'),
+    require('postcss-preset-env')({
       features: {
-        calc: {
-          mediaQueries: true
+        stage: 3, // See https://cssdb.org/#staging-process
+        importFrom: require.resolve('@jetbrains/ring-ui/components/global/variables.css'),
+        features: {
+          'nesting-rules': true,
+          'custom-properties': {
+            preserve: true
+          }
         }
       }
     })

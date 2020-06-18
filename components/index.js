@@ -54,7 +54,7 @@ export {
   Profile, SmartProfile,
   Services, SmartServices
 } from './header/header';
-export {default as Heading, H1, H2, H3, H4, H5} from './heading/heading';
+export {default as Heading, H1, H2, H3, H4} from './heading/heading';
 export {default as Http} from './http/http';
 export {default as HubSource} from './hub-source/hub-source';
 export {default as Icon} from './icon';
@@ -106,5 +106,6 @@ export {default as TagsList} from './tags-list/tags-list';
 export {default as TemplateNg} from './template-ng/template-ng';
 export {default as Text} from './text/text';
 export {default as TitleNg} from './title-ng/title-ng';
+export {default as Toggle} from './toggle/toggle';
 export {default as Tooltip} from './tooltip/tooltip';
 export {default as TooltipNg} from './tooltip-ng/tooltip-ng';

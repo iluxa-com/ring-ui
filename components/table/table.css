@@ -1,11 +1,9 @@
-@value global: '../global/global.css';
-@value unit, text-color, gray-color, dark-gray-color, blue-color, light-blue-color, link-hover-color, fixed-z-index, ellipsis from global;
-@value dirty-blue-color: #D4EDFA;
-@value table-border-color: #E6E6E6;
-@value table-background-color: #F0F0F0;
-@value table-header-background-color: #EBEBEB;
-@value table-caption-border-color: #DBDBDB;
-@value box-shadow-color: #F7F7F7;
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
+@value height: calc(4 * unit);
+@value compensate: 2px;
+@value compensated: calc(height - compensate);
 
 .tableWrapper {
   position: relative;
@@ -23,12 +21,16 @@
 
 .headerCell {
   & {
-    padding: 0 calc(unit * 2.5);
+    composes: font-smaller-lower from "../global/global.css";
+
+    box-sizing: border-box;
+    height: calc(unit * 3);
+    padding-right: calc(unit * 5);
 
     text-align: left;
     white-space: nowrap;
 
-    color: dark-gray-color;
+    color: var(--ring-secondary-color);
 
     font-weight: 200;
   }
@@ -40,10 +42,6 @@
   &:last-child {
     width: 100%;
     padding-right: calc(unit * 4);
-  }
-
-  &:first-child {
-    min-width: 297px;
   }
 
   &:first-child:only-child {
@@ -72,109 +70,97 @@
   &.headerCellSortable .sorter {
     display: inline-block;
   }
+}
 
-  & .sorter .icon {
-    top: -2px;
+.sortedUp .icon {
+  transform: rotate(180deg);
+  transform-origin: center 53%;
+}
+
+.caption {
+  padding-top: unit;
+  padding-bottom: 6px;
+
+  text-transform: capitalize;
+
+  color: var(--ring-text-color);
+  border-bottom: none;
+
+  font-size: var(--ring-font-size);
+  font-weight: bold;
+  line-height: var(--ring-line-height-lower);
+}
+
+.tableHead {
+  &::after {
+    position: absolute;
+
+    width: 100%;
+
+    height: 1px;
+
+    content: "";
+
+    background-color: var(--ring-line-color);
   }
 }
 
-.header {
-  & {
-    color: dark-gray-color;
-    background-color: table-header-background-color;
-  }
+.subHeaderFixed {
+  &::after {
+    position: absolute;
+    top: 24px;
 
-  & .headerCell {
-    box-sizing: border-box;
-    height: calc(calc(unit * 5) + 1px);
+    height: 1px;
 
-    border-top: 1px solid table-border-color;
-    box-shadow: inset 0 1px 0 0 box-shadow-color;
-  }
+    content: "";
 
-  & .caption {
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-  }
-
-  & .headerCell .sorter {
-    margin-top: -1px;
+    background-color: var(--ring-line-color);
   }
 }
 
 .subHeader {
-  & {
-    color: gray-color;
-    background-color: table-border-color;
-
-    font-size: 12px;
-  }
-
-  & .headerCell {
-    box-sizing: border-box;
-    height: 25px;
-
-    border-top: 1px solid table-caption-border-color;
-  }
-
-  & .headerCell:first-child {
-    padding-left: calc(unit * 4);
+  &::after {
+    right: calc(unit * 4);
+    left: calc(unit * 4);
   }
 }
 
 .subHeaderFixed {
   position: fixed;
-  z-index: fixed-z-index;
+  z-index: var(--ring-fixed-z-index);
   top: 0;
 
-  & .headerCell {
-    border-bottom: 1px solid table-caption-border-color;
+  opacity: 0.9;
+  background-color: var(--ring-content-background-color);
+
+  &::after {
+    right: 0;
+    left: 0;
   }
 }
 
 .row {
   & {
     outline: none;
-    background-color: table-background-color;
 
-    line-height: 39px;
+    line-height: compensated;
   }
 
   @nest .table:not(.disabledHover) &:hover {
-    background-color: #fff !important;
+    background-color: var(--ring-hover-background-color);
   }
+}
 
-  @nest .table:not(.multiSelection) &.rowFocused,
-  &.rowSelected {
-    background-color: light-blue-color;
-  }
+.rowSelected {
+  background-color: var(--ring-selected-background-color);
+}
 
-  & .cell {
-    border: 1px none table-border-color;
-    border-top-style: solid;
-  }
-
-  &:first-child .cell {
-    border-top-color: table-caption-border-color;
-  }
-
-  &:last-child .cell {
-    border-bottom-style: solid;
-  }
-
-  &.rowFocused .cell {
-    border-color: blue-color;
-    border-bottom-style: solid;
-  }
+.rowFocused {
+  background-color: var(--ring-hover-background-color);
 
   /* stylelint-disable-next-line selector-max-specificity */
-  &.rowFocused + .row .cell {
-    border-top-style: none;
-  }
-
-  /* stylelint-disable-next-line selector-max-specificity */
-  &.rowSelected:not(.rowFocused) + .rowSelected:not(.rowFocused) .cell {
-    border-top-color: dirty-blue-color;
+  & .cell:nth-child(1) {
+    box-shadow: inset 2px 0 var(--ring-main-color);
   }
 }
 
@@ -194,13 +180,17 @@
 
 .cell {
   & {
-    composes: ellipsis;
+    composes: ellipsis from "../global/global.css";
 
     box-sizing: content-box;
-    height: calc(unit * 5);
-    padding: 0 calc(unit * 2.5);
 
-    color: text-color;
+    min-width: 0;
+
+    height: height;
+    padding: 0;
+    padding-right: calc(unit * 5);
+
+    color: var(--ring-text-color);
   }
 
   &:first-child {
@@ -217,8 +207,8 @@
   }
 
   &:first-child {
-    min-width: 297px;
-    max-width: 617px;
+    min-width: calc(unit * 37);
+    max-width: calc(unit * 77);
   }
 
   &:first-child:only-child {
@@ -240,94 +230,55 @@
 
   float: left;
 
-  height: 37px;
-  padding-top: 1px;
-  padding-right: unit;
+  height: 16px;
+  padding-right: compensate;
 
-  @nest .header &,
-  .subHeader & {
-    height: 16px;
+  &.headerMetaColumn {
+    padding-top: 1px;
   }
 }
 
+@value top: -3px;
+
 .dragHandle {
-  position: absolute;
-  top: -11px;
-  left: -24px;
-
-  display: none;
-
-  padding: unit;
+  top: top;
+  left: calc(-2 * unit);
 
   cursor: grab;
 
-  color: gray-color;
-
-  &:hover {
-    color: link-hover-color;
-  }
+  opacity: 0;
 }
 
-.visibleDragHandle {
-  display: block;
+/* override button */
+.dragHandle.dragHandle {
+  position: absolute;
+
+  height: calc(height - top);
+  padding: 0;
 }
 
+.dragHandle.visibleDragHandle,
 .row:hover .dragHandle {
-  display: block;
+  opacity: 1;
+}
+
+.rowCollapseExpandButton {
+  padding-right: calc(unit / 2);
+  padding-left: 7px;
 }
 
 .draggingRow {
-  vertical-align: middle;
+  z-index: var(--ring-overlay-z-index);
 
-  background-color: #fff;
+  background-color: var(--ring-hover-background-color);
 
   & .dragHandle {
-    display: block;
-
     cursor: grabbing;
 
-    color: link-hover-color;
-  }
-}
+    opacity: 1;
 
-.cleanUI {
-  & .tableHead {
-    background-color: inherit;
-  }
-
-  & .header {
-    background-color: inherit;
-
-    & .headerCell {
-      color: text-color;
-      border-top: none;
-      box-shadow: none;
-    }
-  }
-
-  & .subHeader {
-    background-color: inherit;
-
-    & .headerCell {
-      border-top: none;
-      border-bottom: 1px solid table-border-color;
-    }
-  }
-
-  & .metaColumn {
-    height: 32px;
-  }
-
-  & .row {
-    background-color: inherit;
-
-    line-height: 31px;
-
-    & .cell {
-      height: 32px;
-
-      border-top: none;
-      border-bottom: none;
+    & svg {
+      color: var(--ring-main-color);
     }
   }
 }

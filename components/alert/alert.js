@@ -3,24 +3,22 @@ import React, {PureComponent} from 'react';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
-import {
-  ExceptionIcon,
-  CheckmarkIcon,
-  WarningIcon,
-  CloseIcon
-} from '../icon';
+import exceptionIcon from '@jetbrains/icons/exception.svg';
+import checkmarkIcon from '@jetbrains/icons/checkmark.svg';
+import warningIcon from '@jetbrains/icons/warning.svg';
+import closeIcon from '@jetbrains/icons/close.svg';
+
+import Icon from '../icon';
 import Loader from '../loader-inline/loader-inline';
-import Badge from '../badge/badge';
 import {getRect} from '../global/dom';
+import dataTests from '../global/data-tests';
 
 import styles from './alert.css';
 
-const ANIMATION_TIME = 500;
+export const ANIMATION_TIME = 500;
 
 /**
  * @name Alert
- * @category Components
- * @description Use **Alert** to display contextual notifications. If you want to display a stack of notifications, use **Alerts** instead.
  */
 
 /**
@@ -40,9 +38,9 @@ const Type = {
  * @type {Object.<Type, string>}
  */
 const TypeToIcon = {
-  [Type.ERROR]: ExceptionIcon,
-  [Type.SUCCESS]: CheckmarkIcon,
-  [Type.WARNING]: WarningIcon
+  [Type.ERROR]: exceptionIcon,
+  [Type.SUCCESS]: checkmarkIcon,
+  [Type.WARNING]: warningIcon
 };
 
 /**
@@ -50,54 +48,54 @@ const TypeToIcon = {
  * @type {Object.<Type, Icon.Color>}
  */
 const TypeToIconColor = {
-  [Type.ERROR]: ExceptionIcon.Color.RED,
-  [Type.SUCCESS]: CheckmarkIcon.Color.GREEN,
-  [Type.WARNING]: WarningIcon.Color.ORANGE
+  [Type.ERROR]: Icon.Color.RED,
+  [Type.SUCCESS]: Icon.Color.GREEN,
+  [Type.WARNING]: Icon.Color.WHITE
 };
 
 /**
  * @constructor
  * @name Alert
  * @extends {ReactComponent}
- * @example-file ./alert.examples.html
+ */
+/**
+ * **Alert** is a component for displaying contextual notifications. If you want to display a stack of notifications, use **Alerts** instead.
  */
 export default class Alert extends PureComponent {
-  static Type = Type;
-
   static propTypes = {
     timeout: PropTypes.number,
+    /**
+     * Fires when alert starts closing if timeout is out or user clicks "Close" button
+     */
     onCloseRequest: PropTypes.func,
     onClose: PropTypes.func,
-    count: PropTypes.number,
+    isShaking: PropTypes.bool,
     isClosing: PropTypes.bool,
+    /**
+     * Whether an alert is rendered inside an **Alerts** container
+     * or standalone.
+     */
     inline: PropTypes.bool,
     showWithAnimation: PropTypes.bool,
     closeable: PropTypes.bool,
     type: PropTypes.oneOf(Object.values(Type)),
 
     children: PropTypes.node,
-    className: PropTypes.string
+    className: PropTypes.string,
+    captionClassName: PropTypes.string,
+    'data-test': PropTypes.string
   };
 
   /** @override */
   static defaultProps = {
-    /** @type {boolean} */
     closeable: true,
     showWithAnimation: true,
     type: Type.MESSAGE,
-    /**
-     * Whether an alert is rendered inside an {@code Alerts} container
-     * or standalone.
-     * @type {boolean}
-     */
     inline: true,
     isClosing: false,
+    isShaking: false,
     timeout: 0,
     onClose: () => {},
-    /**
-     * Fires when alert starts closing if timeout is out or user clicks "Close" button
-     * @type {?function(SyntheticMouseEvent):undefined}
-     */
     onCloseRequest: () => {}
   };
 
@@ -111,8 +109,8 @@ export default class Alert extends PureComponent {
     }
   }
 
-  componentWillReceiveProps(newProps) {
-    if (newProps.isClosing) {
+  componentDidUpdate() {
+    if (this.props.isClosing) {
       this._close();
     }
   }
@@ -120,6 +118,8 @@ export default class Alert extends PureComponent {
   componentWillUnmount() {
     clearTimeout(this.hideTimeout);
   }
+
+  static Type = Type;
 
   closeRequest = (...args) => {
     const height = getRect(this.node).height;
@@ -149,16 +149,12 @@ export default class Alert extends PureComponent {
   _getCaption() {
     return (
       <span
-        className={styles.caption}
+        className={classNames(styles.caption, this.props.captionClassName)}
         onClick={this._handleCaptionsLinksClick}
+        // We only process clicks on `a` elements, see above
+        role="presentation"
       >
         {this.props.children}
-        {this.props.count > 1 &&
-          <Badge
-            gray
-            className={styles.badge}
-          >{this.props.count}</Badge>
-        }
       </span>
     );
   }
@@ -168,19 +164,19 @@ export default class Alert extends PureComponent {
    * @return {XML|string}
    */
   _getIcon() {
-    const Icon = TypeToIcon[this.props.type];
+    const glyph = TypeToIcon[this.props.type];
 
-    if (Icon) {
+    if (glyph) {
       return (
         <Icon
+          glyph={glyph}
           className={styles.icon}
           color={TypeToIconColor[this.props.type] || Icon.Color.DEFAULT}
-          size={Icon.Size.Size16}
         />
       );
     } else if (this.props.type === Type.LOADING) {
       return (
-        <Loader className={styles.loader}/>
+        <Loader className={styles.loader} theme={Loader.Theme.DARK}/>
       );
     }
 
@@ -192,22 +188,25 @@ export default class Alert extends PureComponent {
   };
 
   render() {
-    const {type, inline, isClosing, showWithAnimation, className} = this.props;
+    const {type, inline, isClosing, isShaking,
+      showWithAnimation, className, 'data-test': dataTest} = this.props;
 
     const classes = classNames(className, {
       [styles.alert]: true,
       [styles.animationOpen]: showWithAnimation,
       [styles.error]: type === 'error',
       [styles.alertInline]: inline,
-      [styles.animationClosing]: isClosing
+      [styles.animationClosing]: isClosing,
+      [styles.animationShaking]: isShaking
     });
 
-    const style = this.state.height ? {marginTop: -this.state.height} : null;
+    const style = this.state.height ? {marginBottom: -this.state.height} : null;
 
     return (
       <div
         className={classes}
-        data-test="alert"
+        data-test={dataTests('alert', dataTest)}
+        data-test-type={type}
         style={style}
         ref={this.storeAlertRef}
       >
@@ -217,13 +216,13 @@ export default class Alert extends PureComponent {
           this.props.closeable
             ? (
               <button
+                type="button"
                 className={styles.close}
                 data-test="alert-close"
+                aria-label="close alert"
                 onClick={this.closeRequest}
               >
-                <CloseIcon
-                  size={CloseIcon.Size.Size16}
-                />
+                <Icon glyph={closeIcon}/>
               </button>
             )
             : ''

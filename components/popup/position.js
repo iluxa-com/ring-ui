@@ -28,9 +28,7 @@ export const Directions = {
  */
 export const DEFAULT_DIRECTIONS = [
   Directions.BOTTOM_RIGHT, Directions.BOTTOM_LEFT, Directions.TOP_LEFT, Directions.TOP_RIGHT,
-  Directions.RIGHT_TOP, Directions.RIGHT_BOTTOM, Directions.LEFT_TOP, Directions.LEFT_BOTTOM,
-  // Fall back to the first option
-  Directions.BOTTOM_RIGHT
+  Directions.RIGHT_TOP, Directions.RIGHT_BOTTOM, Directions.LEFT_TOP, Directions.LEFT_BOTTOM
 ];
 
 /**
@@ -69,7 +67,7 @@ function getScrollingCoordinates(container) {
   };
 }
 
-function getPositionStyles(popup, anchorRect, anchorLeft, anchorTop) {
+function getPositionStyles(popup, anchorRect, anchorLeft, anchorTop, offset) {
   const popupWidth = popup.clientWidth;
   const popupHeight = popup.clientHeight;
 
@@ -84,18 +82,18 @@ function getPositionStyles(popup, anchorRect, anchorLeft, anchorTop) {
   const popupBottomToTop = anchorBottom - popupHeight;
 
   return {
-    [Directions.BOTTOM_RIGHT]: {left: anchorLeft, top: anchorBottom},
-    [Directions.BOTTOM_LEFT]: {left: popupRightToLeft, top: anchorBottom},
-    [Directions.BOTTOM_CENTER]: {left: popupHorizontalCenter, top: anchorBottom},
-    [Directions.TOP_RIGHT]: {left: anchorLeft, top: popupTop},
-    [Directions.TOP_LEFT]: {left: popupRightToLeft, top: popupTop},
-    [Directions.TOP_CENTER]: {left: popupHorizontalCenter, top: popupTop},
-    [Directions.LEFT_BOTTOM]: {left: popupLeft, top: anchorTop},
-    [Directions.LEFT_TOP]: {left: popupLeft, top: popupBottomToTop},
-    [Directions.LEFT_CENTER]: {left: popupLeft, top: popupVerticalCenter},
-    [Directions.RIGHT_BOTTOM]: {left: anchorRight, top: anchorTop},
-    [Directions.RIGHT_TOP]: {left: anchorRight, top: popupBottomToTop},
-    [Directions.RIGHT_CENTER]: {left: anchorRight, top: popupVerticalCenter}
+    [Directions.BOTTOM_RIGHT]: {left: anchorLeft, top: anchorBottom + offset},
+    [Directions.BOTTOM_LEFT]: {left: popupRightToLeft, top: anchorBottom + offset},
+    [Directions.BOTTOM_CENTER]: {left: popupHorizontalCenter, top: anchorBottom + offset},
+    [Directions.TOP_RIGHT]: {left: anchorLeft, top: popupTop - offset},
+    [Directions.TOP_LEFT]: {left: popupRightToLeft, top: popupTop - offset},
+    [Directions.TOP_CENTER]: {left: popupHorizontalCenter, top: popupTop - offset},
+    [Directions.LEFT_BOTTOM]: {left: popupLeft - offset, top: anchorTop},
+    [Directions.LEFT_TOP]: {left: popupLeft - offset, top: popupBottomToTop},
+    [Directions.LEFT_CENTER]: {left: popupLeft - offset, top: popupVerticalCenter},
+    [Directions.RIGHT_BOTTOM]: {left: anchorRight + offset, top: anchorTop},
+    [Directions.RIGHT_TOP]: {left: anchorRight + offset, top: popupBottomToTop},
+    [Directions.RIGHT_CENTER]: {left: anchorRight + offset, top: popupVerticalCenter}
   };
 }
 
@@ -132,9 +130,11 @@ function horizontalOverflow(styles, scrollingCoordinates, attrs) {
 export const positionPropKeys = [
   'directions',
   'autoPositioning',
+  'autoCorrectTopOverflow',
   'sidePadding',
   'top',
   'left',
+  'offset',
   'maxHeight',
   'minWidth'
 ];
@@ -144,6 +144,68 @@ const defaultcontainerRect = {
   left: 0
 };
 
+function handleTopOffScreen({
+  sidePadding, styles, anchorRect, maxHeight, popupScrollHeight, direction
+}) {
+  const BORDER_COMPENSATION = 1;
+  const {TOP_LEFT, TOP_RIGHT, TOP_CENTER, RIGHT_TOP, LEFT_TOP} = Directions;
+
+  const openedToTop = [TOP_LEFT, TOP_RIGHT, TOP_CENTER, RIGHT_TOP, LEFT_TOP].includes(direction);
+
+  if (!openedToTop) {
+    return styles;
+  }
+
+  const isAttachedToAnchorTop = [TOP_LEFT, TOP_CENTER, TOP_RIGHT].includes(direction);
+  const attachingPointY = (isAttachedToAnchorTop ? anchorRect.top : anchorRect.bottom);
+
+  const effectiveHeight = maxHeight ? Math.min(popupScrollHeight, maxHeight) : popupScrollHeight;
+  const hypotheticalTop = attachingPointY - effectiveHeight;
+
+  if (hypotheticalTop <= sidePadding) {
+    styles.top = sidePadding;
+    styles.maxHeight = attachingPointY - sidePadding + BORDER_COMPENSATION;
+  }
+
+  return styles;
+}
+
+
+export function maxHeightForDirection(direction, anchorNode, containerNode) {
+  // eslint-disable-next-line no-param-reassign
+  containerNode = containerNode || document.documentElement;
+  const domRect = anchorNode.getBoundingClientRect();
+  const containerRect = containerNode.getBoundingClientRect();
+  const topMaxHeight = Math.max(domRect.top - containerRect.top, 0);
+  const containerHeight = Math.max(containerRect.height,
+    // XXX
+    // If container is the document element
+    // then we check client height too because we may have situation when
+    // "height" from "getBoundingClientRect" less then "clientHeight".
+    containerNode === document.documentElement ? containerNode.clientHeight : 0);
+  const bottomMaxHeight = Math.max(containerHeight - (topMaxHeight + domRect.height), 0);
+  switch (direction) {
+    case Directions.TOP_LEFT:
+    case Directions.TOP_CENTER:
+    case Directions.TOP_RIGHT:
+      return topMaxHeight;
+    case Directions.BOTTOM_LEFT:
+    case Directions.BOTTOM_CENTER:
+    case Directions.BOTTOM_RIGHT:
+    case Directions.LEFT_BOTTOM:
+    case Directions.RIGHT_BOTTOM:
+      return bottomMaxHeight;
+    case Directions.LEFT_TOP:
+    case Directions.RIGHT_TOP:
+      return domRect.height + bottomMaxHeight;
+    case Directions.RIGHT_CENTER:
+    case Directions.LEFT_CENTER:
+      return (domRect.height / 2) + bottomMaxHeight;
+    default:
+      return null;
+  }
+}
+
 export default function position(attrs) {
   const {
     popup,
@@ -151,17 +213,20 @@ export default function position(attrs) {
     container,
     directions,
     autoPositioning,
-    sidePadding, // eslint-disable-line no-unused-vars
+    sidePadding,
     top,
     left,
+    offset,
     maxHeight,
-    minWidth
+    minWidth,
+    autoCorrectTopOverflow = true
   } = attrs;
 
   let styles = {
     top: 0,
     left: 0
   };
+  let chosenDirection = null;
 
   const containerRect = container !== null ? getRect(container) : defaultcontainerRect;
   const defaultAnchor = container !== null ? container : document.body;
@@ -171,25 +236,34 @@ export default function position(attrs) {
   const anchorTop = anchorRect.top + scroll.top + top - containerRect.top;
 
   if (popup) {
-    const directionsMatrix = getPositionStyles(popup, anchorRect, anchorLeft, anchorTop);
+    const directionsMatrix = getPositionStyles(popup, anchorRect, anchorLeft, anchorTop, offset);
     if (!autoPositioning || directions.length === 1) {
       styles = directionsMatrix[directions[0]];
+      chosenDirection = directions[0];
     } else {
-      const directionStylesSortedByIncreasingOverflow = directions.
-        filter(direction => directionsMatrix[direction]).
-        map(direction => directionsMatrix[direction]).
-        sort((firstDirectionStyles, secondDirectionStyles) => {
-          const firstDirectionOverflow =
-            verticalOverflow(firstDirectionStyles, scroll, attrs) +
-            horizontalOverflow(firstDirectionStyles, scroll, attrs);
-          const secondDirectionOverflow =
-            verticalOverflow(secondDirectionStyles, scroll, attrs) +
-            horizontalOverflow(secondDirectionStyles, scroll, attrs);
-          return firstDirectionOverflow - secondDirectionOverflow;
+      const sortedByIncreasingOverflow = directions.
+        // Fall back to the first option
+        concat(directions[0]).filter(direction => directionsMatrix[direction]).
+        map(direction => ({styles: directionsMatrix[direction], direction})).
+        sort(({styles: stylesA}, {styles: stylesB}) => {
+          const overflowA =
+            verticalOverflow(stylesA, scroll, attrs) +
+            horizontalOverflow(stylesA, scroll, attrs);
+          const overflowB =
+            verticalOverflow(stylesB, scroll, attrs) +
+            horizontalOverflow(stylesB, scroll, attrs);
+          return overflowA - overflowB;
         });
-
-      styles = directionStylesSortedByIncreasingOverflow[0];
+      styles = sortedByIncreasingOverflow[0].styles;
+      chosenDirection = sortedByIncreasingOverflow[0].direction;
     }
+
+    // because of the anchor negative margin top and left also may become negative
+    ['left', 'top'].forEach(key => {
+      if (styles[key] < 0) {
+        styles[key] = 0;
+      }
+    });
   }
 
   if (maxHeight === MaxHeight.SCREEN || maxHeight === 'screen') {
@@ -199,11 +273,22 @@ export default function position(attrs) {
     styles.maxHeight = maxHeight;
   }
 
+  if (autoCorrectTopOverflow) {
+    styles = handleTopOffScreen({
+      sidePadding,
+      styles,
+      anchorRect,
+      maxHeight,
+      direction: chosenDirection,
+      popupScrollHeight: popup.scrollHeight
+    });
+  }
+
   if (minWidth === MinWidth.TARGET || minWidth === 'target') {
     styles.minWidth = anchorRect.width;
   } else if (minWidth) {
-    styles.minWidth = minWidth;
+    styles.minWidth = anchorRect.width < minWidth ? minWidth : anchorRect.width;
   }
 
-  return styles;
+  return {styles, direction: chosenDirection};
 }

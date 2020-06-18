@@ -2,13 +2,18 @@ import 'dom4';
 import React from 'react';
 import {mount} from 'enzyme';
 
-import styles from '../auth-dialog/auth-dialog.css';
+import styles from './auth-dialog.css';
 
 import AuthDialog from './auth-dialog';
 
 describe('AuthDialog', () => {
   const defaultProps = {show: true, text: 'Foo'};
-  const mountAuthDialog = props => mount(<AuthDialog {...props}/>);
+  let wrapper;
+  const mountAuthDialog = props => {
+    wrapper = mount(<AuthDialog {...props}/>);
+    return wrapper;
+  };
+  afterEach(() => wrapper.unmount());
 
   const getContainer = () => document.querySelector('*[data-test="ring-auth-dialog"]');
 

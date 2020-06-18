@@ -4,27 +4,27 @@
 //
 // Markup:
 // <div class="ring-panel">
-//  <button class="ring-button_primary ring-button">Accept</button>
-//  <button class="ring-button">Decline</button>
+//  <rg-button>Accept</button>
+//  <rg-button>Decline</button>
 // </div>
 
 .ring-panel {
   position: relative;
   margin-top: 2*$ring-unit;
   padding: 2*$ring-unit 0 2*$ring-unit 2*$ring-unit;
-  background-color: rgba(37, 183, 255, 0.1);
+  border-top: 1px solid rgba(0, 42, 76, .1);
 
   &:empty {
     display: none;
   }
 
-  .ring-button {
-    margin-right: 2*$ring-unit;
+  button {
+    margin-right: $ring-unit;
   }
 }
 
-.ring-panel_transparent {
-  background: none;
+.ring-panel_no-border {
+  border-top: none;
 }
 
 .ring-panel_black {

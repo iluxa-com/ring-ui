@@ -1,8 +1,6 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
-
-import {ServicesIcon} from '../icon';
+import servicesIcon from '@jetbrains/icons/services-20px.svg';
 
 import Dropdown from '../dropdown/dropdown';
 import Popup from '../popup/popup';
@@ -11,18 +9,32 @@ import TrayIcon from './tray-icon';
 import ServicesLink from './services-link';
 import styles from './services.css';
 
-const Anchor = ({active}) => (
-  <TrayIcon
-    active={active}
-    glyph={ServicesIcon}
-  />
-);
+const makeAnchor = loading => {
+  const Anchor = ({active}) => (
+    <TrayIcon
+      loader={loading}
+      active={active}
+      icon={servicesIcon}
+      aria-label="Services"
+    />
+  );
 
-Anchor.propTypes = {
-  active: PropTypes.bool
+  Anchor.propTypes = {
+    active: PropTypes.bool
+  };
+
+  return Anchor;
 };
 
 export default class Services extends PureComponent {
+  static sort = (a, b) => {
+    const aApplicationName = a.applicationName || '';
+    const bApplicationName = b.applicationName || '';
+
+    return aApplicationName.localeCompare(bApplicationName) ||
+      a.name.localeCompare(b.name);
+  };
+
   static propTypes = {
     className: PropTypes.string,
     clientId: PropTypes.string,
@@ -33,31 +45,20 @@ export default class Services extends PureComponent {
   };
 
   static Link = ServicesLink;
-  static sort = (a, b) => {
-    const aApplicationName = a.applicationName || '';
-    const bApplicationName = b.applicationName || '';
-
-    return aApplicationName.localeCompare(bApplicationName) ||
-      a.name.localeCompare(b.name);
-  };
 
   serviceIsActive = service => service.id === this.props.clientId;
 
   render() {
-    // eslint-disable-next-line no-unused-vars
-    const {className, clientId, loading, services, initShown, ...props} = this.props;
-
-    const classes = classNames(className, {
-      ['ring-icon_loading']: loading
-    });
+    const {clientId, loading, services, initShown, ...props} = this.props;
 
     if (!services) {
       return (
         <TrayIcon
           {...props}
+          loader={loading}
           active={loading}
-          className={classes}
-          glyph={ServicesIcon}
+          icon={servicesIcon}
+          aria-label="Services"
         />
       );
     }
@@ -70,11 +71,13 @@ export default class Services extends PureComponent {
     return (
       <Dropdown
         {...props}
-        anchor={Anchor}
-        className={className}
+        anchor={makeAnchor(loading)}
         initShown={initShown}
       >
-        <Popup className={styles.services}>
+        <Popup
+          className={styles.services}
+          top={-3}
+        >
           {servicesWithIcons.map(service => {
             const isActive = this.serviceIsActive(service);
 

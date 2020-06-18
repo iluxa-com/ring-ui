@@ -1,15 +1,18 @@
-@value unit, font-size-smaller, gray-color, blue-color, light-blue-color, dark-gray-color, error-color, link-hover-color, text-color, border-radius, ease, overlay-z-index, fixed-z-index from  "../global/global.css";
-@value soft-blue-color: #cef;
-@value border-color: #dfe5eb;
+@import "../global/variables.css";
+
+@value unit, resetButton from "../global/global.css";
 @value cellSize: calc(unit * 3);
 @value calHeight: calc(unit * 36);
-@value calWidth: calc(unit * 38);
+@value calWidth: calc(unit * 37);
 @value yearHeight: calc(unit * 4);
-@value yearWidth: calc(unit * 7);
+@value yearWidth: calc(unit * 6);
+
+:root {
+  /* stylelint-disable-next-line color-no-hex */
+  --ring-date-picker-hover-color: #b3dfff;
+}
 
 .container {
-  position: relative;
-
   display: inline-block;
 }
 
@@ -21,7 +24,7 @@
 .hoverable:hover {
   transition: none;
 
-  color: link-hover-color;
+  color: var(--ring-link-hover-color);
 }
 
 .datePicker.datePicker {
@@ -41,19 +44,17 @@
 }
 
 .clear {
-  position: relative;
-  z-index: overlay-z-index;
-  top: -3px;
-  right: calc(unit * 5 + 1px);
-
   cursor: pointer;
-  transition: opacity ease;
+  transition: opacity var(--ring-ease);
 
   opacity: 0.3;
-  color: dark-gray-color;
 }
 
-.clear:hover {
+.datePicker:hover .clear {
+  opacity: 0.5;
+}
+
+.datePicker .clear:hover {
   transition: none;
 
   opacity: 1;
@@ -64,16 +65,54 @@
   text-align: left;
 }
 
-.input.input {
-  width: calc(unit * 17);
+.datePopup * {
+  box-sizing: border-box;
+}
+
+.filterWrapper {
+  composes: filterWrapper from "../select/select-popup.css";
+
+  display: flex;
+}
+
+.filter {
+  composes: filter from "../select/select-popup.css";
+}
+
+.filterIcon {
+  composes: filterIcon from "../select/select-popup.css";
+}
+
+.fromInput {
+  position: relative;
+
+  flex-basis: calc(unit * 13);
+  flex-grow: 0;
+  flex-shrink: 0;
+
+  &::after {
+    position: absolute;
+    right: unit;
+
+    content: '—';
+
+    line-height: calc(4 * unit - 3px);
+  }
+}
+
+.toInput {
+  flex-basis: calc(unit * 13);
+  flex-grow: 1;
+  flex-shrink: 0;
+
+  width: calc(unit * 13);
 }
 
 .weekdays {
-  margin-top: calc(unit * 2);
+  height: calc(unit * 4);
+  padding: 5px calc(unit * 2) 0;
 
-  color: dark-gray-color;
-
-  line-height: normal;
+  color: var(--ring-secondary-color);
 }
 
 .weekday {
@@ -86,7 +125,7 @@
 }
 
 .weekend {
-  color: error-color;
+  color: var(--ring-error-color);
 }
 
 .calendar {
@@ -97,7 +136,7 @@
   width: calWidth;
   height: calHeight;
 
-  box-shadow: 0 -1px border-color;
+  box-shadow: 0 -1px var(--ring-line-color);
 }
 
 .months {
@@ -124,7 +163,6 @@
 .month > * {
   flex-shrink: 0;
 
-  box-sizing: border-box;
   height: cellSize;
 
   line-height: cellSize;
@@ -134,6 +172,7 @@
   /* IE workaround, see https://github.com/philipwalton/flexbugs#7-flex-basis-doesnt-account-for-box-sizingborder-box */
 
   width: calc(unit * 12);
+
   padding-left: calc(unit * 0.5);
 
   text-align: left;
@@ -148,60 +187,195 @@
 }
 
 .day {
+  composes: resetButton;
+
   position: relative;
 
   flex-basis: cellSize;
 
   cursor: pointer;
-  transition: background-color ease, color ease;
+  transition: background-color var(--ring-ease), color var(--ring-ease);
   text-align: center;
+
+  &::before,
+  &::after {
+    pointer-events: none;
+  }
 }
 
-.day.between {
+.between {
   transition: none;
 
-  background-color: light-blue-color;
+  background-color: var(--ring-selected-background-color);
 }
 
-.day.activeBetween {
+.activeBetween {
   transition: none;
 
-  background-color: soft-blue-color;
+  background-color: var(--ring-date-picker-hover-color);
 }
 
-.day.current {
-  color: #fff;
-  border-radius: border-radius;
-  background-color: blue-color;
+.current {
+  color: var(--ring-dark-text-color);
+  border-radius: var(--ring-border-radius);
+  background-color: var(--ring-main-color);
 }
 
-.day.active {
+.active {
   transition: none;
 
-  color: link-hover-color;
-  border-radius: border-radius;
-  background-color: soft-blue-color;
+  color: var(--ring-link-hover-color);
+  border-radius: var(--ring-border-radius);
+  background-color: var(--ring-date-picker-hover-color);
 }
 
-.day.from {
-  border-radius: border-radius 0 0 border-radius;
+.disabled {
+  cursor: not-allowed;
+
+  color: var(--ring-disabled-color);
 }
 
-.day.to {
-  border-radius: 0 border-radius border-radius 0;
+.from {
+  border-radius: var(--ring-border-radius) 0 0 var(--ring-border-radius);
 }
 
-.day.from.to {
-  border-radius: border-radius;
+.to {
+  border-radius: 0 var(--ring-border-radius) var(--ring-border-radius) 0;
 }
 
-.day.empty {
+.from.to {
+  border-radius: var(--ring-border-radius);
+}
+
+.Monday {
+  position: relative;
+
+  &::before,
+  &::after {
+    position: absolute;
+
+    width: calc(unit * 2);
+    height: 100%;
+
+    content: '';
+    transition: background-color var(--ring-ease);
+  }
+
+  &::before {
+    right: 100%;
+  }
+
+  &::after {
+    bottom: 100%;
+    left: 700%;
+  }
+
+  &.spread {
+    &::before,
+    &::after {
+      transition: none;
+
+      background-color: var(--ring-selected-background-color);
+    }
+  }
+
+  &.activeSpread {
+    &::before,
+    &::after {
+      transition: none;
+
+      background-color: var(--ring-date-picker-hover-color);
+    }
+  }
+}
+
+.first {
+  position: relative;
+
+  &::before,
+  &::after {
+    position: absolute;
+    z-index: var(--ring-invisible-element-z-index);
+
+    width: calc(unit * 23);
+    height: calc(unit * 8);
+
+    content: '';
+    transition: background-color var(--ring-ease);
+  }
+
+  &::before {
+    right: 100%;
+    bottom: 0;
+  }
+
+  &::after {
+    bottom: 100%;
+    left: 0;
+  }
+
+  &.Monday {
+    &::after {
+      height: calc(unit * 5);
+    }
+  }
+
+  & + .Tuesday {
+    position: relative;
+
+    &::before {
+      position: absolute;
+      z-index: var(--ring-invisible-element-z-index);
+      top: calc(unit * -8);
+      left: 600%;
+
+      width: calc(unit * 2);
+      height: 100%;
+
+      content: '';
+      transition: background-color var(--ring-ease);
+    }
+  }
+}
+
+.Friday,
+.Saturday,
+.Sunday {
+  &::before,
+  &::after {
+    height: calc(unit * 5);
+  }
+}
+
+.spread {
+  &::before,
+  &::after,
+  & + .Tuesday::before {
+    transition: none;
+
+    background-color: var(--ring-selected-background-color);
+  }
+}
+
+.activeSpread {
+  &::before,
+  &::after,
+  & + .Tuesday::before {
+    transition: none;
+
+    background-color: var(--ring-date-picker-hover-color);
+  }
+}
+
+.empty {
   pointer-events: none;
 
   opacity: 0;
 }
 
 .today {
+  position: relative;
+
   font-weight: bold;
 }
 
@@ -212,16 +386,21 @@
 
   content: '•';
 
-  font-size: font-size-smaller;
+  font-size: var(--ring-font-size-smaller);
 }
 
-.day.today::before {
-  top: unit;
+.day > .today::before {
+  top: 4px;
   left: 0;
 
   width: 100%;
 
   text-align: center;
+}
+
+.year.today::before {
+  top: -1px;
+  left: 2px;
 }
 
 .monthNames {
@@ -232,11 +411,13 @@
 
   width: calc(unit * 6);
 
-  box-shadow: -1px 0 border-color;
+  background-color: var(--ring-content-background-color);
+  box-shadow: -1px 0 var(--ring-line-color);
 }
 
 .monthName {
   composes: hoverable;
+  composes: resetButton;
 
   position: relative;
 
@@ -247,27 +428,31 @@
 }
 
 .monthSlider {
+  composes: resetButton;
+
   position: absolute;
-  z-index: fixed-z-index;
+  z-index: var(--ring-fixed-z-index);
   right: 0;
   left: -1px;
+
+  width: calc(100% + 1px);
 
   height: calc(unit * 6);
 
   cursor: grab;
 
-  opacity: 0.1;
-  background-color: blue-color;
+  opacity: 0.17;
+  background-color: var(--ring-main-color);
 }
 
 .monthSlider:hover {
-  opacity: 0.15;
+  opacity: 0.3;
 }
 
-.monthSlider.dragging {
+.dragging.dragging {
   cursor: grabbing;
 
-  opacity: 0.25;
+  opacity: 0.35;
 }
 
 .range {
@@ -276,7 +461,7 @@
 
   width: 2px;
 
-  background-color: blue-color;
+  background-color: var(--ring-main-color);
 }
 
 .years {
@@ -286,19 +471,25 @@
 
   width: yearWidth;
 
-  box-shadow: -1px 0 border-color;
+  background-color: var(--ring-content-background-color);
+  box-shadow: -1px 0 var(--ring-line-color);
+
+  font-size: var(--ring-font-size-smaller);
 }
 
 .year {
   composes: hoverable;
+  composes: resetButton;
 
   position: relative;
+
+  width: 100%;
 
   height: yearHeight;
 
   text-align: center;
 
-  color: dark-gray-color;
+  color: var(--ring-secondary-color);
 
   line-height: yearHeight;
 }
@@ -307,9 +498,9 @@
   cursor: auto;
   transition: none;
 
-  color: text-color;
+  color: var(--ring-text-color);
 }
 
 .currentYear:hover {
-  color: text-color;
+  color: var(--ring-text-color);
 }

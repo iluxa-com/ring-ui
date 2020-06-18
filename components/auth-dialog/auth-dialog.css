@@ -1,4 +1,6 @@
-@value unit, font, font-size, error-color from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .dialog.dialog {
   width: auto;
@@ -6,7 +8,7 @@
 }
 
 .content {
-  composes: font;
+  composes: font from "../global/global.css";
 
   display: flex;
   align-items: center;
@@ -46,5 +48,5 @@
 .error {
   text-align: center;
 
-  color: error-color;
+  color: var(--ring-error-color);
 }

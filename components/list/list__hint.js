@@ -1,5 +1,8 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import classnames from 'classnames';
+
+import styles from './list.css';
 
 /**
  * @constructor
@@ -16,7 +19,8 @@ export default class ListHint extends PureComponent {
   render() {
     return (
       <span
-        className="ring-list__item ring-list__item_hint"
+        className={classnames(styles.item, styles.hint)}
+        data-test="ring-list-hint"
       >{this.props.label}</span>
     );
   }

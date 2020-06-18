@@ -7,12 +7,14 @@ const ora = require('ora');
 
 const getFreePort = require('../app/get-free-port');
 const getLatestVersions = require('../app/get-latest-versions');
+const processPackageJson = require('../app/process-package-json');
 
 const packages = [
   '@jetbrains/ring-ui',
   '@jetbrains/logos',
   '@jetbrains/icons',
   '@jetbrains/generator-ring-ui',
+  '@jetbrains/hub-widget-ui',
   'hub-dashboard-addons'
 ];
 const BASE_GENERATOR_PATH = path.resolve(
@@ -20,10 +22,17 @@ const BASE_GENERATOR_PATH = path.resolve(
   '../templates'
 );
 
+const INDENT = 2;
+
 const additionalDevServerOptions = `
     headers: {
       'Access-Control-Allow-Origin': '*'
-    },`;
+    },
+    disableHostCheck: true,`;
+
+const additionalWebpackPlugins = `,
+    new (require('copy-webpack-plugin'))(['manifest.json'], {})
+`;
 
 module.exports = class HubWidgetGenerator extends Generator {
   prompting() {
@@ -62,8 +71,11 @@ module.exports = class HubWidgetGenerator extends Generator {
           projectName,
           camelCaseName,
           additionalDevServerOptions,
+          additionalWebpackPlugins,
           port
         }, answers, versions);
+
+        console.log('Generating package with given parameters:', this.props);
       }).
       then(() => {
         if (spinner) {
@@ -100,16 +112,24 @@ module.exports = class HubWidgetGenerator extends Generator {
       this.destinationPath('package.json'),
       {
         process: content => {
-          const pkg = JSON.parse(content);
-
-          pkg.config.components = './src';
-
-          console.log('>>>', this.props);
-          pkg.dependencies['hub-dashboard-addons'] =
-            this.props.hubDashboardAddons;
-
-          const SPACES = 2;
-          return JSON.stringify(pkg, null, SPACES);
+          const packageJson = processPackageJson(
+            this.props,
+            JSON.parse(content)
+          );
+          const newPackageJson = Object.assign({}, packageJson, {
+            config: Object.assign({}, packageJson.config, {
+              components: './src'
+            }),
+            dependencies: Object.assign({}, packageJson.dependencies, {
+              'hub-dashboard-addons': this.props.hubDashboardAddons,
+              '@jetbrains/hub-widget-ui': this.props.jetbrainsHubWidgetUi
+            }),
+            scripts: Object.assign({}, packageJson.scripts, {
+              build: 'webpack -p', // Widgets with sourcemaps take to much space
+              dist: `npm run build && rm -f ${this.props.projectName}.zip && zip -r -j ${this.props.projectName}.zip ./dist`
+            })
+          });
+          return JSON.stringify(newPackageJson, null, INDENT);
         }
       }
     );

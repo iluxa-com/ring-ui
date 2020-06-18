@@ -8,33 +8,10 @@ import ErrorMessage from '../error-message-ng/error-message-ng';
 import Permissions from '../permissions-ng/permissions-ng';
 import MessageBundle from '../message-bundle-ng/message-bundle-ng';
 
+import styles from './error-page-ng.css';
+
 /**
  * @name Error Page Ng
- * @category Legacy Angular Components
- * @description Displays an error page, e.g. 404 Not Found.
- * @example
-   <example name="Error Page Ng">
-     <file name="index.html" disable-auto-size>
-      <div ng-app="Ring.error-page" ng-strict-di>
-          <div class="app" rg-error-page-background>
-              <div rg-error-page="{error: {status: 403}}"></div>
-          </div>
-      </div>
-     </file>
-     <file name="index.css">
-       body {
-          margin: 0;
-       }
-     </file>
-     <file name="index.js" webpack="true">
-        import angular from 'angular';
-        import AngularRoute from 'angular-route';
-        import ErrorPageNG from '@jetbrains/ring-ui/components/error-page-ng/error-page-ng';
-        import authMock from '@jetbrains/ring-ui/components/auth-ng/auth-ng.mock';
-
-        angular.module('Ring.auth', [AngularRoute, ErrorPageNG]).provider('auth', authMock);
-     </file>
-   </example>
  */
 
 const angularModule = angular.module('Ring.error-page', [
@@ -85,6 +62,12 @@ angularModule.provider('errorPageConfiguration', function errorPageConfiguration
 
 angularModule.factory('getErrorPagePresentation', RingMessageBundle => error => {
   const presentationModels = {
+    401: {
+      status: 401,
+      title: RingMessageBundle.errorpage_401(),
+      description: RingMessageBundle.errorpage_401msg(),
+      icon: PermissionIcon
+    },
     404: {
       status: 404,
       title: RingMessageBundle.errorpage_404(),
@@ -234,7 +217,18 @@ angularModule.directive('rgErrorPage', [
             scope.error = getErrorPagePresentation(error);
             scope.links = errorPageConfiguration.links;
 
-            const template = require('./error-page-ng.html');
+            const template = `
+              <div class="${styles.errorPageNg}">
+                <rg-error-message 
+                  code="{{ error.status }}" 
+                  message="{{ error.title }}" 
+                  links="links"
+                  icon="{{ error.icon }}"
+                >
+                  <span>{{ error.description }}</span>
+                </rg-error-message>
+              </div>
+            `;
             const el = $compile(angular.element(template))(scope);
             iElement.append(el);
             if (errorPageBackgroundCtrl) {

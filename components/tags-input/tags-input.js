@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import {findDOMNode} from 'react-dom';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
@@ -7,22 +6,18 @@ import getEventKey from '../global/get-event-key';
 import Select from '../select/select';
 import TagsList from '../tags-list/tags-list';
 import Caret from '../caret/caret';
-import '../input-size/input-size.scss';
 import memoize from '../global/memoize';
 import rerenderHOC from '../global/rerender-hoc';
 
-import './tags-input.scss';
+import styles from './tags-input.css';
 
 function noop() {}
 
 /**
  * @name Tags Input
- * @category Components
- * @constructor
- * @description Displays a tags input field.
- * @extends {ReactComponent}
- * @example-file ./tags-input.examples.html
  */
+
+const POPUP_VERTICAL_SHIFT = 2;
 
 export default class TagsInput extends Component {
   static propTypes = {
@@ -50,9 +45,12 @@ export default class TagsInput extends Component {
     disabled: PropTypes.bool,
     autoOpen: PropTypes.bool,
     renderOptimization: PropTypes.bool,
+    legacyMode: PropTypes.bool,
+    filter: PropTypes.oneOfType([PropTypes.bool, PropTypes.shape({fn: PropTypes.func})]),
 
     loadingMessage: PropTypes.string,
-    notFoundMessage: PropTypes.string
+    notFoundMessage: PropTypes.string,
+    allowAddNewTags: PropTypes.bool
   };
 
   static defaultProps = {
@@ -65,10 +63,12 @@ export default class TagsInput extends Component {
     canNotBeEmpty: false,
     disabled: false,
     autoOpen: false,
-    renderOptimization: true
+    renderOptimization: true,
+    legacyMode: false,
+    allowAddNewTags: false,
+    filter: {fn: () => true},
+    placeholder: 'Select an option'
   };
-
-  static ngModelStateField = 'tags';
 
   state = {
     tags: [],
@@ -79,7 +79,7 @@ export default class TagsInput extends Component {
     activeIndex: 0
   };
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this.updateStateFromProps(this.props);
   }
 
@@ -91,15 +91,21 @@ export default class TagsInput extends Component {
     }
   }
 
-  componentWillReceiveProps(props) {
+  UNSAFE_componentWillReceiveProps(props) {
     this.updateStateFromProps(props);
   }
+
+  static ngModelStateField = 'tags';
+
+  nodeRef = node => {
+    this.node = node;
+  };
 
   ngModelStateField = TagsInput.ngModelStateField;
 
   getInputNode() {
     if (!this.input) {
-      this.input = findDOMNode(this.select.filter); // eslint-disable-line react/no-find-dom-node
+      this.input = this.select.filter;
       this.caret = new Caret(this.input);
     }
     return this.input;
@@ -121,12 +127,17 @@ export default class TagsInput extends Component {
   };
 
   addTag = tag => {
-    const tags = this.state.tags.concat([tag]);
-    this.setState({tags});
+    const isUniqueTag = this.state.tags.filter(item => tag.key === item.key).length === 0;
     this.select.clear();
     this.select.filterValue('');
-    this.props.onAddTag({tag});
-    this.setActiveIndex();
+
+    if (isUniqueTag) {
+      this.setState(prevState => ({
+        tags: prevState.tags.concat([tag])
+      }));
+      this.props.onAddTag({tag});
+      this.setActiveIndex();
+    }
   };
 
   onRemoveTag(tagToRemove) {
@@ -194,12 +205,22 @@ export default class TagsInput extends Component {
   };
 
   handleKeyDown = event => {
+    const key = getEventKey(event);
+    const isInputFocused = () => event.target.matches(this.getInputNode().tagName);
+
+    if (key === ' ' && this.props.allowAddNewTags) {
+      event.stopPropagation();
+      const value = this.getInputNode().value;
+      if (value !== '') {
+        this.handleTagCreation(value);
+      }
+      return true;
+    }
+
     if (this.select._popup.isVisible()) {
       return true;
     }
 
-    const key = getEventKey(event);
-    const isInputFocused = () => event.target.matches(this.getInputNode().tagName);
 
     if (key === 'ArrowLeft') {
       if (this.getInputNode() && this.caret.getPosition() > 0) {
@@ -247,8 +268,8 @@ export default class TagsInput extends Component {
 
   handleRemove = memoize(tag => () => this.onRemoveTag(tag));
 
-  nodeRef = node => {
-    this.node = node;
+  handleTagCreation = label => {
+    this.addTag({key: label, label});
   };
 
   selectRef = el => {
@@ -256,58 +277,67 @@ export default class TagsInput extends Component {
   };
 
   render() {
+    const {focused, tags, activeIndex} = this.state;
+    const {legacyMode, disabled, canNotBeEmpty, allowAddNewTags, filter} = this.props;
     const classes = classNames(
-      'ring-tags-input',
+      styles.tagsInput,
       {
-        'ring-tags-input_disabled': this.props.disabled,
-        'ring-tags-input_focused': this.state.focused
+        [styles.tagsInputDisabled]: disabled,
+        [styles.tagsInputFocused]: focused,
+        [styles.tagsInputLegacyMode]: legacyMode
       },
       this.props.className);
 
     return (
       <div
+        // it transfers focus to input
+        role="presentation"
         className={classes}
         onKeyDown={this.handleKeyDown}
         onClick={this.clickHandler}
         ref={this.nodeRef}
       >
-
-        {this.state.tags && this.state.tags.length > 0 &&
         <TagsList
-          tags={this.state.tags}
-          activeIndex={this.state.activeIndex}
-          disabled={this.props.disabled}
-          canNotBeEmpty={this.props.canNotBeEmpty}
+          tags={tags}
+          activeIndex={activeIndex}
+          disabled={disabled}
+          canNotBeEmpty={canNotBeEmpty}
           handleRemove={this.handleRemove}
-          className="ring-tags-input__tags-list"
+          className={styles.tagsList}
+          tagClassName={styles.tag}
           handleClick={this.handleClick}
-        />}
+        >
+          <Select
+            ref={this.selectRef}
+            type={Select.Type.INPUT_WITHOUT_CONTROLS}
+            inputPlaceholder={this.props.placeholder}
+            data={this.state.suggestions}
+            className={classNames(styles.tagsSelect)}
+            onSelect={this.addTag}
+            onFocus={this._focusHandler}
+            onBlur={this._blurHandler}
+            renderOptimization={this.props.renderOptimization}
+            add={allowAddNewTags ? {prefix: 'Add new tag'} : undefined}
+            onAdd={allowAddNewTags ? this.handleTagCreation : undefined}
+            filter={filter}
+            maxHeight={this.props.maxPopupHeight}
+            minWidth={this.props.minPopupWidth}
+            top={POPUP_VERTICAL_SHIFT}
+            loading={this.state.loading}
+            onFilter={this.loadSuggestions}
+            onBeforeOpen={this.loadSuggestions}
+            onKeyDown={this.handleKeyDown}
+            disabled={this.props.disabled}
 
-        <Select
-          ref={this.selectRef}
-          type={Select.Type.INPUT}
-          label={this.props.placeholder}
-          data={this.state.suggestions}
-          className="ring-input-size_md"
-          onSelect={this.addTag}
-          onFocus={this._focusHandler}
-          onBlur={this._blurHandler}
-          renderOptimization={this.props.renderOptimization}
-          filter={{
-            fn: () => true
-          }}
-          maxHeight={this.props.maxPopupHeight}
-          minWidth={this.props.minPopupWidth}
-          loading={this.state.loading}
-          onFilter={this.loadSuggestions}
-          onBeforeOpen={this.loadSuggestions}
-          onKeyDown={this.handleKeyDown}
-          disabled={this.props.disabled}
+            loadingMessage={this.props.loadingMessage}
+            notFoundMessage={this.props.notFoundMessage}
+          />
+        </TagsList>
 
-          loadingMessage={this.props.loadingMessage}
-          notFoundMessage={this.props.notFoundMessage}
-        />
-      </div>);
+        {!legacyMode && <div className={styles.underline}/>}
+        {!legacyMode && <div className={styles.focusUnderline}/>}
+      </div>
+    );
   }
 }
 

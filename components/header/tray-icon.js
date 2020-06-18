@@ -2,34 +2,30 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
-import Icon from '../icon';
+import Button from '../button/button';
 
 import styles from './header.css';
 
 export default class TrayIcon extends Component {
   static propTypes = {
-    ...Icon.propTypes,
-    active: PropTypes.bool,
-    rotated: PropTypes.bool
+    ...Button.propTypes,
+    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]).isRequired,
+    rotatable: PropTypes.bool
   };
 
   static defaultProps = {
-    ...Icon.defaultProps,
-    active: false,
-    rotated: false,
-    size: Icon.Size.Size18
+    ...Button.defaultProps,
+    theme: Button.Theme.DARK
   };
 
   render() {
-    const {className, active, rotated, ...restProps} = this.props;
-    const classes = classNames(
-      {[styles.rotatedIcon]: rotated},
-      active ? styles.activeIcon : styles.icon,
-      className
-    );
-
+    const {className, rotatable: rotatable, ...restProps} = this.props;
+    const classes = classNames(styles.icon, className, {
+      [styles.rotatable]: rotatable,
+      [styles.rotated]: rotatable && restProps.active
+    });
     return (
-      <Icon
+      <Button
         {...restProps}
         className={classes}
       />

@@ -1,5 +1,6 @@
 import angular from 'angular';
-import {render} from 'react-dom';
+
+import {render, hydrate} from 'react-dom';
 import React from 'react';
 
 import {RerenderableSelect} from '../select/select';
@@ -10,6 +11,7 @@ class SelectLazy {
     this.ctrl = ctrl;
     this.props = props || {};
     this.type = type;
+    this.node = container;
     this._popup = {
       isVisible: angular.noop
     };
@@ -18,15 +20,9 @@ class SelectLazy {
     this.render();
   }
 
-  render(props) {
-    this.reactSelect = <RerenderableSelect {...Object.assign({}, this.props, props || {})}/>;
-    this.props = this.reactSelect.props;
-
-    if (this.type !== 'dropdown') {
-      const ReactDOMServer = require('react-dom/server');
-      this.container.innerHTML = ReactDOMServer.renderToStaticMarkup(this.reactSelect);
-    }
-  }
+  onClick = () => {
+    this._clickHandler();
+  };
 
   rerender(props = {}) {
     for (const prop in props) {
@@ -49,14 +45,25 @@ class SelectLazy {
     this.container.removeEventListener('click', this.onClick);
   }
 
-  onClick = () => {
-    this._clickHandler();
-  };
+  render(props) {
+    this.reactSelect = <RerenderableSelect {...Object.assign({}, this.props, props || {})}/>;
+    this.props = this.reactSelect.props;
+
+    if (this.type !== 'dropdown') {
+      const ReactDOMServer = require('react-dom/server');
+      this.container.innerHTML = ReactDOMServer.renderToString(this.reactSelect);
+    }
+  }
 
   _clickHandler() {
     this.detachEvents();
-    this.ctrl.selectInstance = render(this.reactSelect, this.container);
-    this.ctrl.selectInstance._clickHandler();
+    if (this.type === 'dropdown') {
+      this.ctrl.selectInstance = render(this.reactSelect, this.container);
+      // In "dropdown" mode we don't click select itself, so need to force click handler
+      this.ctrl.selectInstance._clickHandler();
+    } else {
+      this.ctrl.selectInstance = hydrate(this.reactSelect, this.container);
+    }
   }
 }
 

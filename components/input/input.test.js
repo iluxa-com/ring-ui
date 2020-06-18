@@ -4,19 +4,34 @@ import {shallow, mount} from 'enzyme';
 import Input from './input';
 
 describe('Input', () => {
-  const shallowInput = params => shallow(<Input {...params}/>);
-  const mountInput = params => mount(<Input {...params}/>);
+  let input;
+  const inputRef = el => {
+    input = el;
+  };
+  const shallowInput = props => shallow(<Input {...props}/>);
+  const mountInput = props => mount(
+    <Input
+      inputRef={inputRef}
+      {...props}
+    />
+  );
 
   it('should create component', () => {
     mountInput().should.have.type(Input);
   });
 
+  it('should wrap children with div', () => {
+    shallowInput().should.have.tagName('div');
+  });
+
   it('should create input by default', () => {
-    shallowInput().should.have.tagName('input');
+    mountInput();
+    input.should.match('input');
   });
 
   it('should create textarea with multiline option', () => {
-    shallowInput({multiline: true}).should.have.tagName('textarea');
+    mountInput({multiline: true});
+    input.should.match('textarea');
   });
 
   it('should use passed className', () => {

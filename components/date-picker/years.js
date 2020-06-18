@@ -1,10 +1,10 @@
-/* eslint-disable react/jsx-no-bind */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import moment from 'moment';
 
 import linearFunction from '../global/linear-function';
+
 
 import styles from './date-picker.css';
 import units, {dateType, DOUBLE, HALF, yearDuration} from './consts';
@@ -84,7 +84,8 @@ export default class Years extends PureComponent {
         }}
       >
         {years.map(item => (
-          <div
+          <button
+            type="button"
             key={+item}
             className={classNames(
               styles.year,
@@ -101,7 +102,7 @@ export default class Years extends PureComponent {
             }}
           >
             {item.format('YYYY')}
-          </div>
+          </button>
         ))}
       </div>
     );

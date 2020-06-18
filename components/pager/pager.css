@@ -1,4 +1,6 @@
-@value unit, dark-gray-color from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .pager {
   user-select: none;
@@ -11,9 +13,9 @@
 .link {
   display: inline-block;
 
-  margin-right: calc(unit * 4);
+  margin-right: calc(unit * 2);
 }
 
 .linkDisabled {
-  color: dark-gray-color;
+  color: var(--ring-secondary-color);
 }

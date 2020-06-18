@@ -1,44 +1,16 @@
 import angular from 'angular';
 import 'dom4';
 
-import {resolveRelativeURL} from '../global/url';
-import {Color, Size} from '../icon/icon__constants';
-import '../icon/icon.scss';
+import {Color} from '../icon/icon__constants';
+import TemplateNg from '../template-ng/template-ng';
+import styles from '../icon/icon.css';
 
 /**
  * @name Icon Ng
- * @category Legacy Angular Components
- * @description Provides an Angular wrapper for Icon.
- * @example
-    <example name="Icon Ng">
-      <file name="index.html">
-        <div ng-app="TestApp" ng-strict-di ng-controller="testCtrl">
-          <rg-icon glyph="{{icon}}" size="14"></rg-icon>
-          <rg-icon glyph="{{icon}}"></rg-icon>
-          <rg-icon glyph="{{icon}}" color="ORANGE"></rg-icon>
-          <rg-icon glyph="{{icon}}" color="{{'BLUE'}}" loading="true"></rg-icon>
-          <rg-icon glyph="{{icon}}" size="64"></rg-icon>
-          <rg-icon glyph="{{error}}" height="80" width="100"></rg-icon>
-        </div>
-      </file>
-    <file name="index.js" webpack="true">
-      import angular from 'angular';
-      import IconNG from '@jetbrains/ring-ui/components/icon-ng/icon-ng';
-      import ButtonNG from '@jetbrains/ring-ui/components/button-ng/button-ng';
-      import {CheckmarkIcon, WarningIcon} from '@jetbrains/ring-ui/components/icon';
-
-      angular.module('TestApp', [ButtonNG, IconNG]).controller('testCtrl', function($scope) {
-        $scope.icon = CheckmarkIcon;
-        $scope.error = WarningIcon;
-      });
-    </file>
-  </example>
  */
 
-const angularModule = angular.module('Ring.icon', []);
-const CLASS_PREFIX = 'ring-icon_';
-const LOADING_CLASS = `${CLASS_PREFIX}loading`;
-const DEFAULT_SIZE = Size.Size32;
+const angularModule = angular.module('Ring.icon', [TemplateNg]);
+const BASE64_PREFIX = 'data:image/svg+xml;base64,';
 
 angularModule.directive('rgIcon', function rgIconDirective() {
   return {
@@ -51,25 +23,34 @@ angularModule.directive('rgIcon', function rgIconDirective() {
       height: '@?',
       width: '@?'
     },
-    template: require('./icon-ng.html'),
+    template: `<span class="${styles.icon}" rg-template="normalizedGlyph" rg-template-class="${styles.glyph}"></span>`,
     controller: $scope => {
+      function decodeBase64IfNeeded(glyph) {
+        // This hack allows passing SVG content as string from angular templates like
+        // <rg-icon glyph="data:image/svg+xml;base64,PHN2ZyB4bWx...></rg-icon>
+        const isEncoded = glyph.indexOf(BASE64_PREFIX) === 0;
+        return isEncoded ? window.atob(glyph.replace(BASE64_PREFIX, '')) : glyph;
+      }
+
       $scope.$watch('glyph', value => {
-        $scope.glyphPath = resolveRelativeURL(value);
+        if (!value) {
+          return;
+        }
+        $scope.normalizedGlyph = decodeBase64IfNeeded(value);
       });
     },
     link: function link(scope, iElement, iAttrs) {
-      iAttrs.$addClass('ring-icon');
+      iAttrs.$addClass('ring-icon'); // TODO: We keep this class for now for compatibility reasons (styles overrides)
 
       scope.$watch('loading', value => {
         if (value) {
-          iAttrs.$addClass(LOADING_CLASS);
+          iAttrs.$addClass(styles.loading);
         } else {
-          iAttrs.$removeClass(LOADING_CLASS);
+          iAttrs.$removeClass(styles.loading);
         }
       });
 
-      scope.$watch(
-        () => scope.color && Color[scope.color] && CLASS_PREFIX + Color[scope.color],
+      scope.$watch(() => scope.color && Color[scope.color] && styles[Color[scope.color]],
         (colorClass, prevColorClass) => {
           if (colorClass) {
             iAttrs.$addClass(colorClass);
@@ -83,21 +64,20 @@ angularModule.directive('rgIcon', function rgIconDirective() {
       );
 
       scope.$watchGroup(['size', 'width', 'height'], ([size, width, height]) => {
-        if (!width && !height) {
-          const sizeString = `${size || DEFAULT_SIZE}px`;
-          scope.style = {
-            width: sizeString,
-            height: sizeString
-          };
+        const svgNode = iElement[0].querySelector('svg');
+
+        if (size && !width && !height) {
+          const sizeString = `${size}px`;
+          const style = `width: ${sizeString}; height: ${sizeString};`;
+          svgNode.setAttribute('style', style);
           return;
         }
 
-        scope.style = {};
         if (width) {
-          scope.style.width = `${width}px`;
+          svgNode.setAttribute('style', `width: ${width}px;`);
         }
         if (height) {
-          scope.style.height = `${height}px`;
+          svgNode.setAttribute('style', `height: ${height}px;`);
         }
       });
     }

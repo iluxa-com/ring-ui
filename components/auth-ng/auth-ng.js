@@ -4,9 +4,6 @@ import Auth from '../auth/auth';
 
 /**
  * @name Auth Ng
- * @category Legacy Angular Components
- * @description Provides an Angular wrapper for Auth.
- * @example-file ./auth-ng.examples.html
  */
 const angularModule = angular.module('Ring.auth', []);
 
@@ -56,7 +53,9 @@ angularModule.provider('auth', function provider($httpProvider) {
         return authInstance.promise.
           then(() => authInstance.auth.requestToken()).
           then(accessToken => {
-            config.headers.Authorization = `Bearer ${accessToken}`;
+            if (accessToken) {
+              config.headers.Authorization = `Bearer ${accessToken}`;
+            }
             return config;
           });
       },
