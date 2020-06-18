@@ -3,14 +3,10 @@ import PropTypes from 'prop-types';
 
 import styles from './tab-trap.css';
 
-export const FOCUSABLE_ELEMENTS = 'input, button:not([data-trap-button]), select, textarea, a[href], *[tabindex]';
+export const FOCUSABLE_ELEMENTS = 'input, button, select, textarea, a[href], *[tabindex]:not([data-trap-button]):not([data-scrollable-container])';
 
 /**
  * @name TabTrap
- * @category Components
- * @tags Ring UI Language
- * @description Disallows tabbing out of a designated area.
- * @example-file ./tab-trap.examples.html
  */
 
 export default class TabTrap extends Component {
@@ -32,7 +28,10 @@ export default class TabTrap extends Component {
 
     if (this.props.autoFocusFirst) {
       this.focusFirst();
-    } else {
+    } else if (
+      !this.props.trapDisabled &&
+      (!this.node || !this.node.contains(this.previousFocusedNode))
+    ) {
       this.trapWithoutFocus = true;
       this.trapButtonNode.focus();
     }
@@ -113,7 +112,6 @@ export default class TabTrap extends Component {
   };
 
   render() {
-    // eslint-disable-next-line no-unused-vars
     const {children, trapDisabled, autoFocusFirst, focusBackOnClose, ...restProps} = this.props;
 
     if (trapDisabled) {
@@ -132,8 +130,10 @@ export default class TabTrap extends Component {
         ref={this.containerRef}
         {...restProps}
       >
-        <button
-          type="button"
+        <div
+          // It never actually stays focused
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
           ref={this.trapButtonRef}
           className={styles.trapButton}
           onFocus={this.focusLastIfEnabled}
@@ -141,9 +141,10 @@ export default class TabTrap extends Component {
           data-trap-button
         />
         {children}
-        <button
-          type="button"
-          className={styles.trapButton}
+        <div
+          // It never actually stays focused
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
           onFocus={this.focusFirst}
           data-trap-button
         />

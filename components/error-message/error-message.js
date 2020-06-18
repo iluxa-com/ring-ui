@@ -3,24 +3,18 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 import Icon from '../icon';
-import {Color, Size} from '../icon/icon__constants';
+import {Size} from '../icon/icon__constants';
 
 import styles from './error-message.css';
 
 
 /**
  * @name Error Message
- * @category Components
- * @tags Ring UI Language
- * @framework React
- * @constructor
- * @description Displays an error message centered both vertically and horizontally inside the parent container.
- * @example-file ./error-message.examples.html
  */
 
 export default class ErrorMessage extends Component {
   static propTypes = {
-    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     code: PropTypes.string,
     message: PropTypes.string,
     description: PropTypes.string,
@@ -40,7 +34,7 @@ export default class ErrorMessage extends Component {
             className={styles.icon}
             glyph={icon}
             size={Size.Size64}
-            color={Color.GRAY}
+            suppressSizeWarning
           />
         )}
         <div className={styles.content}>

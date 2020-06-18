@@ -7,13 +7,15 @@
   "npmClient": "yarn",
   "version": "independent",
   "command": {
+    "bootstrap": {
+      "npmClientArgs": ["--force", "--check-files"]
+    },
     "init": {
       "exact": true
     },
     "publish": {
       "ignoreChanges": [
-        "@ring-ui/docs",
-        "@ring-ui/gemini"
+        "@ring-ui/hermione"
       ]
     }
   }

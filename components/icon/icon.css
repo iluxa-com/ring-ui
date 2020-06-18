@@ -1,5 +1,7 @@
 @import "../global/variables.css";
 
+@value unit from "../global/global.css";
+
 .icon {
   display: inline-block;
 
@@ -31,6 +33,20 @@
 
   &[width='20'] {
     vertical-align: -2px;
+  }
+
+  &.compatibilityMode {
+    width: calc(unit * 2);
+    height: calc(unit * 2);
+    margin-right: 0;
+    margin-left: 0;
+  }
+}
+
+/* HACK: This media query hack makes styles applied for WebKit browsers only */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .glyph {
+    width: auto; /* Safari size bug workaround, see https://youtrack.jetbrains.com/issue/RG-1983 */
   }
 }
 

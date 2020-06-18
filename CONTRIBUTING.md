@@ -1,14 +1,8 @@
----
-title: Contributing
-category: Docs
-order: 1
----
-
 ### Environment setup
 
 1. (macOS only) Install Xcode Command Line Tools: `xcode-select --install`
 2. Install Node.js
-3. Install [yarn](http://yarnpkg.cn/en/docs/install)
+3. Install [yarn](https://yarnpkg.com/en/docs/install)
 4. Bootstrap the packages: `yarn bootstrap`
 5. (Optional, macOS and Linux) Install the [status bar indicator](https://github.com/roman01la/anybar-webpack#known-apps) app to receive webpack build notifications.
 
@@ -31,15 +25,6 @@ By default, documentation is built using the `development` environment. Use the 
  * **hub** (Hub server URI)
  * **clientId** (Ring UI service client ID in Hub)
 
-You can change them by the following means (in order of precedence):
-
-1. Command line switch: `npm <start|run build> -- --env.<param> <value>`
-Example: `npm start -- --env.port 8765`
-2. Persistently using NPM: `npm config set @ring-ui/docs:<param> <value>`
-Example: `npm config set @ring-ui/docs:port 8765`
-3. Persistently for a given environment: `npm config set @ring-ui/docs:<environment>:<param> <value>`  
-Example: `npm config set @ring-ui/docs:development:port 8765`
-
 ### Contributing
 
 To add a new component, issue one of the following commands after changing to the `components` directory:
@@ -61,15 +46,15 @@ Instead of jQuery Ring UI uses modern DOM APIs, [DOM 4 polyfill](https://github.
 
 To enable the `Wallaby.js` test runner follow these steps:
  
-1. Download and install the [Wallaby.js plugin](http://wallabyjs.com/) for WebStorm.
+1. Download and install the [Wallaby.js plugin](https://wallabyjs.com/) for WebStorm.
 2. Make sure Node.js is available at `/usr/local/bin/node`, if not – create a symlink.  
 3. Run the `Wallaby` configuration in WebStorm.
 
 ### Visual regression testing
 
-*Run the development server with `npm start` before executing the commands listed below*
+Run the development server with `yarn start` before executing the commands listed below*
 
-Ring UI uses [Gemini](https://ru.bem.info/tools/testing/gemini) for visual regression testing. Gemini works by taking screenshots and comparing them to existing reference images. 
+Ring UI uses [Hermione](https://github.com/gemini-testing/hermione) for visual regression testing. Hermione works by taking screenshots and comparing them to existing reference images. 
 
 We use [Sauce Labs](https://saucelabs.com/) as a cloud Selenium grid. In order to use it on your local machine, you need to have a Sauce Labs account. **Note that simply logging in to Sauce Labs with a GitHub account is not enough, you need to create a regular account.** 
 
@@ -79,9 +64,16 @@ export SAUCE_USERNAME=yourlogin
 export SAUCE_ACCESS_KEY=yourkey
 ```
 
-After you make some visual changes, run `npm run gemini-test` to make sure there are no regressions.
+After you make some visual changes, run `npm run hermione-test` to make sure there are no regressions.
 
 To update the reference images for a certain component (for example, `alert`):
+`yarn run hermione-gather --grep Components/Alert`.
 
-1. `cd packages/gemini`
-2. `npm run gemini-gather ../../components/alert/*.gemini.js`.
+### Accessibility audit
+
+It is very important for web components to be accessible for everyone. We have some accessibility tests set up.
+
+To check current status on CI you may check [teamcity configuration](https://teamcity.jetbrains.com/buildConfiguration/JetBrainsUi_RingUi_A11yAudit).
+
+To run tests locally, run `yarn run a11y-audit`. Also, there is "Accessibility" tab on storybook pages, 
+so every component could be inspected via running storybook (`npm start`) and then checking this tab.

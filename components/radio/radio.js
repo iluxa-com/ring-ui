@@ -7,16 +7,9 @@ import RadioItem, {RadioContext} from './radio__item';
 
 /**
  * @name Radio
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @description Displays a radio button. Adopted from [react-radio-group](https://github.com/chenglou/react-radio-group).
- * @example-file ./radio.examples.html
  */
 
 export default class Radio extends Component {
-  static Item = RadioItem;
-
   static propTypes = {
     name: PropTypes.string,
     disabled: PropTypes.bool,
@@ -28,6 +21,8 @@ export default class Radio extends Component {
     onChange: PropTypes.func,
     children: PropTypes.node.isRequired
   };
+
+  static Item = RadioItem;
 
   uid = getUID('ring-radio-');
 

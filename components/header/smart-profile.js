@@ -13,14 +13,13 @@ import Profile from './profile';
 const CERTIFICATE_MISMATCH_HEADER = 'x-client-certificate-token-mismatch';
 
 export default class SmartProfile extends PureComponent {
-  static Size = Profile.Size;
-
   static propTypes = {
     auth: PropTypes.instanceOf(Auth).isRequired,
     className: PropTypes.string,
     translations: PropTypes.object,
     profileUrl: PropTypes.string,
-    size: Profile.propTypes.size
+    size: Profile.propTypes.size,
+    round: Profile.propTypes.round
   };
 
   state = {
@@ -33,6 +32,8 @@ export default class SmartProfile extends PureComponent {
   componentDidMount() {
     this.requestUser();
   }
+
+  static Size = Profile.Size;
 
   login = async () => {
     this.setState({loading: true});

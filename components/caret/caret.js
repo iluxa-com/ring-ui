@@ -2,36 +2,6 @@ import {getRect} from '../global/dom';
 
 /**
  * @name Caret
- * @category Utilities
- * @tags Ring UI Language
- * @description Allows manipulation of the caret position in a text box or a contenteditable element. Ported from [jquery-caret](https://github.com/accursoft/caret/).
- * @see https://github.com/princed/caret
- * @example
-   <example name="Caret">
-    <file name="index.html">
-      <textarea id="test-input" class="ring-input">
-      Lorem ipsum
-      dolor sit amet
-      </textarea>
-      <div>
-        <a href="" id="cursor-action" class="ring-link">Set caret position</a>
-      </div>
-    </file>
-    <file name="index.js">
-      import '@jetbrains/ring-ui/components/input/input.scss';
-      import '@jetbrains/ring-ui/components/link/link__legacy.css';
-      import Caret from '@jetbrains/ring-ui/components/caret/caret';
-
-      const targetEl = document.getElementById('test-input');
-      const caret = new Caret(targetEl);
-
-      document.getElementById('cursor-action').addEventListener('click', event => {
-        caret.focus();
-        caret.setPosition(4);
-        event.preventDefault();
-      })
-    </file>
-   </example>
  */
 
 export default class Caret {
@@ -71,15 +41,11 @@ export default class Caret {
 
   /**
    * Get caret position index
-   * @param {Object} [params]
-   * @param {boolean} params.avoidFocus
    * @return {number}
    */
-  getPosition(params = {}) {
+  getPosition() {
     if (this.isContentEditable()) {
-      if (!params.avoidFocus) {
-        this.focus();
-      }
+      this.focus();
 
       const selection = window.getSelection();
 
@@ -88,24 +54,60 @@ export default class Caret {
       }
 
       const range1 = selection.getRangeAt(0);
-
-      if (range1.startOffset !== range1.endOffset) {
-        return -1;
-      }
-
       const range2 = range1.cloneRange();
 
       range2.selectNodeContents(this.target);
       range2.setEnd(range1.endContainer, range1.endOffset);
 
+      if (range1.startOffset !== range1.endOffset) {
+        return {startOffset: range1.startOffset,
+          endOffset: range1.endOffset,
+          position: range2.toString().length};
+      }
       return range2.toString().length;
     }
 
-    if (this.target.selectionStart !== this.target.selectionEnd) {
-      return -1;
-    }
-
     return this.target.selectionStart;
+  }
+
+  /**
+   * Get relative position of query
+   * @param  {Node} curNode
+   * @param {number} position
+   * @return {{_correctedPosition: number, _curNode: Node}}
+   */
+  getRelativePosition(curNode, position) {
+    let curPos = 0;
+    let _curNode = curNode;
+    const nodeTypeText = 3;
+    if (!_curNode) {
+      return {_curNode: this.target, _correctedPosition: position};
+    }
+    if (position === 0) {
+      while (_curNode.nodeType !== nodeTypeText) {
+        _curNode = _curNode.childNodes[0];
+      }
+      const _correctedPosition = position;
+      return {_curNode, _correctedPosition};
+    }
+    let i = -1;
+    if (_curNode && _curNode.nodeType !== undefined) {
+      while (curPos < position && _curNode.nodeType !== nodeTypeText) {
+        i++;
+        if (_curNode.childNodes[i] !== null && _curNode.childNodes[i]) {
+          curPos += _curNode.childNodes[i].textContent.length;
+          if (curPos >= position) {
+            _curNode = _curNode.childNodes[i];
+            curPos -= _curNode.textContent.length;
+            i = -1;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+    const _correctedPosition = position - curPos;
+    return {_curNode, _correctedPosition};
   }
 
   /**
@@ -116,21 +118,37 @@ export default class Caret {
   setPosition(position) {
     const isContentEditable = this.isContentEditable();
     let correctedPosition;
-
-    if (position === -1) {
-      const value = isContentEditable
-        ? this.target.textContent
-        : this.constructor.normalizeNewlines(this.target.value);
-      correctedPosition = value.length;
-    } else {
-      correctedPosition = position;
+    let curNode = this.target && this.target.childNodes[0];
+    if (position !== undefined) {
+      if (position.startOffset !== undefined) {
+        const range = new Range();
+        const start = this.getRelativePosition(curNode, position.startOffset);
+        range.setStart(start._curNode, start._correctedPosition);
+        const end = this.getRelativePosition(curNode, position.endOffset);
+        range.setEnd(end._curNode, end._correctedPosition);
+        correctedPosition = range;
+      } else if (position === -1) {
+        const value = isContentEditable
+          ? this.target.textContent
+          : this.constructor.normalizeNewlines(this.target.value);
+        correctedPosition = value.length;
+      } else {
+        const {_curNode, _correctedPosition} = this.getRelativePosition(curNode, position);
+        curNode = _curNode;
+        correctedPosition = _correctedPosition;
+      }
     }
 
     if (isContentEditable) {
       this.focus();
 
       try {
-        window.getSelection().collapse(this.target.firstChild || this.target, correctedPosition);
+        if (correctedPosition instanceof Range) {
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(correctedPosition);
+        } else {
+          window.getSelection().collapse(curNode || this.target, correctedPosition);
+        }
       } catch (e) {
         // Do nothing
       }

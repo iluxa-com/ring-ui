@@ -4,23 +4,19 @@ import classNames from 'classnames';
 import closeIcon from '@jetbrains/icons/close.svg';
 
 import Icon from '../icon';
+import Button from '../button/button';
 
 import styles from './tag.css';
 
 /**
  * @name Tag
- * @category Components
- * @tags Ring UI Language
- * @description Displays a tag.
- * @example-file ./tag.examples.html
  */
 
-// eslint-disable-next-line react/no-deprecated
 export default class Tag extends PureComponent {
   static propTypes = {
     onRemove: PropTypes.func,
     onClick: PropTypes.func,
-    rgTagIcon: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    rgTagIcon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     icon: PropTypes.string,
     avatar: PropTypes.string,
     rgTagTitle: PropTypes.string,
@@ -45,7 +41,7 @@ export default class Tag extends PureComponent {
     focused: false
   };
 
-  componentWillReceiveProps(props) {
+  UNSAFE_componentWillReceiveProps(props) {
     this.updateStateFromProps(props);
   }
 
@@ -103,6 +99,7 @@ export default class Tag extends PureComponent {
     });
     return (
       <img
+        alt={avatarSrc ? 'Avatar' : 'Icon'}
         className={classes}
         src={avatarSrc || this.props.icon}
       />
@@ -132,10 +129,12 @@ export default class Tag extends PureComponent {
   renderRemoveIcon() {
     if (!this.props.readOnly) {
       return (
-        <Icon
-          glyph={closeIcon}
+        <Button
+          title="Remove"
+          icon={closeIcon}
           data-test="ring-tag-remove"
           className={styles.remove}
+          iconClassName={styles.removeIcon}
           onClick={this.props.onRemove}
         />
       );
@@ -150,24 +149,28 @@ export default class Tag extends PureComponent {
       {
         [styles.focused]: this.state.focused,
         [styles.disabled]: this.props.disabled,
-        [styles.tagAngled]: this.props.angled
+        [styles.tagAngled]: this.props.angled,
+        [styles.withRemove]: !this.props.readOnly
       },
       this.props.className
     );
 
     return (
-      <span
-        data-test="ring-tag"
-        tabIndex="0"
-        className={classes}
-        ref={this.tagRef}
-        onClick={this.props.onClick}
-      >
-        {this.renderAvatar()}
-        {this.renderCustomIcon()}
-        {this.renderImage()}
-        <span className={styles.content}>{this.props.children}</span>
+      <span className={styles.container}>
+        <button
+          type="button"
+          data-test="ring-tag"
+          className={classes}
+          ref={this.tagRef}
+          onClick={this.props.onClick}
+        >
+          {this.renderAvatar()}
+          {this.renderCustomIcon()}
+          {this.renderImage()}
+          <span className={styles.content}>{this.props.children}</span>
+        </button>
         {this.renderRemoveIcon()}
-      </span>);
+      </span>
+    );
   }
 }

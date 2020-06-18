@@ -1,3 +1,4 @@
+import 'focus-visible';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
@@ -11,17 +12,8 @@ import styles from './button.css';
 
 /**
  * @name Button
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @description A component for displaying variously styled buttons.
- * @extends {PureComponent}
- * @example-file ./button.examples.html
  */
 export default class Button extends PureComponent {
-  static IconSize = Size;
-  static Theme = Theme;
-
   static propTypes = {
     theme: PropTypes.string,
     active: PropTypes.bool,
@@ -42,25 +34,22 @@ export default class Button extends PureComponent {
 
     href: PropTypes.string,
 
-    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     iconSize: PropTypes.number,
     iconClassName: PropTypes.string,
+    iconSuppressSizeWarning: PropTypes.bool,
 
     className: PropTypes.string,
-    onMouseDown: PropTypes.func,
 
     children: PropTypes.node
   };
 
   static defaultProps = {
-    theme: Theme.LIGHT,
-    onMouseDown() {}
+    theme: Theme.LIGHT
   };
 
-  onMouseDown = e => {
-    e.preventDefault();
-    this.props.onMouseDown(e);
-  };
+  static IconSize = Size;
+  static Theme = Theme;
 
   render() {
     const {
@@ -81,9 +70,9 @@ export default class Button extends PureComponent {
       icon,
       iconSize,
       iconClassName,
+      iconSuppressSizeWarning,
       className,
       children,
-      onMouseDown, // eslint-disable-line no-unused-vars
       ...props
     } = this.props;
 
@@ -119,6 +108,7 @@ export default class Button extends PureComponent {
               glyph={icon}
               size={iconSize}
               loading={loader}
+              suppressSizeWarning={iconSuppressSizeWarning}
             />
           </span>
         )}
@@ -141,7 +131,6 @@ export default class Button extends PureComponent {
         tabIndex={loader ? -1 : 0}
         type={isLink ? null : 'button'}
         {...props}
-        onMouseDown={this.onMouseDown}
         className={classes}
       >
         {loader && !text && !icon && <div className={styles.loaderBackground}/>}

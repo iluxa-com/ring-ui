@@ -1,10 +1,5 @@
 /**
  * @name Island Ng
- * @category Legacy Angular
- * @tags Ring UI Language
- * @framework Angular
- * @description Provides an Angular wrapper for Island.
- * @example-file ./island-ng.examples.html
  */
 import angular from 'angular';
 
@@ -26,6 +21,7 @@ angularModule.directive('rgIsland', function islandDirective() {
     compile,
     template: `
 <div 
+  data-test="ring-island"
   class="${styles.island}" 
   ng-class="{'${styles.narrowIsland}': islandCtrl.narrow}" 
   ng-transclude

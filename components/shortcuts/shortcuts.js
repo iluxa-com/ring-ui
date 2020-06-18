@@ -1,9 +1,8 @@
 import {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 
-import shortcuts from '../shortcuts/core';
+import shortcuts from './core';
 
-// eslint-disable-next-line react/no-deprecated
 export default class Shortcuts extends PureComponent {
   static propTypes = {
     map: PropTypes.object.isRequired,
@@ -17,18 +16,18 @@ export default class Shortcuts extends PureComponent {
     options: {}
   };
 
-  componentWillMount() {
+  componentDidMount() {
     if (!this.props.disabled) {
       this.turnShorcutsOn();
     }
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentDidUpdate(prevProps) {
     const {disabled} = this.props;
-    if (!disabled && nextProps.disabled) {
+    if (!prevProps.disabled && disabled) {
       this.turnShorcutsOff();
     }
-    if (disabled && !nextProps.disabled) {
+    if (prevProps.disabled && !disabled) {
       this.turnShorcutsOn();
     }
   }

@@ -15,8 +15,18 @@ import styles from './date-picker.css';
 
 const scrollExpDelay = 10;
 
-// eslint-disable-next-line react/no-deprecated
 export default class DatePopup extends Component {
+
+  static sameDay(next, prev, inputFormat, displayFormat) {
+    const nextMoment = parseDate(next, inputFormat, displayFormat);
+    const prevMoment = parseDate(prev, inputFormat, displayFormat);
+    if (nextMoment && prevMoment) {
+      return nextMoment.isSame(prevMoment, 'day');
+    }
+
+    return next === prev;
+  }
+
   static propTypes = {
     className: PropTypes.string,
     date: dateType,
@@ -27,36 +37,51 @@ export default class DatePopup extends Component {
     inputFormat: PropTypes.string,
     onChange: PropTypes.func,
     onComplete: PropTypes.func,
-    onClear: PropTypes.func
+    onClear: PropTypes.func,
+    minDate: dateType,
+    maxDate: dateType,
+    hidden: PropTypes.bool
   };
 
   static defaultProps = {
     onChange() {}
   };
 
-  state = {
-    text: null,
-    hoverDate: null,
-    scrollDate: null,
-    active: null
-  };
-
-  componentWillMount() {
-    const {range, from, to} = this.props;
+  constructor(props) {
+    super(props);
+    const defaultState = {
+      text: null,
+      hoverDate: null,
+      scrollDate: null
+    };
+    const {range, from, to} = props;
 
     if (!range) {
-      this.setState({active: 'date'});
+      this.state = {...defaultState, active: 'date'};
     } else if (from && !to) {
-      this.setState({active: 'to'});
+      this.state = {...defaultState, active: 'to'};
     } else {
-      this.setState({active: 'from'});
+      this.state = {...defaultState, active: 'from'};
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    const name = this.state.active;
-    if (nextProps[name] && !this.sameDay(this.props[name], nextProps[name])) {
-      this.setState({text: null});
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const name = prevState.active;
+    if (nextProps[name] &&
+      !DatePopup.sameDay(prevState[name],
+        nextProps[name],
+        nextProps.inputFormat,
+        nextProps.displayFormat
+      )
+    ) {
+      return {...prevState, text: null};
+    }
+    return null;
+  }
+
+  componentDidMount() {
+    if (this.componentRef.current) {
+      this.componentRef.current.addEventListener('wheel', this.handleWheel);
     }
   }
 
@@ -71,15 +96,17 @@ export default class DatePopup extends Component {
     }
   }
 
-  sameDay(next, prev) {
-    const nextMoment = this.parseDate(next);
-    const prevMoment = this.parseDate(prev);
-    if (nextMoment && prevMoment) {
-      return nextMoment.isSame(prevMoment, 'day');
+  componentWillUnmount() {
+    if (this.componentRef.current) {
+      this.componentRef.current.removeEventListener('wheel', this.handleWheel);
     }
-
-    return next === prev;
   }
+
+  componentRef = React.createRef();
+
+  handleWheel = e => {
+    e.preventDefault();
+  };
 
   parseDate(text) {
     return parseDate(
@@ -149,7 +176,10 @@ export default class DatePopup extends Component {
       this.parseDate(this.props[this.state.active]) ||
       moment();
     const goal = this._scrollDate;
-    if (!current || !goal || this.sameDay(goal, current)) {
+    if (!current ||
+      !goal ||
+      this.sameDay(goal, current, this.props.inputFormat, this.props.displayFormat)
+    ) {
       this._scrollDate = null;
       this._scrollTS = null;
       return;
@@ -195,7 +225,7 @@ export default class DatePopup extends Component {
   handleScroll = scrollDate => this.setState({scrollDate});
 
   render() {
-    const {range} = this.props;
+    const {range, hidden} = this.props;
 
     const names = range ? ['from', 'to'] : ['date'];
     const dates = names.reduce((obj, key) => {
@@ -250,6 +280,7 @@ export default class DatePopup extends Component {
       <div
         className={styles.datePopup}
         data-test="ring-date-popup"
+        ref={this.componentRef}
       >
         <div className={styles.filterWrapper}>
           <Icon
@@ -264,6 +295,7 @@ export default class DatePopup extends Component {
               key={name}
               date={dates[name]}
               active={this.state.active === name}
+              hidden={hidden}
               onActivate={this.handleActivate(name)}
               onInput={this.handleInput}
               onConfirm={this.handleConfirm(name)}

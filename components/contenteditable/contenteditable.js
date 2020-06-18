@@ -1,23 +1,18 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {render} from 'react-dom';
+import {renderToStaticMarkup} from 'react-dom/server';
 
 /**
  * @name ContentEditable
- * @description Provides a ContentEditable component.
- * @tags Ring UI Language
- * @category Components
- * @constructor
- * @example-file ./contenteditable.examples.html
  */
 
 function noop() {}
 
-// eslint-disable-next-line react/no-deprecated
 export default class ContentEditable extends Component {
   /** @override */
   static propTypes = {
     disabled: PropTypes.bool,
+    tabIndex: PropTypes.number,
     componentDidUpdate: PropTypes.func,
     onComponentUpdate: PropTypes.func,
     className: PropTypes.string,
@@ -31,15 +26,11 @@ export default class ContentEditable extends Component {
     onComponentUpdate: noop
   };
 
+  static getDerivedStateFromProps = ({children}) => ({
+    __html: children ? renderToStaticMarkup(children) : ''
+  });
+
   state = {__html: ''};
-
-  componentWillMount() {
-    this.renderStatic(this.props);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    this.renderStatic(nextProps);
-  }
 
   shouldComponentUpdate(nextProps, nextState) {
     return nextProps.disabled !== this.props.disabled ||
@@ -50,24 +41,15 @@ export default class ContentEditable extends Component {
     this.props.onComponentUpdate(prevProps, prevState);
   }
 
-  onRender = node => {
-    this.setState({__html: node ? node.innerHTML : ''});
-  };
-
-  renderStatic(nextProps) {
-    if (!nextProps.children) {
-      this.setState({__html: ''});
-    }
-
-    render(<i ref={this.onRender}>{nextProps.children}</i>, document.createElement('i'));
-  }
-
   render() {
-    const {children, onComponentUpdate, ...props} = this.props; // eslint-disable-line no-unused-vars
+    const {children, onComponentUpdate, disabled, tabIndex, ...props} = this.props;
 
     return (
       <div
         {...props}
+        disabled={disabled}
+        role="textbox"
+        tabIndex={disabled ? null : tabIndex}
         contentEditable={!this.props.disabled}
         dangerouslySetInnerHTML={this.state}
       />

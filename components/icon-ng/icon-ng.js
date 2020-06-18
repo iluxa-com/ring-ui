@@ -7,30 +7,6 @@ import styles from '../icon/icon.css';
 
 /**
  * @name Icon Ng
- * @category Legacy Angular
- * @tags Ring UI Language
- * @description Provides an Angular wrapper for Icon.
- * @example
-    <example name="Icon Ng">
-      <file name="index.html">
-        <div ng-app="TestApp" ng-strict-di ng-controller="testCtrl">
-          <rg-icon glyph="{{icon}}"></rg-icon>
-          <rg-icon glyph="{{icon}}" color="MAGENTA"></rg-icon>
-          <rg-icon glyph="{{icon}}" color="{{'BLUE'}}" loading="true"></rg-icon>
-        </div>
-      </file>
-    <file name="index.js" webpack="true">
-      import angular from 'angular';
-      import IconNG from '@jetbrains/ring-ui/components/icon-ng/icon-ng';
-      import ButtonNG from '@jetbrains/ring-ui/components/button-ng/button-ng';
-      import {CheckmarkIcon, WarningIcon} from '@jetbrains/ring-ui/components/icon';
-
-      angular.module('TestApp', [ButtonNG, IconNG]).controller('testCtrl', function($scope) {
-        $scope.icon = CheckmarkIcon;
-        $scope.error = WarningIcon;
-      });
-    </file>
-  </example>
  */
 
 const angularModule = angular.module('Ring.icon', [TemplateNg]);
@@ -47,7 +23,7 @@ angularModule.directive('rgIcon', function rgIconDirective() {
       height: '@?',
       width: '@?'
     },
-    template: `<span class="${styles.icon}" rg-template="normalizedGlyph" rg-template-class="${styles.glyph}" ng-style="style"></span>`,
+    template: `<span class="${styles.icon}" rg-template="normalizedGlyph" rg-template-class="${styles.glyph}"></span>`,
     controller: $scope => {
       function decodeBase64IfNeeded(glyph) {
         // This hack allows passing SVG content as string from angular templates like
@@ -88,21 +64,20 @@ angularModule.directive('rgIcon', function rgIconDirective() {
       );
 
       scope.$watchGroup(['size', 'width', 'height'], ([size, width, height]) => {
+        const svgNode = iElement[0].querySelector('svg');
+
         if (size && !width && !height) {
           const sizeString = `${size}px`;
-          scope.style = {
-            width: sizeString,
-            height: sizeString
-          };
+          const style = `width: ${sizeString}; height: ${sizeString};`;
+          svgNode.setAttribute('style', style);
           return;
         }
 
-        scope.style = {};
         if (width) {
-          scope.style.width = `${width}px`;
+          svgNode.setAttribute('style', `width: ${width}px;`);
         }
         if (height) {
-          scope.style.height = `${height}px`;
+          svgNode.setAttribute('style', `height: ${height}px;`);
         }
       });
     }

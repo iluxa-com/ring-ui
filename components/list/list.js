@@ -1,18 +1,16 @@
 /**
  * @name List
- * @category Components
- * @tags Ring UI Language
- * @description Displays a list of items.
  */
 
 import 'dom4';
 import React, {Component, cloneElement} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import VirtualizedList from 'react-virtualized/dist/commonjs/List';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
-import WindowScroller from 'react-virtualized/dist/commonjs/WindowScroller';
-import {CellMeasurer, CellMeasurerCache} from 'react-virtualized/dist/commonjs/CellMeasurer';
+import VirtualizedList from 'react-virtualized/dist/es/List';
+import AutoSizer from 'react-virtualized/dist/es/AutoSizer';
+import WindowScroller from 'react-virtualized/dist/es/WindowScroller';
+import {CellMeasurer, CellMeasurerCache} from 'react-virtualized/dist/es/CellMeasurer';
+import deprecate from 'util-deprecate';
 
 import dataTests from '../global/data-tests';
 import getUID from '../global/get-uid';
@@ -60,6 +58,11 @@ const DEFAULT_ITEM_TYPE = Type.ITEM;
 
 function noop() {}
 
+const warnEmptyKey = deprecate(
+  () => {},
+  'No key passed for list item with non-string label. It is considered as a bad practice and has been deprecated, please provide a key.'
+);
+
 /**
  * @param {Type} listItemType
  * @param {Object} item list item
@@ -83,19 +86,8 @@ function isActivatable(item) {
  * @name List
  * @constructor
  * @extends {ReactComponent}
- * @example-file ./list.examples.html
  */
-// eslint-disable-next-line react/no-deprecated
 export default class List extends Component {
-  static isItemType = isItemType;
-
-  static ListHint = ListHint;
-
-  static ListProps = {
-    Type,
-    Dimension
-  };
-
   static propTypes = {
     className: PropTypes.string,
     hint: PropTypes.string,
@@ -119,7 +111,8 @@ export default class List extends Component {
     renderOptimization: PropTypes.bool,
     disableMoveOverflow: PropTypes.bool,
     disableMoveDownOverflow: PropTypes.bool,
-    compact: PropTypes.bool
+    compact: PropTypes.bool,
+    disableScrollToActive: PropTypes.bool
   };
 
   static defaultProps = {
@@ -146,7 +139,7 @@ export default class List extends Component {
     scrolledToBottom: false
   };
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     const {data, activeIndex} = this.props;
     this.checkActivatableItems(data);
     if (activeIndex != null && data[this.props.activeIndex]) {
@@ -174,7 +167,7 @@ export default class List extends Component {
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
   }
 
-  componentWillReceiveProps(props) {
+  UNSAFE_componentWillReceiveProps(props) {
     if (props.data) {
       //TODO investigate (https://youtrack.jetbrains.com/issue/RG-772)
       //props.data = props.data.map(normalizeListItemType);
@@ -245,6 +238,15 @@ export default class List extends Component {
     document.removeEventListener('keydown', this.onDocumentKeyDown, true);
   }
 
+  static isItemType = isItemType;
+
+  static ListHint = ListHint;
+
+  static ListProps = {
+    Type,
+    Dimension
+  };
+
   hoverHandler = memoize(index => () =>
     scheduleHoverListener(() => {
       if (this.state.disabledHover) {
@@ -311,7 +313,7 @@ export default class List extends Component {
     }
   }
 
-  selectHandler = memoize(index => event => {
+  selectHandler = memoize(index => (event, tryKeepOpen = false) => {
     const item = this.props.data[index];
     if (!this.props.useMouseUp && item.onClick) {
       item.onClick(item, event);
@@ -320,7 +322,7 @@ export default class List extends Component {
     }
 
     if (this.props.onSelect) {
-      this.props.onSelect(item, event);
+      this.props.onSelect(item, event, {tryKeepOpen});
     }
   });
 
@@ -406,7 +408,9 @@ export default class List extends Component {
           return;
         }
 
-        preventDefault(e);
+        if (e.key !== 'Home' && e.key !== 'End') {
+          preventDefault(e);
+        }
       }
     );
   }
@@ -449,12 +453,12 @@ export default class List extends Component {
     return this.props.data[this.state.activeIndex];
   }
 
-  clearSelected() {
+  clearSelected = () => {
     this.setState({
       activeIndex: null,
       needScrollToActive: false
     });
-  }
+  };
 
   defaultItemHeight() {
     return this.props.compact ? Dimension.COMPACT_ITEM_HEIGHT : Dimension.ITEM_HEIGHT;
@@ -462,7 +466,7 @@ export default class List extends Component {
 
   shouldActivateFirstItem(props) {
     return props.activateFirstItem ||
-      props.activateSingleItem && props.length === 1;
+      props.activateSingleItem && props.data.length === 1;
   }
 
   scrollEndHandler = () => scheduleScrollListener(() => {
@@ -495,6 +499,16 @@ export default class List extends Component {
     return props.maxHeight - this.defaultItemHeight() - Dimension.INNER_PADDING;
   }
 
+  _deprecatedGenerateKeyFromContent(itemProps) {
+    const identificator = itemProps.label || itemProps.description;
+    const isString = typeof identificator === 'string' || identificator instanceof String;
+    if (identificator && !isString) {
+      warnEmptyKey();
+      `${itemProps.rgItemType}_${JSON.stringify(identificator)}`;
+    }
+    return `${itemProps.rgItemType}_${identificator}`;
+  }
+
   renderItem = ({index, style, isScrolling, parent, key}) => {
     let itemKey;
     let el;
@@ -510,7 +524,6 @@ export default class List extends Component {
     } else {
 
       // Hack around SelectNG implementation
-      // eslint-disable-next-line no-unused-vars
       const {selectedLabel, originalModel, ...cleanedProps} = item;
       const itemProps = Object.assign({rgItemType: DEFAULT_ITEM_TYPE}, cleanedProps);
 
@@ -521,11 +534,12 @@ export default class List extends Component {
         itemProps.rgItemType = Type.LINK;
       }
 
-      // Probably unique enough key
-      itemKey = key || itemProps.key ||
-        `${itemProps.rgItemType}_${itemProps.label || itemProps.description}`;
+      itemKey = key || itemProps.key || this._deprecatedGenerateKeyFromContent(itemProps);
 
       itemProps.hover = (realIndex === this.state.activeIndex);
+      if (itemProps.hoverClassName != null && itemProps.hover) {
+        itemProps.className = classNames(itemProps.className, itemProps.hoverClassName);
+      }
       itemProps.onMouseOver = this.hoverHandler(realIndex);
       itemProps.tabIndex = -1;
       itemProps.scrolling = isScrolling;
@@ -537,7 +551,7 @@ export default class List extends Component {
       } else {
         itemProps.onClick = selectHandler;
       }
-      itemProps.onCheckboxChange = selectHandler;
+      itemProps.onCheckboxChange = event => selectHandler(event, true);
 
       if (itemProps.compact == null) {
         itemProps.compact = this.props.compact;
@@ -581,7 +595,11 @@ export default class List extends Component {
         rowIndex={index}
         columnIndex={0}
       >
-        <div style={style}>{el}</div>
+        <div style={style} role="row">
+          <div role="cell">
+            {el}
+          </div>
+        </div>
       </CellMeasurer>
     ) : cloneElement(el, {key: itemKey});
   };
@@ -628,7 +646,6 @@ export default class List extends Component {
             height={height}
             width={width}
             isScrolling={isScrolling}
-            // eslint-disable-next-line react/jsx-no-bind
             onScroll={e => {
               onChildScroll(e);
               this.scrollEndHandler(e);
@@ -641,11 +658,12 @@ export default class List extends Component {
             overscanRowCount={this._bufferSize}
 
             // ensure rerendering
-            // eslint-disable-next-line react/jsx-no-bind
             noop={() => {}}
 
             scrollToIndex={
-              this.state.needScrollToActive && this.state.activeIndex != null
+              !this.props.disableScrollToActive &&
+                this.state.needScrollToActive &&
+                this.state.activeIndex != null
                 ? this.state.activeIndex + 1
                 : undefined
             }
@@ -727,8 +745,8 @@ export default class List extends Component {
         ref={this.containerRef}
         className={classes}
         onMouseOut={this.props.onMouseOut}
-        onMouseDown={this.mouseDownHandler}
-        onMouseUp={this.mouseUpHandler}
+        onBlur={this.props.onMouseOut}
+        onMouseLeave={this.clearSelected}
         data-test="ring-list"
       >
         {this.props.shortcuts &&

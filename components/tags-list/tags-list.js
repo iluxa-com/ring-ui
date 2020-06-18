@@ -8,12 +8,6 @@ function noop() {}
 
 /**
  * @name Tags List
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @description Displays a list of tags.
- * @extends {ReactComponent}
- * @example-file ./tags-list.examples.html
  */
 
 export default class TagsList extends Component {
@@ -59,12 +53,21 @@ export default class TagsList extends Component {
         onClick={this.props.handleClick(tag)}
         onRemove={this.props.handleRemove(tag)}
         className={tagClassName}
-      >{tag.label}</TagComponent>);
+      >{tag.label}</TagComponent>
+    );
   }
 
   render() {
     const {
-      children, className, customTagComponent, canNotBeEmpty, handleClick, tagClassName, handleRemove, tags, activeIndex, // eslint-disable-line no-unused-vars, max-len
+      children,
+      className,
+      customTagComponent,
+      canNotBeEmpty,
+      handleClick,
+      tagClassName,
+      handleRemove,
+      tags,
+      activeIndex,
       ...props
     } = this.props;
     const classes = classNames(
@@ -84,6 +87,7 @@ export default class TagsList extends Component {
       >
         {tagsList}
         {children}
-      </div>);
+      </div>
+    );
   }
 }

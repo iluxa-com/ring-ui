@@ -25,6 +25,7 @@ export const USER_CHANGE_POSTPONED_EVENT = 'changePostponed';
 function noop() {}
 
 const DEFAULT_CONFIG = {
+  cacheCurrentUser: false,
   reloadOnUserChange: true,
   embeddedLogin: false,
   EmbeddedLoginFlow: null,
@@ -52,9 +53,10 @@ const DEFAULT_CONFIG = {
     postpone: 'Postpone',
     youHaveLoggedInAs: 'You have logged in as another user: %userName%',
     applyChange: 'Apply change',
-    backendIsNotAvailable: 'Backend is not available',
-    checkAgain: 'Check again',
-    nothingHappensLink: 'Click here if nothing happens'
+    backendIsNotAvailable: 'Connection lost',
+    checkAgain: 'try again',
+    nothingHappensLink: 'Click here if nothing happens',
+    errorMessage: 'There may be a problem with your network connection. Make sure that you are online and'
   }
 };
 
@@ -120,7 +122,8 @@ export default class Auth {
     this._storage = new AuthStorage({
       messagePrefix: `${clientId}-message-`,
       stateKeyPrefix: `${clientId}-states-`,
-      tokenKey: `${clientId}-token`
+      tokenKey: `${clientId}-token`,
+      userKey: `${clientId}-user-`
     });
 
     this._domainStorage = new AuthStorage({messagePrefix: 'domain-message-'});
@@ -178,6 +181,10 @@ export default class Auth {
     this.addListener(USER_CHANGE_POSTPONED_EVENT, () => this._setPostponed(true));
     this.addListener(USER_CHANGED_EVENT, () => this._setPostponed(false));
     this.addListener(USER_CHANGED_EVENT, user => user && this._updateDomainUser(user.id));
+    if (this.config.cacheCurrentUser) {
+      this.addListener(LOGOUT_EVENT, () => this._storage.wipeCachedCurrentUser());
+      this.addListener(USER_CHANGED_EVENT, () => this._storage.onUserChanged());
+    }
 
     this._createInitDeferred();
 
@@ -278,8 +285,12 @@ export default class Auth {
 
       // Access token appears to be valid.
       // We may resolve restoreLocation URL now
+      if (!state) {
+        // Check if we have requested to restore state anyway
+        state = await this._checkForStateRestoration();
+      }
       this._initDeferred.resolve(state && state.restoreLocation);
-      return state && state.restoreLocation;
+      return state?.restoreLocation;
     } catch (error) {
       if (Auth.storageIsUnavailable) {
         this._initDeferred.resolve(); // No way to handle if cookies are disabled
@@ -413,7 +424,13 @@ export default class Auth {
    * @return {Promise.<object>}
    */
   getUser(accessToken) {
-    return this.http.authorizedFetch(Auth.API_PROFILE_PATH, accessToken, this.config.userParams);
+    if (this.config.cacheCurrentUser) {
+      return this._storage.getCachedUser(
+        () => this.http.authorizedFetch(Auth.API_PROFILE_PATH, accessToken, this.config.userParams)
+      );
+    } else {
+      return this.http.authorizedFetch(Auth.API_PROFILE_PATH, accessToken, this.config.userParams);
+    }
   }
 
   /**
@@ -440,6 +457,7 @@ export default class Auth {
   async updateUser() {
     this._setPostponed(false);
     const accessToken = await this.requestToken();
+    this._storage.wipeCachedCurrentUser();
     const user = await this.getUser(accessToken);
     this.user = user;
     this.listeners.trigger(USER_CHANGED_EVENT, user);
@@ -731,6 +749,15 @@ export default class Auth {
     await this._storage.saveToken({accessToken, scopes, expires, lifeTime: effectiveExpiresIn});
 
     return newState;
+  }
+
+  async _checkForStateRestoration() {
+    const authResponse = this._responseParser.getAuthResponseFromURL();
+    if (authResponse && this.config.cleanHash) {
+      this.setHash('');
+    }
+    const stateId = authResponse?.restoreAuthState;
+    return await (stateId && this._storage.getState(stateId)) || {};
   }
 
   _checkBackendsAreUp() {

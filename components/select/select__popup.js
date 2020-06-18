@@ -19,6 +19,8 @@ import memoize from '../global/memoize';
 import TagsList from '../tags-list/tags-list';
 import Caret from '../caret/caret';
 import Shortcuts from '../shortcuts/shortcuts';
+import Button from '../button/button';
+import Text from '../text/text';
 
 import SelectFilter from './select__filter';
 import styles from './select-popup.css';
@@ -30,13 +32,13 @@ function noop() {}
 
 const FilterWithShortcuts = shortcutsHOC(SelectFilter);
 
-// eslint-disable-next-line react/no-deprecated
 export default class SelectPopup extends Component {
   static defaultProps = {
     data: [],
     activeIndex: null,
     toolbar: null,
     filter: false, // can be either boolean or an object with "value" and "placeholder" properties
+    multiple: false, // multiple can be an object - see demo for more information
     message: null,
     anchorElement: null,
     maxHeight: 600,
@@ -49,7 +51,9 @@ export default class SelectPopup extends Component {
     onLoadMore: noop,
     selected: [],
     tags: null,
-    ringPopupTarget: null
+    ringPopupTarget: null,
+    onSelectAll: noop,
+    onEmptyPopupEnter: noop
   };
 
   state = {
@@ -65,7 +69,7 @@ export default class SelectPopup extends Component {
     window.document.addEventListener('mouseup', this.mouseUpHandler);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.hidden !== this.props.hidden) {
       this.setState({
         popupShortcuts: !nextProps.hidden,
@@ -112,10 +116,10 @@ export default class SelectPopup extends Component {
     });
   }
 
-  removeTag(tag) {
+  removeTag(tag, event) {
     const _tag = tag || this.props.selected.slice(0)[this.props.selected.length - 1];
     if (_tag) {
-      this.onListSelect(_tag);
+      this.onListSelect(_tag, event, {tryKeepOpen: true});
       this.setState({
         tagsActiveIndex: null
       });
@@ -167,10 +171,6 @@ export default class SelectPopup extends Component {
     });
   }
 
-  listOnMouseOut = () => {
-    this.list.clearSelected();
-  };
-
   mouseDownHandler = () => {
     this.isClickingPopup = true;
   };
@@ -183,7 +183,7 @@ export default class SelectPopup extends Component {
     return this.popup && this.popup.isVisible();
   }
 
-  onListSelect = (selected, event) => {
+  onListSelect = (selected, event, opts) => {
     const getSelectItemEvent = () => {
       let customEvent;
       if (document.createEvent) {
@@ -197,7 +197,7 @@ export default class SelectPopup extends Component {
       return customEvent;
     };
 
-    this.props.onSelect(selected, getSelectItemEvent());
+    this.props.onSelect(selected, getSelectItemEvent(), opts);
   };
 
   tabPress = event => {
@@ -207,7 +207,7 @@ export default class SelectPopup extends Component {
   onClickHandler = () => this.filter.focus();
 
   getFilter() {
-    if ((this.props.filter || this.props.tags) && !this.props.hidden) {
+    if (this.props.filter || this.props.tags) {
       return (
         <div
           className={styles.filterWrapper}
@@ -242,7 +242,7 @@ export default class SelectPopup extends Component {
     return null;
   }
 
-  handleRemoveTag = memoize(tag => () => this.removeTag(tag));
+  handleRemoveTag = memoize(tag => event => this.removeTag(tag, event));
 
   handleTagClick = memoize(tag => () => {
     this.setState({
@@ -265,7 +265,7 @@ export default class SelectPopup extends Component {
   }
 
   getFilterWithTags() {
-    if (this.props.tags && !this.props.hidden) {
+    if (this.props.tags) {
       const classes = classNames([
         styles.filterWithTags,
         {
@@ -276,7 +276,6 @@ export default class SelectPopup extends Component {
       return (
         <div
           className={classes}
-          tabIndex="0"
         >
           {this.getTags()}
           {this.getFilter()}
@@ -324,12 +323,12 @@ export default class SelectPopup extends Component {
           restoreActiveIndex
           activateFirstItem
           onSelect={this.onListSelect}
-          onMouseOut={this.listOnMouseOut}
           onResize={this.handleListResize}
           onScrollToBottom={this.props.onLoadMore}
           shortcuts={this.state.popupShortcuts}
           disableMoveOverflow={this.props.disableMoveOverflow}
           disableMoveDownOverflow={this.props.loading}
+          disableScrollToActive={this.props.disableScrollToActive}
           compact={this.props.compact}
           renderOptimization={this.props.renderOptimization}
         />
@@ -338,6 +337,25 @@ export default class SelectPopup extends Component {
 
     return null;
   }
+
+  handleSelectAll = () => this.props.onSelectAll(
+    this.props.data.filter(item => !item.disabled).length !== this.props.selected.length
+  );
+
+  getSelectAll = () => (
+    <div className={styles.selectAll}>
+      <Button
+        text
+        inline
+        onClick={this.handleSelectAll}
+      >
+        {this.props.data.filter(item => !item.disabled).length !== this.props.selected.length
+          ? 'Select all'
+          : 'Deselect all'}
+      </Button>
+      <Text info>{`${this.props.selected.length} selected`}</Text>
+    </div>
+  );
 
   _adjustListMaxHeight(userDefinedMaxHeight) {
     // Calculate list's maximum height that can't
@@ -357,7 +375,7 @@ export default class SelectPopup extends Component {
       // a link on the container node. It looks awkward using popup in this component
       // maybe we can find a better solution
       const anchorNode = this.props.anchorElement;
-      const containerNode = this.popup && this.popup.getContainer();
+      const containerNode = document.documentElement; // A temporary fix for RG-2050. To be made permanent if working
       this._cachedAdjustedMaxHeight = (Math.min(
         directions.reduce((maxHeight, direction) => (
           Math.max(maxHeight, maxHeightForDirection(direction, anchorNode, containerNode))
@@ -392,7 +410,9 @@ export default class SelectPopup extends Component {
       down: event => (this.list && this.list.downHandler(event)),
       home: event => (this.list && this.list.homeHandler(event)),
       end: event => (this.list && this.list.endHandler(event)),
-      enter: event => (this.list && this.list.enterHandler(event)),
+      enter: event => (this.list
+        ? this.list.enterHandler(event)
+        : this.props.onEmptyPopupEnter(event)),
       esc: event => this.props.onCloseAttempt(event, true),
       tab: event => this.tabPress(event),
       backspace: event => this.handleBackspace(event),
@@ -433,8 +453,13 @@ export default class SelectPopup extends Component {
               />
             )
           }
-
-          {this.getFilterWithTags()}
+          {/* Add empty div to prevent the change of List position in DOM*/}
+          {this.props.hidden ? <div/> : this.getFilterWithTags()}
+          {this.props.multiple &&
+            !this.props.multiple.limit &&
+            this.props.multiple.selectAll &&
+            this.getSelectAll()
+          }
           {this.getList()}
           {this.getBottomLine()}
           {this.props.toolbar}

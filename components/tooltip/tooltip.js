@@ -3,27 +3,21 @@ import PropTypes from 'prop-types';
 
 import Popup from '../popup/popup';
 import {Listeners} from '../global/dom';
+import dataTests from '../global/data-tests';
 
 import styles from './tooltip.css';
 
 /**
  * @name Tooltip
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @description Displays a tooltip.
- * @extends {ReactComponent}
- * @example-file ./tooltip.examples.html
  */
 export default class Tooltip extends Component {
-  static PopupProps = Popup.PopupProps;
-
   static propTypes = {
     delay: PropTypes.number,
     selfOverflowOnly: PropTypes.bool,
     popupProps: PropTypes.object,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-    children: PropTypes.node
+    children: PropTypes.node,
+    'data-test': PropTypes.string
   };
 
   static defaultProps = {
@@ -49,8 +43,11 @@ export default class Tooltip extends Component {
   }
 
   componentWillUnmount() {
+    clearTimeout(this.timeout);
     this.listeners.removeAll();
   }
+
+  static PopupProps = Popup.PopupProps;
 
   listeners = new Listeners();
   containerRef = el => {
@@ -67,6 +64,14 @@ export default class Tooltip extends Component {
     const showPopup = () => {
       if (selfOverflowOnly) {
         const {containerNode} = this;
+
+        // rare cases when containerNode is null are possible;
+        // probably the collision is due to the asynchronous nature of the code,
+        // i.e. this code runs after the component is unmounted,
+        // although at first glance it looks unlikely.
+        if (!containerNode) {
+          return;
+        }
 
         // inline element?
         if (containerNode.clientWidth === 0 && containerNode.clientHeight === 0) {
@@ -105,10 +110,15 @@ export default class Tooltip extends Component {
   };
 
   render() {
-    const {children, title, delay, selfOverflowOnly, popupProps, ...restProps} = this.props; // eslint-disable-line no-unused-vars
+    const {children, 'data-test': dataTest,
+      title, delay, selfOverflowOnly, popupProps, ...restProps} = this.props;
 
     return (
-      <span {...restProps} ref={this.containerRef}>
+      <span
+        {...restProps}
+        ref={this.containerRef}
+        data-test={dataTests('ring-tooltip', dataTest)}
+      >
         {children}
         <Popup
           hidden={!this.state.showPopup}

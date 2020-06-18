@@ -1,6 +1,6 @@
 import React from 'react';
 import {shallow, mount} from 'enzyme';
-import VirtualizedList from 'react-virtualized/dist/commonjs/List';
+import VirtualizedList from 'react-virtualized/dist/es/List';
 
 import getUID from '../global/get-uid';
 import Icon, {CheckmarkIcon} from '../icon';
@@ -201,7 +201,7 @@ describe('List', () => {
           {}
         ]
       }).instance();
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
       firstItemWrapper.should.have.className(styles.action);
       firstItemWrapper.should.have.text('');
     });
@@ -250,7 +250,7 @@ describe('List', () => {
     it('should render separator', () => {
       const instance = shallowList({
         data: [
-          {rgItemType: List.ListProps.Type.SEPARATOR}
+          {rgItemType: List.ListProps.Type.SEPARATOR, label: 'test'}
         ]
       }).instance();
 
@@ -348,7 +348,7 @@ describe('List', () => {
         ]
       }).instance();
 
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
       firstItemWrapper.simulate('click');
       clicked.should.have.been.called;
     });
@@ -361,7 +361,7 @@ describe('List', () => {
         data: [{label: 'Hello!'}]
       }).instance();
 
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
       firstItemWrapper.simulate('click');
       onSelect.should.have.been.called;
     });
@@ -371,6 +371,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM
           }
         ]
@@ -386,6 +387,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM,
             onClick
           }
@@ -402,6 +404,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM,
             disabled: true
           }

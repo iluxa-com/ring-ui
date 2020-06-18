@@ -5,12 +5,11 @@ import classNames from 'classnames';
 import memoize from '../global/memoize';
 
 import Theme from '../global/theme';
-
-import Link from '../link/link';
+import dataTests from '../global/data-tests';
 
 import styles from './tabs.css';
 
-import Tab from './tab';
+import TabLink from './tab-link';
 
 export const CustomItem = ({children}) => children;
 CustomItem.propTypes = {
@@ -18,14 +17,14 @@ CustomItem.propTypes = {
 };
 
 export default class Tabs extends PureComponent {
-  static Theme = Theme;
   static propTypes = {
     theme: PropTypes.string,
     selected: PropTypes.string,
     className: PropTypes.string,
     href: PropTypes.string,
     children: PropTypes.node.isRequired,
-    onSelect: PropTypes.func
+    onSelect: PropTypes.func,
+    'data-test': PropTypes.string
   };
 
   static defaultProps = {
@@ -33,18 +32,9 @@ export default class Tabs extends PureComponent {
     onSelect() {}
   };
 
-  handleSelect = memoize(key => () => this.props.onSelect(key));
+  static Theme = Theme;
 
-  getTabTitleCaption(title, isSelected) {
-    const renderedTitle = Tab.renderTitle(title, isSelected);
-    return (
-      <>
-        <span className={styles.visible}>{renderedTitle}</span>
-        {/* hack for preserving constant tab width*/}
-        <span className={styles.hidden}>{renderedTitle}</span>
-      </>
-    );
-  }
+  handleSelect = memoize(key => () => this.props.onSelect(key));
 
   getTabTitle = (child, i) => {
     if (child == null || typeof child !== 'object' || child.type === CustomItem) {
@@ -60,7 +50,9 @@ export default class Tabs extends PureComponent {
     });
 
     return (
-      <Link
+      <TabLink
+        title={title}
+        isSelected={isSelected}
         active
         key={key}
         href={href}
@@ -68,17 +60,17 @@ export default class Tabs extends PureComponent {
         className={titleClasses}
         disabled={disabled}
         onPlainLeftClick={this.handleSelect(key)}
-      >{() => this.getTabTitleCaption(title, isSelected)}</Link>
+      />
     );
   };
 
   render() {
-    const {className, children, selected, theme} = this.props;
+    const {className, children, selected, theme, 'data-test': dataTest} = this.props;
     const classes = classNames(styles.tabs, className, styles[theme]);
     const childrenArray = React.Children.toArray(children).filter(Boolean);
 
     return (
-      <div className={classes}>
+      <div className={classes} data-test={dataTests('ring-dumb-tabs', dataTest)}>
         <div className={styles.titles}>
           {childrenArray.map(this.getTabTitle)}
         </div>

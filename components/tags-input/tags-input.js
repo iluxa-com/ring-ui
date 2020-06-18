@@ -15,20 +15,11 @@ function noop() {}
 
 /**
  * @name Tags Input
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @description Displays a tags input field.
- * @extends {ReactComponent}
- * @example-file ./tags-input.examples.html
  */
 
 const POPUP_VERTICAL_SHIFT = 2;
 
-// eslint-disable-next-line react/no-deprecated
 export default class TagsInput extends Component {
-  static ngModelStateField = 'tags';
-
   static propTypes = {
     className: PropTypes.string,
     tags: PropTypes.array,
@@ -88,7 +79,7 @@ export default class TagsInput extends Component {
     activeIndex: 0
   };
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this.updateStateFromProps(this.props);
   }
 
@@ -100,9 +91,11 @@ export default class TagsInput extends Component {
     }
   }
 
-  componentWillReceiveProps(props) {
+  UNSAFE_componentWillReceiveProps(props) {
     this.updateStateFromProps(props);
   }
+
+  static ngModelStateField = 'tags';
 
   nodeRef = node => {
     this.node = node;
@@ -297,6 +290,8 @@ export default class TagsInput extends Component {
 
     return (
       <div
+        // it transfers focus to input
+        role="presentation"
         className={classes}
         onKeyDown={this.handleKeyDown}
         onClick={this.clickHandler}
@@ -341,7 +336,8 @@ export default class TagsInput extends Component {
 
         {!legacyMode && <div className={styles.underline}/>}
         {!legacyMode && <div className={styles.focusUnderline}/>}
-      </div>);
+      </div>
+    );
   }
 }
 

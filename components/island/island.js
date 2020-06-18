@@ -2,18 +2,14 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
-import adaptiveIslandHOC from '../island/adaptive-island-hoc';
 import dataTests from '../global/data-tests';
+
+import adaptiveIslandHOC from './adaptive-island-hoc';
 
 import styles from './island.css';
 
 /**
  * @name Island
- * @name Island
- * @category Components
- * @tags Ring UI Language
- * @description Displays an island.
- * @example-file ./island.examples.html
  */
 
 export default class Island extends Component {
