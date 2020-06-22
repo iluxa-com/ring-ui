@@ -4,17 +4,16 @@ import PropTypes from 'prop-types';
 import Table from './table';
 import Selection from './selection';
 
-/* eslint-disable no-unused-vars */
 const {
   selection: __selection__,
   onSelect: __onSelect__,
   ...restPropTypes
 } = Table.propTypes;
-/* eslint-enable */
 
 class SmartTable extends PureComponent {
   static propTypes = {
     onSelectionChange: PropTypes.func,
+    isItemSelectable: PropTypes.func,
     ...restPropTypes
   };
 
@@ -23,13 +22,16 @@ class SmartTable extends PureComponent {
   };
 
   state = {
-    selection: new Selection({data: this.props.data})
+    selection: new Selection({
+      data: this.props.data,
+      isItemSelectable: this.props.isItemSelectable
+    })
   };
 
-  componentWillReceiveProps(nextProps) {
-    const data = nextProps.data;
-    if (this.props.data !== data) {
-      const selection = new Selection({data});
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const {data, isItemSelectable} = nextProps;
+    if (this.props.data !== data || this.props.isItemSelectable !== isItemSelectable) {
+      const selection = new Selection({data, isItemSelectable});
       this.setState({selection});
     }
   }

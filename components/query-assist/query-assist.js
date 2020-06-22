@@ -4,8 +4,8 @@ import {findDOMNode} from 'react-dom';
 import debounce from 'just-debounce-it';
 import classNames from 'classnames';
 import deepEqual from 'deep-equal';
-
-import {SearchIcon, CloseIcon} from '../icon';
+import searchIcon from '@jetbrains/icons/search.svg';
+import closeIcon from '@jetbrains/icons/close.svg';
 
 import getUID from '../global/get-uid';
 import dataTests from '../global/data-tests';
@@ -17,6 +17,9 @@ import LoaderInline from '../loader-inline/loader-inline';
 import Shortcuts from '../shortcuts/shortcuts';
 import rerenderHOC from '../global/rerender-hoc';
 import Theme from '../global/theme';
+import Button from '../button/button';
+
+import QueryAssistSuggestions from './query-assist__suggestions';
 
 import styles from './query-assist.css';
 
@@ -24,7 +27,6 @@ const POPUP_COMPENSATION = PopupMenu.ListProps.Dimension.ITEM_PADDING +
   PopupMenu.PopupProps.Dimension.BORDER_WIDTH;
 
 const ngModelStateField = 'query';
-const ICON_ID_LENGTH = 44;
 
 function noop() {}
 
@@ -34,75 +36,8 @@ function cleanText(text) {
 
 /**
  * @name Query Assist
- * @constructor
- * @category Components
- * @extends {ReactComponent}
- * @example-file ./query-assist.examples.html
- * @description
- *
- ## Component params
-
-+ __autoOpen__ `bool=false` Open suggestions popup during the initial render
-+ __caret__ `number=query.length` Initial caret position
-+ __clear__ `bool=false` Show clickable "cross" icon on the right which clears the query
-+ __className__ `string=''` Additional class for the component
-+ __popupClassName__ `string=''` Additional class for the popup
-+ __dataSource__ `func` Data source function
-+ __delay__ `number=0` Input debounce delay
-+ __disabled__ `bool=false` Disable the component
-+ __focus__ `bool=false` Initial focus
-+ __hint__ `string=''` Hint under the suggestions list
-+ __hintOnSelection__ `string=''` Hint under the suggestions list visible when a suggestion is selected
-+ __glass__ `bool=false` Show clickable "glass" icon on the right which applies the query
-+ __loader__ `bool=false` Show loader when a data request is in process
-+ __placeholder__ `string=''` Field placeholder value
-+ __onApply__ `func=` Called when the query is applied. An object with fields `caret`, `focus` and `query` is passed as an argument
-+ __onChange__ `func=`  Called when the query is changed. An object with fields `caret` and `query` is passed as an argument
-+ __onClear__ `func=` Called when the query is cleared. Called without arguments
-+ __onFocusChange__ `func` Called when the focus status is changed. An object with fields `focus` is passed as an argument
-+ __shortcuts__ `bool=true` Enable shortcut
-+ __query__ `string=''` Initial query
-
- ## Data source function
-
- Component class calls a data source function when user input happens and passes an object with fields `caret`, `focus` and `query` as the only argument.
- The function must return an object with the fields described below. The object can be optionally wrapped in a Promise.
-
- ### return object fields
-
- `caret` and `query` should just return server values provided to data source function.
- These fields allow the Query Assist component to recognise and drop earlier responses from the server.
-
-+ __caret__ (`string=0`) Caret from request
-+ __query__ (`string=''`) Query from request
-+ __styleRanges__ (`Array<suggestion>=`) Array of `styleRange` objects, used to highlight the request in the input field
-+ __suggestions__ (`Array<styleRange>`) Array of `suggestion` objects to show.
-
- ### `styleRange` object fields
-
- start `number` Range start (in characters)
- length `number` Range length (in characters)
- style `string` Style of the range. Possible values: `text`, `field_value`, `field_name`, `operator`
-
- ### `suggestion` object fields
-
-+ __prefix__ `string=` Suggestion option prefix
-+ __option__ `string` Suggestion option
-+ __suffix__ `string=` Suggestion option suffix
-+ __description__ `string=` Suggestion option description. Is not visible when a group is set
-+ __matchingStart__ `number` (required when matchingEnd is set) Start of the highlighted part of an option in the suggestions list (in characters)
-+ __matchingEnd__ `number` (required when matchingEnd is set) End of the highlighted part of an option in the suggestions list (in characters)
-+ __caret__ `number` Caret position after option completion (in characters)
-+ __completionStart__ `number` Where to start insertion (or replacement, when completing with the `Tab` key) of the completion option (in characters)
-+ __completionEnd__ `number` Where to end insertion of the completion option (in characters)
-+ __group__ `string=` Group title. Options with the same title are grouped under it
-+ __icon__ `string=` Icon URI, Data URI is possible
-
  */
 export default class QueryAssist extends Component {
-  static ngModelStateField = ngModelStateField;
-  static Theme = Theme;
-
   static propTypes = {
     theme: PropTypes.string,
     autoOpen: PropTypes.bool,
@@ -124,6 +59,9 @@ export default class QueryAssist extends Component {
     onClear: PropTypes.func,
     onFocusChange: PropTypes.func,
     query: PropTypes.string,
+    useCustomItemRender: PropTypes.bool,
+    translations: PropTypes.object,
+    actions: PropTypes.array,
     'data-test': PropTypes.string
   };
 
@@ -132,7 +70,11 @@ export default class QueryAssist extends Component {
     onApply: noop,
     onChange: noop,
     onClear: noop,
-    onFocusChange: noop
+    onFocusChange: noop,
+    translations: {
+      searchTitle: 'Search',
+      clearTitle: 'Clear search input'
+    }
   };
 
   state = {
@@ -144,7 +86,7 @@ export default class QueryAssist extends Component {
     showPopup: false
   };
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this.setState({shortcuts: !!this.props.focus});
   }
 
@@ -161,8 +103,7 @@ export default class QueryAssist extends Component {
 
     if (this.props.autoOpen) {
       this.requestHandler().
-        catch(noop).
-        then(this.setCaretPosition);
+        catch(noop);
     } else {
       this.requestStyleRanges().catch(noop);
     }
@@ -170,7 +111,7 @@ export default class QueryAssist extends Component {
     this.setCaretPosition();
   }
 
-  componentWillReceiveProps({caret, delay, query}) {
+  UNSAFE_componentWillReceiveProps({caret, delay, query}) {
     this.setupRequestHandler(delay);
     const shouldSetCaret = typeof caret === 'number';
 
@@ -204,6 +145,7 @@ export default class QueryAssist extends Component {
       props.disabled !== this.props.disabled ||
       props.clear !== this.props.clear ||
       props.focus !== this.props.focus ||
+      props.actions !== this.props.actions ||
       props.loader !== this.props.loader ||
       props.glass !== this.props.glass;
   }
@@ -212,7 +154,16 @@ export default class QueryAssist extends Component {
     this.updateFocus(prevProps);
   }
 
+  static ngModelStateField = ngModelStateField;
+  static Theme = Theme;
+
   ngModelStateField = ngModelStateField;
+
+  handleBlur = e => {
+    if (e.relatedTarget) {
+      this.handleFocusChange(e);
+    }
+  };
 
   handleFocusChange = e => {
     // otherwise it's blur and false
@@ -263,12 +214,17 @@ export default class QueryAssist extends Component {
       this.immediateState.caret < queryLength
         ? this.immediateState.caret
         : queryLength;
-    const currentCaretPosition = this.caret.getPosition({avoidFocus: true});
-
-    if (this.immediateState.focus && !this.props.disabled && currentCaretPosition !== -1) {
-      // Set to end of field value if newCaretPosition is inappropriate
-      this.caret.setPosition(newCaretPosition >= 0 ? newCaretPosition : -1);
-      this.scrollInput();
+    if (this.immediateState.focus && !this.props.disabled) {
+      if (Number.isInteger(this.immediateState.selection)) {
+        // Set to end of field value if newCaretPosition is inappropriate
+        this.caret.setPosition(newCaretPosition >= 0 ? newCaretPosition : -1);
+        this.scrollInput();
+      } else if (this.immediateState.selection && this.immediateState.selection.startOffset !==
+        undefined) {
+        this.caret.setPosition(this.immediateState.selection);
+      } else {
+        this.caret.setPosition(-1);
+      }
     }
   };
 
@@ -276,7 +232,7 @@ export default class QueryAssist extends Component {
     const caretOffset = this.caret.getOffset();
 
     if (this.input.clientWidth !== this.input.scrollWidth && caretOffset > this.input.clientWidth) {
-      this.input.scrollLeft = this.input.scrollLeft + caretOffset;
+      this.input.scrollLeft += caretOffset;
     }
   }
 
@@ -299,16 +255,14 @@ export default class QueryAssist extends Component {
     }
   };
 
-  // To hide placeholder as quickly as possible, does not work in IE/Edge
-  handleInput = () => {
+  handleInput = e => {
     this.togglePlaceholder();
-  };
-
-  handleKeyUp = e => {
     const props = {
       dirty: true,
       query: this.getQuery(),
-      caret: this.caret.getPosition(),
+      caret: Number.isInteger(this.caret.getPosition())
+        ? this.caret.getPosition()
+        : this.caret.getPosition().position,
       focus: true
     };
 
@@ -316,8 +270,6 @@ export default class QueryAssist extends Component {
       this.handleCaretMove(e);
       return;
     }
-
-    this.togglePlaceholder();
 
     if (this.isComposing) {
       return;
@@ -357,21 +309,24 @@ export default class QueryAssist extends Component {
     return true;
   };
 
-  handlePaste(e) {
+  handlePaste = e => {
     const INSERT_COMMAND = 'insertText';
     if (e.clipboardData && document.queryCommandSupported(INSERT_COMMAND)) {
       preventDefault(e);
       const text = cleanText(e.clipboardData.getData('text/plain'));
       document.execCommand(INSERT_COMMAND, false, text);
+      this.handleInput(e);
     }
-  }
+  };
 
   handleCaretMove = e => {
     if (this.isComposing) {
       return;
     }
 
-    const caret = this.caret.getPosition();
+    const caret = Number.isInteger(this.caret.getPosition())
+      ? this.caret.getPosition()
+      : this.caret.getPosition().position;
     const popupHidden = (!this.state.showPopup) && e.type === 'click';
 
     if (!this.props.disabled && (caret !== this.immediateState.caret || popupHidden)) {
@@ -381,7 +336,6 @@ export default class QueryAssist extends Component {
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
   handleStyleRangesResponse = ({suggestions, ...restProps}) => this.handleResponse(restProps);
 
   // eslint-disable-next-line max-len
@@ -389,7 +343,7 @@ export default class QueryAssist extends Component {
     if (
       query === this.getQuery() &&
       (caret === this.immediateState.caret ||
-      this.immediateState.caret === undefined)
+        this.immediateState.caret === undefined)
     ) {
       // Do not setState on unmounted component
       if (!this.node) {
@@ -412,6 +366,7 @@ export default class QueryAssist extends Component {
         state.styleRanges = styleRanges;
       }
 
+      this.immediateState.selection = this.caret.getPosition();
       this.setState(state, resolve);
     } else {
       reject(new Error('Current and response queries mismatch'));
@@ -606,9 +561,8 @@ export default class QueryAssist extends Component {
     });
   };
 
-  // See http://stackoverflow.com/questions/12353247/force-contenteditable-div-to-stop-accepting-input-after-it-loses-focus-under-web
   blurInput() {
-    window.getSelection().removeAllRanges();
+    this.caret.target.blur();
   }
 
   /**
@@ -629,71 +583,29 @@ export default class QueryAssist extends Component {
     }
   }
 
+  _renderSuggestion(suggestion) {
+    const {ITEM} = PopupMenu.ListProps.Type;
+    const {description, icon, group} = suggestion;
+    const key = QueryAssistSuggestions.createKey(suggestion);
+    const label = QueryAssistSuggestions.renderLabel(suggestion);
+
+    return {
+      key,
+      icon,
+      label,
+      description,
+      group,
+      rgItemType: ITEM,
+      data: suggestion
+    };
+  }
+
   renderSuggestions() {
-    const renderedSuggestions = [];
     const {suggestions} = this.state;
-
-    suggestions.forEach((suggestion, index, arr) => {
-      const {ITEM, SEPARATOR} = PopupMenu.ListProps.Type;
-      const {
-        className,
-        description,
-        group,
-        icon,
-        matchingStart,
-        matchingEnd,
-        option,
-        prefix = '',
-        suffix = ''
-      } = suggestion;
-      const prevSuggestion = arr[index - 1] && arr[index - 1].group;
-      const key = prefix + option + suffix + group + description +
-        (icon ? icon.substring(icon.length - ICON_ID_LENGTH) : '');
-
-      if (prevSuggestion !== group) {
-        renderedSuggestions.push({
-          key: option + group + SEPARATOR,
-          description: group,
-          rgItemType: SEPARATOR
-        });
-      }
-
-      let wrappedOption;
-      let before = '';
-      let after = '';
-
-      if (matchingStart !== matchingEnd) {
-        before = option.substring(0, matchingStart);
-        wrappedOption = (
-          <span className={styles.highlight}>
-            {option.substring(matchingStart, matchingEnd)}
-          </span>
-        );
-        after = option.substring(matchingEnd);
-      } else {
-        wrappedOption = option;
-      }
-
-      const wrappedPrefix = prefix && <span className={styles.service}>{prefix}</span>;
-      const wrappedSuffix = suffix && <span className={styles.service}>{suffix}</span>;
-
-      const label = (
-        <span className={className}>
-          {wrappedPrefix}{before}{wrappedOption}{after}{wrappedSuffix}
-        </span>
-      );
-
-      renderedSuggestions.push({
-        key,
-        icon,
-        label,
-        description,
-        rgItemType: ITEM,
-        data: suggestion
-      });
-    });
-
-    return renderedSuggestions;
+    if (!suggestions || !suggestions.length) {
+      return [];
+    }
+    return QueryAssistSuggestions.renderList(suggestions, this._renderSuggestion);
   }
 
   renderQuery() {
@@ -715,7 +627,7 @@ export default class QueryAssist extends Component {
       });
     }
 
-    return [...query].map((letter, index, letters) => {
+    return Array.from(query).map((letter, index, letters) => {
       const className = classNames(styles.letter, classes[index] || LETTER_DEFAULT_CLASS);
 
       const dataTest = (letters.length - 1 === index)
@@ -793,17 +705,40 @@ export default class QueryAssist extends Component {
     end: noop
   };
 
-  render() {
-    const {theme, glass, 'data-test': dataTest} = this.props;
-    const renderPlaceholder = !!this.props.placeholder && this.state.placeholderEnabled;
+  renderActions() {
+    const actions = [].concat(this.props.actions || []);
     const renderClear = this.props.clear && !!this.state.query;
+
+    if (renderClear) {
+      actions.push(
+        <Button
+          icon={closeIcon}
+          key={'clearAction'}
+          className={styles.icon}
+          iconClassName={styles.iconInner}
+          title={this.props.translations.clearTitle}
+          ref={this.clearRef}
+          onClick={this.clearQuery}
+          data-test="query-assist-clear-icon"
+        />
+      );
+    }
+
+    return actions;
+  }
+
+  render() {
+    const {theme, glass, 'data-test': dataTest, useCustomItemRender} = this.props;
+    const renderPlaceholder = !!this.props.placeholder && this.state.placeholderEnabled;
     const renderLoader = this.props.loader !== false && this.state.loading;
     const renderGlass = glass && !renderLoader;
     const renderUnderline = theme === Theme.DARK;
+    const actions = this.renderActions();
 
     const inputClasses = classNames({
       [`${styles.input} ring-js-shortcuts`]: true,
-      [styles.inputGap]: renderClear,
+      [styles.inputGap]: actions.length,
+      [styles.inputGap2]: actions.length === 2, // TODO: replace with flex-box layout
       [styles.inputLeftGap]: this.isRenderingGlassOrLoader(),
       [styles.inputDisabled]: this.props.disabled
     });
@@ -814,23 +749,27 @@ export default class QueryAssist extends Component {
         className={classNames(styles.queryAssist, styles[theme])}
         onMouseDown={this.trackInputMouseState}
         onMouseUp={this.trackInputMouseState}
+        // mouse handlers are used to track clicking on inner elements
+        role="presentation"
         ref={this.nodeRef}
       >
         {this.state.shortcuts &&
-          (
-            <Shortcuts
-              map={this.shortcutsMap}
-              scope={this.shortcutsScope}
-            />
-          )
+        (
+          <Shortcuts
+            map={this.shortcutsMap}
+            scope={this.shortcutsScope}
+          />
+        )
         }
 
         {renderGlass && (
-          <SearchIcon
-            className={classNames(styles.icon, styles.iconGlass)}
-            iconRef={this.glassRef}
+          <Button
+            icon={searchIcon}
+            className={styles.icon}
+            iconClassName={styles.iconInner}
+            title={this.props.translations.searchTitle}
+            ref={this.glassRef}
             onClick={this.handleApply}
-            size={SearchIcon.Size.Size16}
             data-test="query-assist-search-icon"
           />
         )}
@@ -846,27 +785,29 @@ export default class QueryAssist extends Component {
         )}
 
         <ContentEditable
+          aria-label={this.props.translations.searchTitle}
           className={inputClasses}
           data-test="ring-query-assist-input"
           ref={this.inputRef}
           disabled={this.props.disabled}
           onComponentUpdate={this.setCaretPosition}
 
-          onBlur={this.handleFocusChange}
+          onBlur={this.handleBlur}
           onClick={this.handleCaretMove}
           onCompositionStart={this.trackCompositionState}
           onCompositionEnd={this.trackCompositionState}
           onFocus={this.handleFocusChange}
-          onInput={this.handleInput}
+          onInput={this.handleInput} // To support IE use the same method
+          onKeyUp={this.handleInput} // to handle input and key up
           onKeyDown={this.handleEnter}
-          onKeyUp={this.handleKeyUp}
           onPaste={this.handlePaste}
 
           spellCheck="false"
         >{this.state.query && <span>{this.renderQuery()}</span>}</ContentEditable>
 
         {renderPlaceholder && (
-          <span
+          <button
+            type="button"
             className={classNames(styles.placeholder, {
               [styles.placeholderSpaced]: glass
             })}
@@ -875,18 +816,11 @@ export default class QueryAssist extends Component {
             data-test="query-assist-placeholder"
           >
             {this.props.placeholder}
-          </span>
+          </button>
         )}
         {renderUnderline && <div className={styles.focusUnderline}/>}
-        {renderClear && (
-          <CloseIcon
-            className={classNames(styles.icon, styles.iconClear)}
-            iconRef={this.clearRef}
-            onClick={this.clearQuery}
-            size={CloseIcon.Size.Size16}
-            data-test="query-assist-clear-icon"
-          />
-        )}
+        {actions &&
+        <div data-test="ring-query-assist-actions" className={styles.actions}>{actions}</div>}
         <PopupMenu
           hidden={!this.state.showPopup}
           onCloseAttempt={this.closePopup}
@@ -896,7 +830,7 @@ export default class QueryAssist extends Component {
           attached
           className={classNames(styles[theme], this.props.popupClassName)}
           directions={[PopupMenu.PopupProps.Directions.BOTTOM_RIGHT]}
-          data={this.renderSuggestions()}
+          data={useCustomItemRender ? this.state.suggestions : this.renderSuggestions()}
           data-test="ring-query-assist-popup"
           hint={this.props.hint}
           hintOnSelection={this.props.hintOnSelection}

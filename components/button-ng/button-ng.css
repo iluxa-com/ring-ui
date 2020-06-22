@@ -1,11 +1,9 @@
-/* This fixes vertical align of icons, contained in button content */
+@import "../global/variables.css";
+
 /* stylelint-disable-next-line selector-type-no-unknown */
-.ringIconVerticalAlignFix rg-icon {
-  top: auto;
-
-  vertical-align: 1px;
-
-  line-height: 8px;
+.ringIconDefaultColor rg-icon,
+.ringIconDefaultColor :global(.ring-icon) {
+  color: var(--ring-icon-secondary-color);
 }
 
 .iconMarginFix.iconMarginFix {

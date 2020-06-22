@@ -2,12 +2,16 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import {sortableHandle} from 'react-sortable-hoc';
-
-import {DragIcon, ChevronRightIcon, ChevronDownIcon} from '../icon';
+import chevronRightIcon from '@jetbrains/icons/chevron-right.svg';
+import chevronDownIcon from '@jetbrains/icons/chevron-down.svg';
+import dragIcon from '@jetbrains/icons/drag.svg';
 
 import focusSensorHOC from '../global/focus-sensor-hoc';
 import Checkbox from '../checkbox/checkbox';
 import Button from '../button/button';
+import Tooltip from '../tooltip/tooltip';
+
+import getUID from '../global/get-uid';
 
 import Cell from './cell';
 import style from './table.css';
@@ -19,9 +23,9 @@ const DragHandle = sortableHandle(({alwaysShowDragHandle}) => {
 
   return (
     <Button
+      title="Drag"
       className={classes}
-      icon={DragIcon}
-      iconSize={DragIcon.Size.Size14}
+      icon={dragIcon}
     />
   );
 });
@@ -41,9 +45,12 @@ class Row extends PureComponent {
     onFocusRestore: PropTypes.func,
     level: PropTypes.number,
     collapsible: PropTypes.bool,
+    parentCollapsible: PropTypes.bool,
     collapsed: PropTypes.bool,
     onCollapse: PropTypes.func,
-    onExpand: PropTypes.func
+    onExpand: PropTypes.func,
+    showDisabledSelection: PropTypes.bool,
+    checkboxTooltip: PropTypes.string
   };
 
   static defaultProps = {
@@ -57,10 +64,13 @@ class Row extends PureComponent {
     onFocusRestore: () => {},
     level: 0,
     collapsible: false,
+    parentCollapsible: false,
     collapsed: false,
     onCollapse: () => {},
     onExpand: () => {}
   };
+
+  id = getUID('table-row-');
 
   onMouseEnter = () => {
     const {item, onHover} = this.props;
@@ -96,7 +106,9 @@ class Row extends PureComponent {
     const {
       item, columns, selectable, selected,
       showFocus, draggable, alwaysShowDragHandle, level,
-      collapsible, collapsed, onCollapse, onExpand
+      collapsible, parentCollapsible, collapsed,
+      onCollapse, onExpand, showDisabledSelection,
+      checkboxTooltip
     } = this.props;
 
     const classes = classNames(this.props.className, {
@@ -113,7 +125,8 @@ class Row extends PureComponent {
     const metaColumnClasses = style.metaColumn;
 
     const SUBITEM_OFFSET = 30;
-    const gap = level * SUBITEM_OFFSET;
+    const COLLAPSIBLE_PARENT_OFFSET = 20;
+    const gap = level * SUBITEM_OFFSET + (parentCollapsible ? COLLAPSIBLE_PARENT_OFFSET : 0);
     const metaColumnStyle = {
       paddingLeft: `${gap}px`
     };
@@ -126,13 +139,28 @@ class Row extends PureComponent {
 
         {selectable &&
           (
-            <Checkbox
-              className={showFocus ? 'ring-checkbox_focus' : ''}
-              checked={selected}
-              onFocus={this.onCheckboxFocus}
-              onChange={this.onCheckboxChange}
-              tabIndex="-1"
-            />
+            <Tooltip title={checkboxTooltip}>
+              <Checkbox
+                aria-labelledby={this.id}
+                className={showFocus ? 'ring-checkbox_focus' : ''}
+                checked={selected}
+                onFocus={this.onCheckboxFocus}
+                onChange={this.onCheckboxChange}
+                tabIndex="-1"
+              />
+            </Tooltip>
+          )
+        }
+
+        {!selectable && showDisabledSelection &&
+          (
+            <Tooltip title={checkboxTooltip}>
+              <Checkbox
+                aria-labelledby={this.id}
+                checked={selected}
+                disabled
+              />
+            </Tooltip>
           )
         }
 
@@ -140,8 +168,7 @@ class Row extends PureComponent {
           (
             <Button
               className={style.rowCollapseExpandButton}
-              icon={ChevronRightIcon}
-              iconSize={ChevronRightIcon.Size.Size14}
+              icon={chevronRightIcon}
               onClick={onExpand}
             />
           )
@@ -151,8 +178,7 @@ class Row extends PureComponent {
           (
             <Button
               className={style.rowCollapseExpandButton}
-              iconSize={ChevronRightIcon.Size.Size14}
-              icon={ChevronDownIcon}
+              icon={chevronDownIcon}
               onClick={onCollapse}
             />
           )
@@ -167,7 +193,7 @@ class Row extends PureComponent {
 
       return (
         <Cell key={column.id} className={cellClasses}>
-          {index === 0 && (draggable || selectable) && metaColumn}
+          {index === 0 && (draggable || selectable || showDisabledSelection) && metaColumn}
           {value}
         </Cell>
       );
@@ -175,6 +201,7 @@ class Row extends PureComponent {
 
     return (
       <tr
+        id={this.id}
         ref={this.rowRef}
         className={classes}
         tabIndex="0"

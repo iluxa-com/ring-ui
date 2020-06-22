@@ -1,4 +1,5 @@
 import angular from 'angular';
+
 import AngularElastic from '@jetbrains/angular-elastic';
 
 import MessageBundle from '../message-bundle-ng/message-bundle-ng';
@@ -7,9 +8,6 @@ import '../error-bubble/error-bubble.scss';
 
 /**
  * @name Form Ng
- * @category Legacy Angular
- * @description Provides an Angular wrapper for Form.
- * @example-file ./form-ng.examples.html
  */
 
 const angularModule = angular.module('Ring.form', [MessageBundle, AngularElastic]);

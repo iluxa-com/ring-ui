@@ -1,4 +1,6 @@
-@value unit, text-color, gray-color from  "../global/global.css";
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .userCardSpaced {
   padding: calc(unit * 2) calc(unit * 2);
@@ -14,7 +16,7 @@
 
   text-align: left;
 
-  color: text-color;
+  color: var(--ring-text-color);
 
   font-size: 13px;
   line-height: 18px;
@@ -39,9 +41,9 @@
   margin-right: 4px;
 
   border-radius: 50%;
-  background: gray-color;
+  background-color: var(--ring-icon-secondary-color);
 }
 
 .userActiveStatus.online {
-  background-color: #6fa01f;
+  background-color: var(--ring-icon-success-color);
 }

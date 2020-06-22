@@ -1,5 +1,7 @@
-@value unit, font-size, text-color, gray-color, borders-color, white-color, border-hover-color, selected-background-color, ease, fast-ease from "../global/global.css";
-@value checkbox-size: 14px;
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
+@value checkboxSize: 14px;
 
 .checkbox {
   position: relative;
@@ -8,13 +10,13 @@
 
   text-align: left;
 
-  color: text-color;
+  color: var(--ring-text-color);
   outline: none;
 
   &:hover .cell {
-    transition: background-color ease;
+    transition: background-color var(--ring-ease);
 
-    border-color: border-hover-color;
+    border-color: var(--ring-border-hover-color);
   }
 }
 
@@ -25,33 +27,35 @@
   display: inline-block;
 
   box-sizing: border-box;
-  width: checkbox-size;
-  height: checkbox-size;
+  width: checkboxSize;
+  height: checkboxSize;
 
   user-select: none;
-  transition: border-color ease, background-color ease, box-shadow ease;
+  transition: border-color var(--ring-ease), background-color var(--ring-ease), box-shadow var(--ring-ease);
   vertical-align: middle;
   pointer-events: none;
 
-  border: 1px solid borders-color;
+  border: 1px solid var(--ring-borders-color);
   border-radius: 3px;
-  background-color: white-color;
+  background-color: var(--ring-content-background-color);
 }
 
-.icon {
+.icon.icon {
   position: absolute;
   top: calc(unit * -1.5);
   left: 1px;
 
-  width: checkbox-size;
-  height: checkbox-size;
+  width: calc(unit * 2);
+  height: calc(unit * 2);
 
-  transition: opacity fast-ease, transform fast-ease;
+  transition: opacity var(--ring-fast-ease), transform var(--ring-fast-ease);
 
   opacity: 0;
 
   & svg {
     position: absolute;
+    top: 0;
+    left: 0;
   }
 }
 
@@ -69,8 +73,8 @@
   opacity: 0;
 
   &:checked + .cell {
-    border-color: border-hover-color;
-    background-color: selected-background-color;
+    border-color: var(--ring-border-hover-color);
+    background-color: var(--ring-selected-background-color);
 
     /* stylelint-disable-next-line selector-max-specificity */
     & .icon {
@@ -82,10 +86,10 @@
 
   &:focus + .cell,
   &.focus + .cell {
-    transition: background-color ease;
+    transition: background-color var(--ring-ease);
 
-    border-color: border-hover-color;
-    box-shadow: 0 0 0 1px border-hover-color;
+    border-color: var(--ring-border-hover-color);
+    box-shadow: 0 0 0 1px var(--ring-border-hover-color);
   }
 
   &[disabled] {
@@ -93,8 +97,8 @@
   }
 
   &[disabled] + .cell {
-    border-color: borders-color;
-    background-color: white-color;
+    border-color: var(--ring-line-color);
+    background-color: var(--ring-content-background-color);
   }
 
   /* stylelint-disable-next-line selector-max-specificity */
@@ -103,7 +107,7 @@
   }
 
   &[disabled] ~ .label {
-    color: gray-color;
+    color: var(--ring-disabled-color);
   }
 }
 

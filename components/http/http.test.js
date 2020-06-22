@@ -75,7 +75,29 @@ describe('HTTP', () => {
     });
 
     const res = await http.request('testurl');
-    res.should.equal('some text');
+    res.should.deep.equal({data: 'some text'});
+  });
+
+  it('should allow to get meta information of response', async () => {
+    const res = await http.request('testurl');
+
+    const meta = http.getMetaForResponse(res);
+    meta.status.should.equal(200); // eslint-disable-line no-magic-numbers
+    meta.headers.get('content-type').should.equal('application/json');
+  });
+
+  it('should allow to get meta information of string response', async () => {
+    http._fetch.resolves({
+      status: 200,
+      headers: new Headers({'content-type': 'text/html'}),
+      json: async () => sandbox.spy(),
+      text: async () => 'some text'
+    });
+    const res = await http.request('testurl');
+
+    const meta = http.getMetaForResponse(res);
+    meta.status.should.equal(200); // eslint-disable-line no-magic-numbers
+    meta.headers.get('content-type').should.equal('text/html');
   });
 
 
@@ -95,7 +117,7 @@ describe('HTTP', () => {
     http._fetch.should.have.been.calledWith('http://test/foo', sinon.match(Object));
   });
 
-  it('should perform request convert "body" as object inro string', async () => {
+  it('should perform request convert "body" as object into string', async () => {
     await http.request('testurl', {
       method: 'POST',
       body: {foo: 'bar'}

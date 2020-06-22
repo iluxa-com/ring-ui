@@ -445,18 +445,18 @@ describe('Query Assist', () => {
     });
 
     it('should close popup with after zero suggestions provided', done => {
+      let currentSuggestions = suggestions;
       const instance = mountQueryAssist({
         dataSource: ({query, caret}) => ({
           query,
           caret,
-          suggestions: this.suggestions
+          suggestions: currentSuggestions
         })
       }).instance();
 
-      this.suggestions = suggestions;
       instance.requestData().
         then(() => {
-          this.suggestions = [];
+          currentSuggestions = [];
           instance.requestData().
             then(() => {
               instance._popup.isVisible().should.be.false;
@@ -627,7 +627,7 @@ describe('Query Assist', () => {
       wrapper.setProps({
         delay: 100
       }, () => {
-        wrapper.prop('dataSource').reset();
+        wrapper.prop('dataSource').resetHistory();
 
         instance.requestData();
         instance.requestData();
@@ -637,6 +637,21 @@ describe('Query Assist', () => {
         wrapper.prop('dataSource').should.have.been.calledOnce;
       });
 
+    });
+  });
+
+
+  describe('custom actions', () => {
+    it('should allow to pass custom actions', () => {
+      const wrapper = mountQueryAssist({
+        actions: [
+          <div id={'A'} key={'A'}/>,
+          <div id={'B'} key={'B'}/>
+        ]
+      });
+
+      wrapper.find('#A').should.exist;
+      wrapper.find('#B').should.exist;
     });
   });
 });

@@ -1,4 +1,6 @@
-@value unit, darker-gray-color, black-color, white-color, main-color, link-hover-color from  "../global/global.css";
+@import "../global/variables.css";
+
+@value unit, resetButton from "../global/global.css";
 @value height: calc(unit * 8);
 @value compensate: 3px;
 @value compensated: calc(height - compensate);
@@ -8,12 +10,12 @@
 }
 
 .dark {
-  color: white-color;
-  background-color: black-color;
+  color: var(--ring-dark-text-color);
+  background-color: var(--ring-navigation-background-color);
 
   /* override link */
   & > a {
-    color: darker-gray-color;
+    color: var(--ring-dark-secondary-color);
   }
 }
 
@@ -33,10 +35,16 @@
     box-sizing: border-box;
     height: height;
     padding: 0 calc(unit * 1.5) compensate;
+  }
+}
 
-    &:first-child {
-      padding-left: calc(unit * 4);
-    }
+.headerSpaced {
+  & > *:first-child {
+    padding-left: calc(unit * 4);
+  }
+
+  & > *:last-child {
+    padding-right: calc(unit * 4);
   }
 }
 
@@ -46,7 +54,7 @@
 
   height: height;
 
-  color: black-color;
+  color: var(--ring-navigation-background-color);
 
   line-height: normal;
 
@@ -74,6 +82,8 @@
 .icon {
   width: calc(unit * 5);
 
+  text-align: center;
+
   vertical-align: top;
 }
 
@@ -81,14 +91,16 @@
 .icon.icon {
   height: compensated;
 
-  padding-top: 4px;
+  padding-top: calc(unit / 2);
+
+  line-height: compensated;
 }
 
 .main svg {
-  color: main-color;
+  color: var(--ring-main-color);
 }
 
-.rotateable svg {
+.rotatable svg {
   transition: transform 0.3s ease-out;
   transform: rotate(0deg);
   transform-origin: 50% 50%;
@@ -103,7 +115,7 @@
 
   width: auto;
   height: compensated;
-  padding: 0 calc(unit * 4) 0 unit;
+  padding-left: unit;
 
   vertical-align: bottom;
 }
@@ -122,6 +134,8 @@
 }
 
 .avatarWrapper {
+  composes: resetButton;
+
   line-height: 0;
 }
 
@@ -140,8 +154,8 @@
 
     content: '';
 
-    border: 1px solid white-color;
+    border: 1px solid var(--ring-dark-text-color);
     border-radius: 50%;
-    background-color: link-hover-color;
+    background-color: var(--ring-link-hover-color);
   }
 }

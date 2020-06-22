@@ -23,7 +23,7 @@ export default class IFrameFlow {
     const authRequest = await this._requestBuilder.prepareAuthRequest(
       // eslint-disable-next-line camelcase
       {request_credentials: 'required', auth_mode: 'bypass_to_login'},
-      {nonRedirect: true}
+      {nonRedirect: false}
     );
 
     return new Promise((resolve, reject) => {
@@ -36,7 +36,7 @@ export default class IFrameFlow {
           this.stop();
         },
         renderFallbackLink: () => (
-          <Link href={authRequest.url}>{this._translations.nothingHappensLink}</Link>
+          <Link href={authRequest.url} target="_self">{this._translations.nothingHappensLink}</Link>
         )
       });
 

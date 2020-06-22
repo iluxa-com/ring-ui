@@ -2,8 +2,12 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+import dataTests from '../global/data-tests';
 import Avatar, {Size as AvatarSize} from '../avatar/avatar';
-import Icon, {CheckmarkIcon} from '../icon';
+import Checkbox from '../checkbox/checkbox';
+import Icon from '../icon';
+
+import getUID from '../global/get-uid';
 
 import styles from './list.css';
 
@@ -14,12 +18,9 @@ import styles from './list.css';
 
 const RING_UNIT = 8;
 const DEFAULT_PADDING = 16;
+const CHECKBOX_WIDTH = 28;
 
 export default class ListItem extends PureComponent {
-  static defaultProps = {
-    hover: false
-  };
-
   static propTypes = {
     scrolling: PropTypes.bool,
     hover: PropTypes.bool,
@@ -34,7 +35,7 @@ export default class ListItem extends PureComponent {
       PropTypes.array
     ]),
     avatar: PropTypes.string,
-    glyph: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    glyph: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     icon: PropTypes.string,
     iconSize: PropTypes.number,
     rightNodes: PropTypes.oneOfType([
@@ -48,21 +49,25 @@ export default class ListItem extends PureComponent {
       PropTypes.array
     ]),
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    title: PropTypes.string,
     level: PropTypes.number,
     rgItemType: PropTypes.number,
-    rightGlyph: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    rightGlyph: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     compact: PropTypes.bool,
     onClick: PropTypes.func,
+    onCheckboxChange: PropTypes.func,
     onMouseOver: PropTypes.func,
-    onMouseUp: PropTypes.func
+    onMouseUp: PropTypes.func,
+    'data-test': PropTypes.string
   };
 
-  static defaultProps = {
-    iconSize: Icon.Size.Size18
-  };
+  id = getUID('list-item-');
+
+  stopBubbling = e => e.stopPropagation();
+
+  _isString = val => typeof val === 'string' || val instanceof String;
 
   render() {
-    /* eslint-disable no-unused-vars */
     const {
       scrolling,
       className,
@@ -74,6 +79,7 @@ export default class ListItem extends PureComponent {
       rightGlyph,
       description,
       label,
+      title,
       details,
       hover,
       rgItemType,
@@ -81,19 +87,24 @@ export default class ListItem extends PureComponent {
       tabIndex,
       compact,
       onClick,
+      onCheckboxChange,
       onMouseOver,
       onMouseUp,
       rightNodes,
       leftNodes,
       ...restProps
     } = this.props;
-    /* eslint-enable */
+
+    const checkable = checkbox !== undefined;
+    const hasLeftNodes = leftNodes || glyph || avatar;
+    const showCheckbox = checkable && (checkbox || !hasLeftNodes || (hover && !disabled));
 
     const classes = classNames(styles.item, className, {
       [styles.action]: !disabled,
       [styles.hover]: hover && !disabled,
       [styles.compact]: compact,
-      [styles.scrolling]: scrolling
+      [styles.scrolling]: scrolling,
+      [styles.disabled]: disabled
     });
 
     const detailsClasses = classNames({
@@ -104,84 +115,104 @@ export default class ListItem extends PureComponent {
     });
 
     const style = {
-      paddingLeft: `${(+level || 0) * RING_UNIT + DEFAULT_PADDING}px`
+      paddingLeft: `${(+level || 0) * RING_UNIT + DEFAULT_PADDING + (showCheckbox ? CHECKBOX_WIDTH : 0)}px`
     };
 
-    const labelIsString = typeof label === 'string' || label instanceof String;
-
-    let dataTest = 'ring-list-item';
-    if (!disabled) {
-      dataTest += ' ring-list-item-action';
+    let computedTitle = null;
+    if (this._isString(title)) {
+      // if title is specified and is a string then use it
+      computedTitle = title;
+    } else {
+      // otherwise use label if it is a string;
+      // label can also be an element, use empty string in this case
+      computedTitle = this._isString(label) ? label : '';
     }
 
+    const dataTest = dataTests({
+      'ring-list-item': (restProps['data-test'] || '').indexOf('ring-list-item') === -1,
+      'ring-list-item-action': !disabled,
+      'ring-list-item-selected': checkbox
+    }, restProps['data-test']);
+
     return (
-      <div
-        tabIndex={tabIndex}
-        onClick={onClick}
-        onMouseOver={onMouseOver}
-        onMouseUp={onMouseUp}
-        className={classes}
-        data-test={dataTest}
-        style={style}
-      >
-        <div className={styles.top}>
-          <div className={styles.left}>
-            {glyph && (
-              <Icon
-                className={styles.glyph}
-                glyph={glyph}
-                size={this.props.iconSize}
-              />
-            )}
-            {avatar && (
-              <Avatar
-                className={styles.avatar}
-                url={avatar}
-                size={AvatarSize.Size20}
-              />
-            )}
+      <div className={styles.itemContainer} data-test={dataTest}>
+        {showCheckbox && (
+          <div
+            className={styles.checkboxContainer}
+          >
+            <Checkbox
+              aria-labelledby={this.id}
+              onClick={this.stopBubbling}
+              checked={checkbox}
+              onChange={onCheckboxChange}
+            />
           </div>
+        )}
+        <button
+          id={this.id}
+          type="button"
+          tabIndex={tabIndex}
+          onClick={onClick}
+          onMouseOver={onMouseOver}
+          onFocus={onMouseOver}
+          onMouseUp={onMouseUp}
+          className={classes}
+          style={style}
+        >
+          <div className={styles.top} onMouseOut={this.stopBubbling} onBlur={this.stopBubbling}>
+            {!showCheckbox && (
+              <div className={styles.left}>
+                {leftNodes}
+                {glyph && (
+                  <Icon
+                    className={styles.glyph}
+                    glyph={glyph}
+                    size={this.props.iconSize}
+                  />
+                )}
+                {avatar && (
+                  <Avatar
+                    className={styles.avatar}
+                    url={avatar}
+                    size={AvatarSize.Size20}
+                  />
+                )}
+              </div>
+            )}
 
-          <span
-            className={styles.label}
-            title={labelIsString ? label : ''}
-            data-test="ring-list-item-label"
-          >{label}</span>
-
-          {description && (
             <span
-              className={styles.description}
-              data-test="ring-list-item-description"
-            >{description}</span>
-          )}
+              className={styles.label}
+              title={computedTitle}
+              data-test="ring-list-item-label"
+            >{label}</span>
 
-          <div className={styles.right}>
-            {rightGlyph && (
-              <Icon
-                className={styles.rightGlyph}
-                glyph={rightGlyph}
-                size={this.props.iconSize}
-              />
+            {description && (
+              <span
+                className={styles.description}
+                data-test="ring-list-item-description"
+              >{description}</span>
             )}
-            {icon && (
-              <div
-                className={styles.icon}
-                style={{backgroundImage: `url("${icon}")`}}
-              />
-            )}
-            {rightNodes}
-            {checkbox !== undefined && (
-              <CheckmarkIcon
-                className={classNames(styles.checkbox, {
-                  [styles.hidden]: !checkbox
-                })}
-                size={CheckmarkIcon.Size.Size14}
-              />
-            )}
+
+            <div className={styles.right}>
+              {rightGlyph && (
+                <Icon
+                  className={styles.rightGlyph}
+                  glyph={rightGlyph}
+                  size={this.props.iconSize}
+                />
+              )}
+              {icon && (
+                <div
+                  className={styles.icon}
+                  style={{backgroundImage: `url("${icon}")`}}
+                />
+              )}
+              {rightNodes}
+            </div>
           </div>
-        </div>
 
-        {details && <div className={detailsClasses}>{details}</div>}
+          {details && <div className={detailsClasses}>{details}</div>}
+        </button>
       </div>
     );
   }

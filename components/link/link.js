@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import {pure} from 'recompose';
 
 import memoize from '../global/memoize';
 import dataTests from '../global/data-tests';
@@ -10,12 +11,6 @@ import styles from './link.css';
 
 /**
  * @name Link
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @description Displays a link.
- * @extends {ReactComponent}
- * @example-file ./link.examples.html
  */
 
 let isCompatibilityMode = false;
@@ -25,10 +20,10 @@ export function setCompatibilityMode(isEnabled) {
 }
 
 const makeWrapText = memoize(innerClassName => {
-  const WrapText = ({className, children}) => {
+  const WrapText = pure(function WrapText({className, children}) {
     const classes = classNames(styles.inner, className, innerClassName);
     return <span className={classes}>{children}</span>;
-  };
+  });
 
   WrapText.propTypes = {
     className: PropTypes.string,
@@ -51,7 +46,9 @@ export function linkHOC(ComposedComponent) {
       hover: PropTypes.bool,
       children: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
       'data-test': PropTypes.string,
-      href: PropTypes.string
+      href: PropTypes.string,
+      onPlainLeftClick: PropTypes.func,
+      onClick: PropTypes.func
     };
 
     getChildren() {
@@ -73,11 +70,10 @@ export function linkHOC(ComposedComponent) {
         className,
         'data-test': dataTest,
         href,
-        // eslint-disable-next-line no-unused-vars
-        innerClassName, children,
+        innerClassName, children, onPlainLeftClick, onClick,
         ...props
       } = this.props;
-      const useButton = pseudo || !isCustom && !href;
+      const useButton = pseudo || !isCustom && href == null;
 
       const classes = classNames(styles.link, className, {
         [styles.active]: active,
@@ -97,6 +93,7 @@ export function linkHOC(ComposedComponent) {
             type="button"
             {...props}
             className={classes}
+            onClick={onClick || onPlainLeftClick}
             data-test={dataTests('ring-link', dataTest)}
           >{this.getChildren()}</button>
         );
@@ -107,6 +104,8 @@ export function linkHOC(ComposedComponent) {
           {...props}
           href={href}
           className={classes}
+          onClick={onClick}
+          onPlainLeftClick={onPlainLeftClick}
           data-test={dataTests('ring-link', dataTest)}
         >
           {this.getChildren()}

@@ -1,4 +1,5 @@
 import angular from 'angular';
+
 import React from 'react';
 import {render, unmountComponentAtNode} from 'react-dom';
 
@@ -14,34 +15,6 @@ const INFINITE_SCROLL_PACK_SIZE = 50;
 const DIALOG_NG_SELECTOR = '[data-anchor=dialog-container][data-in-sidebar=false]';
 /**
  * @name Select Ng
- * @category Legacy Angular
- * @tags Ring UI Language
- * @description Provides an Angular wrapper for Select.
- * Options argument has one of the following forms:
- * * `label` **`in`** `items`
- * * `label` **`for`** `item` **`in`** `items`
- * * `label` **`for`** `item` **`in`** `items` **`track by`** `trackexpr`
- * * `label` **`select as`** `buttontext` **`describe as`** `description` **`for`** `item` **`in`** `items` **`track by`** `trackexpr`
- * * `select` **`as`** `label` **`select as`** `buttontext` **`for`** `item` **`in`** `items`
- *
- * Where:
- * * `items` is an expression that evaluates to a datasource containing data to iterate over. Datasource can be an array or a function that accepts the `query` parameter and returns a promise of an array filtered by the query.
- * * `item` is a local variable that will refer to each item in the items.
- * * `label` – the result of this expression will be the label for &lt;option&gt; element. The expression will most likely refer to the value variable (e.g. item.name).
- * * `select` – the result of this expression will be bound to the model of the parent &lt;select&gt; element. If not specified, select expression will default to item.
- * * `trackexpr` is used when working with an array of objects. The result of this expression will be used to identify the objects in the array. The trackexpr will most likely refer to the item variable (e.g. item.id). Used to preserve selection even when the options are recreated (e.g. reloaded from the server).
- * * `buttontext` – label for the selected item to be displayed on the button.
- * * `description` – description of an item to display in the option list.
- *
- * Examples:
- * * `item in items`
- * * `item in dataSource(query)`
- * * `item.text for item in items`
- * * `item.text for item in items track by item.id`
- * * `item.text select as item.fullText describe as item.fullDescription for item in items track by item.id`
- * * `item as item.text select as makeFullText(item) for item in items`
- *
- * @example-file ./select-ng.examples.html
  */
 
 const angularModule = angular.module('Ring.select', [SelectNgOptions, MessageBundle]);
@@ -116,7 +89,8 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
       config: '=?',
       configAutoUpdate: '=',
       selectInstance: '=?',
-      size: '@'
+      size: '@',
+      dir: '@'
     },
     bindToController: true,
     controllerAs: 'selectCtrl',
@@ -145,6 +119,8 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
       ctrl.ngModelCtrl = null;
       ctrl.query = null;
       ctrl.dataReceived = false;
+
+      ctrl.skipNextModelSync = false;
 
       const scope = ctrl.optionsScope ? ctrl.optionsScope : $scope.$parent;
 
@@ -200,6 +176,7 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
         }
 
         if (ctrl.ngModelCtrl) {
+          ctrl.skipNextModelSync = true;
           if (getType() === 'suggest') {
             ctrl.ngModelCtrl.$setViewValue(selectedValue.label);
           } else if (Array.isArray(selectedValue)) {
@@ -246,13 +223,13 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
       let loaderDelayTimeout = null;
       ctrl.showLoader = () => {
         if (getType() !== 'suggest') {
-          ctrl.selectInstance.rerender({loading: true});
+          reRenderSelect({loading: true});
         }
       };
 
       ctrl.loadOptionsToSelect = query => {
         if (ctrl.stopLoadingNewOptions && query === lastQuery) {
-          return;
+          return $q.resolve();
         }
 
         ctrl.stopLoadingNewOptions = false;
@@ -270,32 +247,43 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
         }
 
         inProcessQueries++;
-        ctrl.getOptions(query, skip).then(results => {
+        return ctrl.getOptions(query, skip).then(results => {
           inProcessQueries--;
           if (query !== lastQuery) {
             return; // do not process the result if queries don't match
+          }
+          if (skip &&
+            ctrl.lastSkip !== -1 &&
+            skip !== (ctrl.lastSkip + infiniteScrollPackSize) &&
+            ctrl.infiniteScrollPackSize) {
+            return; // do not process the result if skips not match
           }
 
           const items = memorizeOptions(results.data || results, skip).
             map(ctrl.convertNgModelToSelect);
           $timeout.cancel(loaderDelayTimeout);
           ctrl.dataReceived = true;
-          ctrl.selectInstance.rerender({
+          reRenderSelect({
             data: items,
             loading: false
           });
-        }).catch(() => {
+        }).catch(error => {
           inProcessQueries--;
           $timeout.cancel(loaderDelayTimeout);
-          ctrl.selectInstance.rerender({
+          reRenderSelect({
             loading: false
           });
+          return $q.reject(error);
         });
       };
 
       function setSelectModel(newValue) {
+        if (ctrl.skipNextModelSync) {
+          ctrl.skipNextModelSync = false;
+          return;
+        }
         if (ctrl.ngModelCtrl) {
-          ctrl.selectInstance.rerender({
+          reRenderSelect({
             selected: ctrl.convertNgModelToSelect(newValue)
           });
         }
@@ -307,14 +295,14 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
 
       function syncDisabled() {
         $attrs.$observe('disabled', newValue => {
-          ctrl.selectInstance.rerender({disabled: newValue});
+          reRenderSelect({disabled: newValue});
         });
       }
 
       function syncMultiple() {
         $scope.$watch(() => ctrl.multiple, () => {
           if (angular.isDefined(ctrl.multiple)) {
-            ctrl.selectInstance.rerender({multiple: ctrl.multiple});
+            reRenderSelect({multiple: ctrl.multiple});
           }
         });
       }
@@ -322,7 +310,7 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
       function syncConfig() {
         $scope.$watchCollection(() => ctrl.config, (config, old) => {
           if (config !== old) {
-            ctrl.selectInstance.rerender(config);
+            reRenderSelect(config);
           }
         });
       }
@@ -372,18 +360,18 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
         });
       }
 
-      function listenToDestroy() {
-        $scope.$on('$destroy', () => {
-          unmountComponentAtNode(container);
-        });
-      }
-
       function getSelectType() {
         return types[getType()] || types.material;
       }
 
       function getSelectSize() {
         return sizes[ctrl.size] || sizes.FULL;
+      }
+
+      function reRenderSelect(props) {
+        if (ctrl.selectInstance.node) {
+          ctrl.selectInstance.rerender(props);
+        }
       }
 
       /**
@@ -402,26 +390,16 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
         }
       }
 
-      ctrl.$onInit = () => {
-        ctrl.optionsParser = new SelectOptions(scope, ctrl.options);
 
-        ctrl.lazy = ctrl.hasOwnProperty('lazy') ? ctrl.lazy : true;
-
-        /**
-         * Provide specific filter function if externalFilter is enabled
-         */
-        if (ctrl.externalFilter) {
-          ctrl.filter = ctrl.filter || {};
-          ctrl.filter.fn = () => true;
-        }
-
-        ctrl.config = angular.extend({}, {
+      function createDefaultConfig() {
+        const defaultConfig = {
           label: ctrl.label || RingMessageBundle.select_label(),
           selectedLabel: ctrl.selectedLabel,
           allowAny: getType() === 'suggest',
           hideArrow: getType() === 'suggest',
           filter: ctrl.filter,
           tags: ctrl.tags,
+          dir: ctrl.dir,
           multiple: ctrl.multiple,
           popupClassName: $attrs.popupClass,
           clear: ctrl.clear,
@@ -475,11 +453,17 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
                 ctrl.onFilter(query);
               }
             });
-          }
-        }, ctrl.config || {});
+          },
+          reloadOptions: query => {
+            $scope.$evalAsync(() => {
+              ctrl.loadOptionsToSelect(query || ctrl.query);
+            });
+          },
+          getLoadedOptions: () => ctrl.loadedOptions
+        };
 
-        if (infiniteScrollPackSize && !ctrl.config.onLoadMore) {
-          ctrl.config.onLoadMore = () => {
+        if (infiniteScrollPackSize) {
+          defaultConfig.onLoadMore = () => {
             if (inProcessQueries === 0) {
               $scope.$evalAsync(() => {
                 ctrl.loadOptionsToSelect(ctrl.query);
@@ -487,6 +471,42 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
             }
           };
         }
+
+        return defaultConfig;
+      }
+
+      function removeDefaultConfigPropFromUserConfig() {
+        if (!ctrl.defaultConfig || !ctrl.config) {
+          return;
+        }
+
+        Object.keys(ctrl.defaultConfig).filter(propName =>
+          ctrl.config[propName] === ctrl.defaultConfig[propName]
+        ).forEach(propName => {
+          delete ctrl.config[propName];
+        });
+      }
+
+      ctrl.$onDestroy = () => {
+        unmountComponentAtNode(container);
+        removeDefaultConfigPropFromUserConfig();
+      };
+
+      ctrl.$onInit = () => {
+        ctrl.optionsParser = new SelectOptions(scope, ctrl.options);
+
+        ctrl.lazy = ctrl.hasOwnProperty('lazy') ? ctrl.lazy : true;
+
+        /**
+         * Provide specific filter function if externalFilter is enabled
+         */
+        if (ctrl.externalFilter) {
+          ctrl.filter = ctrl.filter || {};
+          ctrl.filter.fn = () => true;
+        }
+
+        ctrl.defaultConfig = createDefaultConfig();
+        ctrl.config = angular.extend({}, ctrl.defaultConfig, ctrl.config || {});
 
         if (getType() === 'suggest' || getType() === 'input') {
           ctrl.selectInstance = render(<RerenderableSelect {...ctrl.config}/>, container);
@@ -513,7 +533,6 @@ angularModule.directive('rgSelect', function rgSelectDirective() {
         }
         attachDropdownIfNeeded();
         listenToRouteChanges();
-        listenToDestroy();
       };
     }
   };

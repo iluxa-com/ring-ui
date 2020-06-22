@@ -1,21 +1,18 @@
 /**
  * @name List
- * @category Components
- * @tags Ring UI Language
- * @description Displays a list of items.
  */
 
 import 'dom4';
-import 'core-js/modules/es6.array.find';
-import 'core-js/modules/es7.array.includes';
 import React, {Component, cloneElement} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import VirtualizedList from 'react-virtualized/dist/commonjs/List';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
-import WindowScroller from 'react-virtualized/dist/commonjs/WindowScroller';
-import {CellMeasurer, CellMeasurerCache} from 'react-virtualized/dist/commonjs/CellMeasurer';
+import VirtualizedList from 'react-virtualized/dist/es/List';
+import AutoSizer from 'react-virtualized/dist/es/AutoSizer';
+import WindowScroller from 'react-virtualized/dist/es/WindowScroller';
+import {CellMeasurer, CellMeasurerCache} from 'react-virtualized/dist/es/CellMeasurer';
+import deprecate from 'util-deprecate';
 
+import dataTests from '../global/data-tests';
 import getUID from '../global/get-uid';
 import scheduleRAF from '../global/schedule-raf';
 import memoize from '../global/memoize';
@@ -61,6 +58,11 @@ const DEFAULT_ITEM_TYPE = Type.ITEM;
 
 function noop() {}
 
+const warnEmptyKey = deprecate(
+  () => {},
+  'No key passed for list item with non-string label. It is considered as a bad practice and has been deprecated, please provide a key.'
+);
+
 /**
  * @param {Type} listItemType
  * @param {Object} item list item
@@ -73,20 +75,19 @@ function isItemType(listItemType, item) {
   return type === listItemType;
 }
 
+function isActivatable(item) {
+  return !(item.rgItemType === Type.HINT ||
+    item.rgItemType === Type.SEPARATOR ||
+    item.rgItemType === Type.TITLE ||
+    item.disabled);
+}
+
 /**
  * @name List
  * @constructor
  * @extends {ReactComponent}
- * @example-file ./list.examples.html
  */
 export default class List extends Component {
-  static isItemType = isItemType;
-
-  static ListProps = {
-    Type,
-    Dimension
-  };
-
   static propTypes = {
     className: PropTypes.string,
     hint: PropTypes.string,
@@ -108,8 +109,10 @@ export default class List extends Component {
     useMouseUp: PropTypes.bool,
     visible: PropTypes.bool,
     renderOptimization: PropTypes.bool,
+    disableMoveOverflow: PropTypes.bool,
     disableMoveDownOverflow: PropTypes.bool,
-    compact: PropTypes.bool
+    compact: PropTypes.bool,
+    disableScrollToActive: PropTypes.bool
   };
 
   static defaultProps = {
@@ -126,33 +129,34 @@ export default class List extends Component {
     disableMoveDownOverflow: false
   };
 
-  static ListHint = ListHint;
-
   state = {
     activeIndex: null,
     activeItem: null,
     needScrollToActive: false,
     scrolling: false,
     hasOverflow: false,
-    disabledHover: false
+    disabledHover: false,
+    scrolledToBottom: false
   };
 
-  componentWillMount() {
-    this.checkActivatableItems(this.props.data);
-    if (this.props.activeIndex != null && this.props.data[this.props.activeIndex]) {
+  UNSAFE_componentWillMount() {
+    const {data, activeIndex} = this.props;
+    this.checkActivatableItems(data);
+    if (activeIndex != null && data[this.props.activeIndex]) {
       this.setState({
-        activeIndex: this.props.activeIndex,
-        activeItem: this.props.data[this.props.activeIndex],
+        activeIndex,
+        activeItem: data[activeIndex],
         needScrollToActive: true
       });
     } else if (
-      this.props.activeIndex == null &&
+      activeIndex == null &&
       this.shouldActivateFirstItem(this.props) &&
-      this.isActivatable(this.props.data[0])
+      this.hasActivatableItems()
     ) {
+      const firstActivatableIndex = data.findIndex(isActivatable);
       this.setState({
-        activeIndex: 0,
-        activeItem: this.props.data[0],
+        activeIndex: firstActivatableIndex,
+        activeItem: data[firstActivatableIndex],
         needScrollToActive: true
       });
     }
@@ -163,52 +167,54 @@ export default class List extends Component {
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
   }
 
-  componentWillReceiveProps(props) {
+  UNSAFE_componentWillReceiveProps(props) {
     if (props.data) {
       //TODO investigate (https://youtrack.jetbrains.com/issue/RG-772)
       //props.data = props.data.map(normalizeListItemType);
 
       this.checkActivatableItems(props.data);
 
-      let activeIndex = null;
-      let activeItem = null;
+      this.setState(prevState => {
+        let activeIndex = null;
+        let activeItem = null;
 
-      if (
-        props.restoreActiveIndex &&
-        this.state.activeItem &&
-        this.state.activeItem.key !== undefined &&
-        this.state.activeItem.key !== null
-      ) {
-        for (let i = 0; i < props.data.length; i++) {
-          // Restore active index if there is an item with the same "key" property
-          if (props.data[i].key !== undefined && props.data[i].key === this.state.activeItem.key) {
-            activeIndex = i;
-            activeItem = props.data[i];
-            break;
+        if (
+          props.restoreActiveIndex &&
+          prevState.activeItem &&
+          prevState.activeItem.key != null
+        ) {
+          for (let i = 0; i < props.data.length; i++) {
+            // Restore active index if there is an item with the same "key" property
+            if (props.data[i].key !== undefined && props.data[i].key === prevState.activeItem.key) {
+              activeIndex = i;
+              activeItem = props.data[i];
+              break;
+            }
           }
         }
-      }
 
-      if (
-        activeIndex === null &&
-        this.shouldActivateFirstItem(props) &&
-        this.isActivatable(props.data[0])
-      ) {
-        activeIndex = 0;
-        activeItem = props.data[0];
-      } else if (
-        props.activeIndex != null &&
-        props.activeIndex !== this.props.activeIndex &&
-        props.data[props.activeIndex]
-      ) {
-        activeIndex = props.activeIndex;
-        activeItem = props.data[props.activeIndex];
-      }
+        if (
+          activeIndex === null &&
+          this.shouldActivateFirstItem(props) &&
+          this.hasActivatableItems()
+        ) {
+          activeIndex = props.data.findIndex(isActivatable);
+          activeItem = props.data[activeIndex];
+        } else if (
+          props.activeIndex != null &&
+          props.activeIndex !== this.props.activeIndex &&
+          props.data[props.activeIndex]
+        ) {
+          activeIndex = props.activeIndex;
+          activeItem = props.data[props.activeIndex];
+        }
 
-      this.setState({
-        activeIndex,
-        activeItem,
-        needScrollToActive: true
+        return {
+          activeIndex,
+          activeItem,
+          needScrollToActive:
+            activeIndex !== prevState.activeIndex ? true : prevState.needScrollToActive
+        };
       });
     }
   }
@@ -219,7 +225,7 @@ export default class List extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.virtualizedList && prevProps.data.length !== this.props.data.length) {
+    if (this.virtualizedList && prevProps.data !== this.props.data) {
       this.virtualizedList.recomputeRowHeights();
     }
 
@@ -227,9 +233,19 @@ export default class List extends Component {
   }
 
   componentWillUnmount() {
+    this.unmounted = true;
     document.removeEventListener('mousemove', this.onDocumentMouseMove);
     document.removeEventListener('keydown', this.onDocumentKeyDown, true);
   }
+
+  static isItemType = isItemType;
+
+  static ListHint = ListHint;
+
+  static ListProps = {
+    Type,
+    Dimension
+  };
 
   hoverHandler = memoize(index => () =>
     scheduleHoverListener(() => {
@@ -290,21 +306,14 @@ export default class List extends Component {
   checkActivatableItems(items) {
     this._activatableItems = false;
     for (let i = 0; i < items.length; i++) {
-      if (this.isActivatable(items[i])) {
+      if (isActivatable(items[i])) {
         this._activatableItems = true;
         return;
       }
     }
   }
 
-  isActivatable(item) {
-    return !(item.rgItemType === Type.HINT ||
-      item.rgItemType === Type.SEPARATOR ||
-      item.rgItemType === Type.TITLE ||
-      item.disabled);
-  }
-
-  selectHandler = memoize(index => event => {
+  selectHandler = memoize(index => (event, tryKeepOpen = false) => {
     const item = this.props.data[index];
     if (!this.props.useMouseUp && item.onClick) {
       item.onClick(item, event);
@@ -313,16 +322,21 @@ export default class List extends Component {
     }
 
     if (this.props.onSelect) {
-      this.props.onSelect(item, event);
+      this.props.onSelect(item, event, {tryKeepOpen});
     }
   });
 
   upHandler = e => {
+    const {data, disableMoveOverflow} = this.props;
     const index = this.state.activeIndex;
     let newIndex;
 
     if (index === null || index === 0) {
-      newIndex = this.props.data.length - 1;
+      if (!disableMoveOverflow) {
+        newIndex = data.length - 1;
+      } else {
+        return;
+      }
     } else {
       newIndex = index - 1;
     }
@@ -331,11 +345,14 @@ export default class List extends Component {
   };
 
   downHandler = e => {
+    const {data, disableMoveOverflow, disableMoveDownOverflow} = this.props;
     const index = this.state.activeIndex;
     let newIndex;
 
-    if ((index === null || index + 1 === this.props.data.length)) {
-      if (!this.props.disableMoveDownOverflow) {
+    if (index === null) {
+      newIndex = 0;
+    } else if (index + 1 === data.length) {
+      if (!disableMoveOverflow && !disableMoveDownOverflow) {
         newIndex = 0;
       } else {
         return;
@@ -347,13 +364,21 @@ export default class List extends Component {
     this.moveHandler(newIndex, this.downHandler, e);
   };
 
+  homeHandler = e => {
+    this.moveHandler(0, this.downHandler, e);
+  };
+
+  endHandler = e => {
+    this.moveHandler(this.props.data.length - 1, this.upHandler, e);
+  };
+
   onDocumentMouseMove = () => {
     if (this.state.disabledHover) {
       this.setState({disabledHover: false});
     }
   };
 
-  onDocumentKeyDown = (e: KeyboardEvent) => {
+  onDocumentKeyDown = e => {
     const metaKeys = [16, 17, 18, 19, 20, 91]; // eslint-disable-line no-magic-numbers
     if (!this.state.disabledHover && !metaKeys.includes(e.keyCode)) {
       this.setState({disabledHover: true});
@@ -378,12 +403,14 @@ export default class List extends Component {
         needScrollToActive: true
       },
       function onSet() {
-        if (!this.isActivatable(item)) {
+        if (!isActivatable(item)) {
           retryCallback(e);
           return;
         }
 
-        preventDefault(e);
+        if (e.key !== 'Home' && e.key !== 'End') {
+          preventDefault(e);
+        }
       }
     );
   }
@@ -417,19 +444,21 @@ export default class List extends Component {
   };
 
   getFirst() {
-    return this.props.data.find(item => item.rgItemType === Type.ITEM);
+    return this.props.data.find(
+      item => item.rgItemType === Type.ITEM || item.rgItemType === Type.CUSTOM
+    );
   }
 
   getSelected() {
     return this.props.data[this.state.activeIndex];
   }
 
-  clearSelected() {
+  clearSelected = () => {
     this.setState({
       activeIndex: null,
       needScrollToActive: false
     });
-  }
+  };
 
   defaultItemHeight() {
     return this.props.compact ? Dimension.COMPACT_ITEM_HEIGHT : Dimension.ITEM_HEIGHT;
@@ -437,7 +466,7 @@ export default class List extends Component {
 
   shouldActivateFirstItem(props) {
     return props.activateFirstItem ||
-      props.activateSingleItem && props.length === 1;
+      props.activateSingleItem && props.data.length === 1;
   }
 
   scrollEndHandler = () => scheduleScrollListener(() => {
@@ -447,7 +476,12 @@ export default class List extends Component {
       const sensitivity = this.defaultItemHeight() / 2;
       const currentScrollingPosition =
         innerContainer.scrollTop + innerContainer.clientHeight + sensitivity;
-      if (currentScrollingPosition >= maxScrollingPosition) {
+      const scrolledToBottom =
+        maxScrollingPosition > 0 && currentScrollingPosition >= maxScrollingPosition;
+      if (!this.unmounted) {
+        this.setState({scrolledToBottom});
+      }
+      if (scrolledToBottom) {
         this.props.onScrollToBottom();
       }
     }
@@ -465,8 +499,18 @@ export default class List extends Component {
     return props.maxHeight - this.defaultItemHeight() - Dimension.INNER_PADDING;
   }
 
-  renderItem = ({index, style, isScrolling, parent}) => {
-    let key;
+  _deprecatedGenerateKeyFromContent(itemProps) {
+    const identificator = itemProps.label || itemProps.description;
+    const isString = typeof identificator === 'string' || identificator instanceof String;
+    if (identificator && !isString) {
+      warnEmptyKey();
+      `${itemProps.rgItemType}_${JSON.stringify(identificator)}`;
+    }
+    return `${itemProps.rgItemType}_${identificator}`;
+  }
+
+  renderItem = ({index, style, isScrolling, parent, key}) => {
+    let itemKey;
     let el;
 
     const realIndex = index - 1;
@@ -475,12 +519,11 @@ export default class List extends Component {
 
     // top and bottom margins
     if (index === 0 || index === this.props.data.length + 1 || item.rgItemType === Type.MARGIN) {
-      key = `${Type.MARGIN}_${index}`;
+      itemKey = key || `${Type.MARGIN}_${index}`;
       el = <div style={{height: Dimension.MARGIN}}/>;
     } else {
 
       // Hack around SelectNG implementation
-      // eslint-disable-next-line no-unused-vars
       const {selectedLabel, originalModel, ...cleanedProps} = item;
       const itemProps = Object.assign({rgItemType: DEFAULT_ITEM_TYPE}, cleanedProps);
 
@@ -491,11 +534,12 @@ export default class List extends Component {
         itemProps.rgItemType = Type.LINK;
       }
 
-      // Probably unique enough key
-      key = itemProps.key ||
-        `${itemProps.rgItemType}_${itemProps.label || itemProps.description}`;
+      itemKey = key || itemProps.key || this._deprecatedGenerateKeyFromContent(itemProps);
 
       itemProps.hover = (realIndex === this.state.activeIndex);
+      if (itemProps.hoverClassName != null && itemProps.hover) {
+        itemProps.className = classNames(itemProps.className, itemProps.hoverClassName);
+      }
       itemProps.onMouseOver = this.hoverHandler(realIndex);
       itemProps.tabIndex = -1;
       itemProps.scrolling = isScrolling;
@@ -507,6 +551,7 @@ export default class List extends Component {
       } else {
         itemProps.onClick = selectHandler;
       }
+      itemProps.onCheckboxChange = event => selectHandler(event, true);
 
       if (itemProps.compact == null) {
         itemProps.compact = this.props.compact;
@@ -521,12 +566,15 @@ export default class List extends Component {
           break;
         case Type.LINK:
           ItemComponent = ListLink;
+          this.addItemDataTestToProp(itemProps);
           break;
         case Type.ITEM:
           ItemComponent = ListItem;
+          this.addItemDataTestToProp(itemProps);
           break;
         case Type.CUSTOM:
           ItemComponent = ListCustom;
+          this.addItemDataTestToProp(itemProps);
           break;
         case Type.TITLE:
           itemProps.isFirst = isFirst;
@@ -542,14 +590,23 @@ export default class List extends Component {
     return parent ? (
       <CellMeasurer
         cache={this._cache}
-        key={key}
+        key={itemKey}
         parent={parent}
         rowIndex={index}
         columnIndex={0}
       >
-        <div style={style}>{el}</div>
+        <div style={style} role="row">
+          <div role="cell">
+            {el}
+          </div>
+        </div>
       </CellMeasurer>
-    ) : cloneElement(el, {key});
+    ) : cloneElement(el, {key: itemKey});
+  };
+
+  addItemDataTestToProp = props => {
+    props['data-test'] = dataTests('ring-list-item', props['data-test']);
+    return props;
   };
 
   virtualizedListRef = el => {
@@ -576,6 +633,7 @@ export default class List extends Component {
     onChildScroll = noop,
     scrollTop
   }) {
+    const dirOverride = {direction: 'auto'}; // Virtualized sets "direction: ltr" by defaulthttps://github.com/bvaughn/react-virtualized/issues/457
     return (
       <AutoSizer disableHeight onResize={this.props.onResize}>
         {({width}) => (
@@ -583,12 +641,11 @@ export default class List extends Component {
             ref={this.virtualizedListRef}
             className="ring-list__i"
             autoHeight={autoHeight}
-            style={maxHeight ? {maxHeight, height: 'auto'} : {}}
+            style={maxHeight ? {maxHeight, height: 'auto', ...dirOverride} : dirOverride}
             autoContainerWidth
             height={height}
             width={width}
             isScrolling={isScrolling}
-            // eslint-disable-next-line react/jsx-no-bind
             onScroll={e => {
               onChildScroll(e);
               this.scrollEndHandler(e);
@@ -601,14 +658,16 @@ export default class List extends Component {
             overscanRowCount={this._bufferSize}
 
             // ensure rerendering
-            // eslint-disable-next-line react/jsx-no-bind
             noop={() => {}}
 
             scrollToIndex={
-              this.state.needScrollToActive && this.state.activeIndex != null
+              !this.props.disableScrollToActive &&
+                this.state.needScrollToActive &&
+                this.state.activeIndex != null
                 ? this.state.activeIndex + 1
                 : undefined
             }
+            scrollToAlignment="center"
             deferredMeasurementCache={this._cache}
             onRowsRendered={this.checkOverflow}
           />
@@ -661,6 +720,8 @@ export default class List extends Component {
   shortcutsMap = {
     up: this.upHandler,
     down: this.downHandler,
+    home: this.homeHandler,
+    end: this.endHandler,
     enter: this.enterHandler,
     'meta+enter': this.enterHandler,
     'ctrl+enter': this.enterHandler,
@@ -684,21 +745,23 @@ export default class List extends Component {
         ref={this.containerRef}
         className={classes}
         onMouseOut={this.props.onMouseOut}
+        onBlur={this.props.onMouseOut}
+        onMouseLeave={this.clearSelected}
         data-test="ring-list"
       >
         {this.props.shortcuts &&
-          (
-            <Shortcuts
-              map={this.shortcutsMap}
-              scope={this.shortcutsScope}
-            />
-          )
+        (
+          <Shortcuts
+            map={this.shortcutsMap}
+            scope={this.shortcutsScope}
+          />
+        )
         }
         {this.props.renderOptimization
           ? this.renderVirtualized(maxHeight, rowCount)
           : this.renderSimple(maxHeight, rowCount)
         }
-        {this.state.hasOverflow && (
+        {this.state.hasOverflow && !this.state.scrolledToBottom && (
           <div
             className={styles.fade}
             style={fadeStyles}

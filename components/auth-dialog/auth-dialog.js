@@ -9,12 +9,6 @@ import styles from './auth-dialog.css';
 
 /**
  * @name Auth Dialog
- * @category Components
- * @tags Ring UI Language
- * @framework React
- * @constructor
- * @description A component that shows an authentication dialog.
- * @example-file ./auth-dialog.examples.html
  */
 
 export default class AuthDialog extends Component {
@@ -83,6 +77,7 @@ export default class AuthDialog extends Component {
         <div className={styles.content}>
           {serviceImage && (
             <img
+              alt={`${serviceName} logo`}
               className={styles.logo}
               src={serviceImage}
             />

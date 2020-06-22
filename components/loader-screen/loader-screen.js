@@ -4,47 +4,10 @@ import PropTypes from 'prop-types';
 
 import Loader from '../loader/loader';
 
-import './loader-screen.scss';
+import styles from './loader-screen.css';
 
 /**
  * @name Loader Screen
- * @category Components
- * @constructor
- * @description Displays a large animated loader and an (optional) text. Use cases: while the site is loading, during major actions.
- * @extends {ReactComponent}
- * @example
-    <example name="Loader Screen">
-     <file name="index.html" disable-auto-size>
-       <div id="loader-screen"></div>
-     </file>
-
-     <file name="index.js" webpack="true">
-       import React from 'react';
-       import {render} from 'react-dom';
-       import LoaderScreen from '@jetbrains/ring-ui/components/loader-screen/loader-screen';
-
-       render(
-         <LoaderScreen/>,
-         document.getElementById('loader-screen')
-       );
-     </file>
-   </example>
-   <example name="Loader Screen with a message">
-     <file name="index.html" disable-auto-size>
-       <div id="loader-screen"></div>
-     </file>
-
-     <file name="index.js" webpack="true">
-       import React from 'react';
-       import {render} from 'react-dom';
-       import LoaderScreen from '@jetbrains/ring-ui/components/loader-screen/loader-screen';
-
-       render(
-         <LoaderScreen message="Loading..."/>,
-         document.getElementById('loader-screen')
-       );
-     </file>
-   </example>
  */
 export default class LoaderScreen extends PureComponent {
   static propTypes = {
@@ -56,10 +19,10 @@ export default class LoaderScreen extends PureComponent {
   render() {
     const {message, className, containerClassName, ...restProps} = this.props;
 
-    const containerClasses = classNames(containerClassName, 'ring-loader-screen');
+    const containerClasses = classNames(containerClassName, styles.loaderScreen);
 
-    const loaderClasses = classNames(className, 'ring-loader-screen__loader', {
-      'ring-loader-screen__loader_without-spacings': !message
+    const loaderClasses = classNames(className, styles.loader, {
+      [styles.loaderWithoutSpacing]: !message
     });
 
     return (

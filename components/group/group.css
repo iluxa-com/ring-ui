@@ -1,4 +1,6 @@
-@value unit from  "../global/global.css";
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .group {
   & > *:not(:last-child) {

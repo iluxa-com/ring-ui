@@ -1,4 +1,7 @@
 import angular from 'angular';
+
+import angularSanitize from 'angular-sanitize';
+
 import 'dom4';
 import createFocusTrap from 'focus-trap';
 
@@ -17,15 +20,11 @@ import styles from './dialog-ng.css';
 
 /**
  * @name Dialog Ng
- * @category Legacy Angular
- * @tags Ring UI Language
- * @description Provides an Angular wrapper for Dialog.
- * @example-file ./dialog-ng.examples.html
  */
 
 const angularModule = angular.module(
   'Ring.dialog',
-  [RingButton, PromisedClickNg, rgCompilerModuleName]
+  [angularSanitize, RingButton, PromisedClickNg, rgCompilerModuleName]
 );
 
 class DialogController extends RingAngularComponent {
@@ -238,8 +237,13 @@ class DialogController extends RingAngularComponent {
   }
 
   getErrorMessage(errorResponse) {
-    if (errorResponse && errorResponse.data && errorResponse.data.error_description) {
+    // eslint-disable-next-line camelcase
+    if (errorResponse?.data?.error_description) {
       return errorResponse.data.error_description;
+    }
+
+    if (errorResponse?.data?.error) {
+      return errorResponse.data.error;
     }
 
     return errorResponse;

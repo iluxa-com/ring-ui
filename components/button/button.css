@@ -1,120 +1,171 @@
-@value unit, font-smaller-lower, border-radius, border-radius-small, icon-color, icon-disabled-color, borders-color, border-hover-color, white-color, black-color, text-color, darker-gray-color, selected-background-color, dark-selected-background-color, main-color, main-hover-color, error-color, dark-gray-color, link-hover-color, gray-color, dark-line-color, ease, font-size-smaller, font-size, font-family from "../global/global.css";
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 @value button-shadow: inset 0 0 0 1px;
 @value height: calc(unit * 3);
 @value loaderWidth: calc(unit * 8);
 
+:root {
+  /* TODO: This colors are not ready to move to variables.css */
+  /* stylelint-disable color-no-hex */
+  --ring-button-primary-background-color: #1a98ff;
+  --ring-button-primary-border-color: #0062b2;
+  --ring-button-danger-active-color: #ffe7e8;
+  --ring-button-danger-hover-color: #ffb3b8;
+  --ring-button-loader-background: #33a3ff;
+  --ring-button-dark-border-disabled-color: #333;
+  --ring-button-dark-icon-disabled-color: var(--ring-button-dark-border-disabled-color);
+  --ring-button-dark-danger-active-color: #26080a;
+  --ring-button-dark-danger-hover-color: #db5860;
+  --ring-button-dark-active-color: #001526; /* TODO: Can't it be replaced with #002A4D? */
+  --ring-button-dark-loader-background: #002039;
+  /* stylelint-enable color-no-hex */
+}
+
 .light {
-  color: text-color;
-  background-color: white-color;
-  box-shadow: button-shadow borders-color;
+  color: var(--ring-text-color);
+  background-color: var(--ring-content-background-color);
+  box-shadow: button-shadow var(--ring-borders-color);
 
   &:hover {
-    box-shadow: button-shadow border-hover-color;
+    box-shadow: button-shadow var(--ring-border-hover-color);
   }
 
   &:active,
   &.active {
-    background-color: selected-background-color;
-    box-shadow: button-shadow border-hover-color;
+    background-color: var(--ring-selected-background-color);
+    box-shadow: button-shadow var(--ring-border-hover-color);
+  }
+
+  &:global(.focus-visible) {
+    box-shadow: button-shadow var(--ring-border-hover-color), 0 0 0 1px var(--ring-border-hover-color);
+  }
+
+  &[disabled] {
+    box-shadow: button-shadow var(--ring-border-disabled-color);
   }
 
   &[disabled],
   &[disabled].withIcon {
-    color: gray-color;
+    color: var(--ring-disabled-color);
   }
 
   &[disabled] .icon {
-    color: icon-disabled-color;
+    color: var(--ring-icon-disabled-color);
   }
 
   &.primary:active,
   &.primary.active {
-    background-color: #1a98ff;
-    box-shadow: button-shadow #0062b2;
+    background-color: var(--ring-button-primary-background-color);
+    box-shadow: button-shadow var(--ring-button-primary-border-color);
   }
 
   &.danger:active,
   &.danger.active {
-    background-color: #ffe5e5;
-    box-shadow: button-shadow #ffb2b2;
+    background-color: var(--ring-button-danger-active-color);
   }
 
-  &.danger:focus,
-  &.danger:hover {
-    box-shadow: button-shadow #ffb2b2;
+  &.danger:active,
+  &.danger.active,
+  &.danger:global(.focus-visible) {
+    box-shadow: button-shadow var(--ring-button-danger-hover-color);
   }
 
   &.withIcon {
-    color: dark-gray-color;
+    color: var(--ring-secondary-color);
+  }
+
+  &.onlyIcon {
+    color: var(--ring-icon-secondary-color);
   }
 
   & .loaderBackground::before {
     background-image:
       linear-gradient(
         to right,
-        white-color,
-        selected-background-color 40%,
-        white-color 80%
+        var(--ring-content-background-color),
+        var(--ring-selected-background-color) 40%,
+        var(--ring-content-background-color) 80%
       );
   }
 }
 
+.light.danger:hover {
+  box-shadow: button-shadow var(--ring-button-danger-hover-color);
+}
+
 .dark {
-  color: darker-gray-color;
-  background-color: black-color;
-  box-shadow: button-shadow dark-line-color;
+  color: var(--ring-dark-secondary-color);
+  background-color: var(--ring-navigation-background-color);
+  box-shadow: button-shadow var(--ring-dark-borders-color);
 
   &:hover {
-    box-shadow: button-shadow main-color;
+    box-shadow: button-shadow var(--ring-dark-border-hover-color);
   }
 
   &:active,
   &.active {
-    color: white-color;
-    background-color: dark-selected-background-color;
-    box-shadow: button-shadow main-color;
+    color: var(--ring-dark-text-color);
+    background-color: var(--ring-button-dark-active-color);
+    box-shadow: button-shadow var(--ring-dark-border-hover-color);
+  }
+
+  &:global(.focus-visible) {
+    box-shadow: button-shadow var(--ring-dark-border-hover-color), 0 0 0 1px var(--ring-dark-border-hover-color);
+  }
+
+  &[disabled] {
+    box-shadow: button-shadow var(--ring-button-dark-border-disabled-color);
   }
 
   &[disabled],
   &[disabled].withIcon {
-    color: text-color;
+    color: var(--ring-dark-disabled-color);
   }
 
   &[disabled] .icon {
-    color: #333;
+    color: var(--ring-button-dark-icon-disabled-color);
   }
 
   &.primary:active,
   &.primary.active {
-    background-color: main-hover-color;
-    box-shadow: button-shadow border-hover-color;
+    background-color: var(--ring-main-hover-color);
+    box-shadow: button-shadow var(--ring-border-hover-color);
   }
 
   &.danger:active,
   &.danger.active {
-    color: error-color;
-    background-color: #1a0000;
-    box-shadow: button-shadow #7f0000;
+    color: var(--ring-error-color);
+    background-color: var(--ring-button-dark-danger-active-color);
   }
 
-  &.danger:focus,
-  &.danger:hover {
-    box-shadow: button-shadow #7f0000;
+  &.danger:active,
+  &.danger.active,
+  &.danger:global(.focus-visible) {
+    box-shadow: button-shadow var(--ring-button-dark-danger-hover-color);
   }
 
   &.withIcon {
-    color: darker-gray-color;
+    color: var(--ring-dark-secondary-color);
   }
 
   & .loaderBackground::before {
     background-image:
       linear-gradient(
         to right,
-        black-color,
-        #002039 40%,
-        black-color 80%
+        var(--ring-navigation-background-color),
+        var(--ring-button-dark-loader-background) 40%,
+        var(--ring-navigation-background-color) 80%
       );
   }
+
+  & .dropdownIcon {
+    color: var(--ring-dark-secondary-color);
+  }
+}
+
+.dark.danger:hover {
+  box-shadow: button-shadow var(--ring-button-dark-danger-hover-color);
 }
 
 .button {
@@ -123,7 +174,6 @@
   composes: button from "../button-toolbar/button-toolbar.css";
 
   position: relative;
-  z-index: 0;
 
   display: inline-block;
 
@@ -133,30 +183,24 @@
   padding: 0 calc(unit * 2);
 
   cursor: pointer;
-  transition: color ease, background-color ease, box-shadow ease;
+  transition: color var(--ring-ease), background-color var(--ring-ease), box-shadow var(--ring-ease);
   text-decoration: none;
 
   border: 0;
-  border-radius: border-radius;
+  border-radius: var(--ring-border-radius);
   outline: 0;
 
-  font-family: font-family;
-  font-size: font-size-smaller;
+  font-family: var(--ring-font-family);
+  font-size: var(--ring-font-size-smaller);
 
   line-height: height;
 
   &:hover {
-    z-index: 3;
-
     transition: none;
   }
 
-  &:focus {
-    z-index: 4;
-
+  &:global(.focus-visible) {
     transition: none;
-
-    box-shadow: inset 0 0 0 1px border-hover-color, 0 0 0 1px border-hover-color;
   }
 
   &[disabled] {
@@ -175,33 +219,31 @@
   }
 }
 
-.button:active,
 .active {
-  z-index: 2;
+  composes: active from "../button-group/button-group.css";
 }
 
 .primary {
-  color: white-color;
-  background-color: main-color;
+  color: var(--ring-dark-text-color);
+  background-color: var(--ring-main-color);
   box-shadow: none;
 
   &.withIcon,
   &.withIcon:active,
   &.withIcon.active {
-    color: main-color;
+    color: var(--ring-main-color);
   }
 
-  &:hover,
-  &:focus {
+  &:global(.focus-visible) {
     transition: none;
 
-    background-color: main-hover-color;
+    background-color: var(--ring-main-hover-color);
     box-shadow: none;
   }
 
   &[disabled] {
-    background-color: white-color;
-    box-shadow: button-shadow borders-color;
+    background-color: var(--ring-content-background-color);
+    box-shadow: button-shadow var(--ring-borders-color);
   }
 
   & .loaderBackground {
@@ -210,22 +252,29 @@
     bottom: 0;
     left: 0;
 
-    border-radius: border-radius;
+    border-radius: var(--ring-border-radius);
 
     &::before {
       background-image:
         linear-gradient(
           to right,
-          main-color,
-          #33a3ff 40%,
-          main-color 80%
+          var(--ring-main-color),
+          var(--ring-button-loader-background) 40%,
+          var(--ring-main-color) 80%
         );
     }
   }
 }
 
+.primary:hover {
+  transition: none;
+
+  background-color: var(--ring-main-hover-color);
+  box-shadow: none;
+}
+
 .danger {
-  color: error-color;
+  color: var(--ring-error-color);
 
   &.withIcon,
   &.withIcon:active,
@@ -233,13 +282,16 @@
   &.text,
   &.text:active,
   &.text.active {
-    color: error-color;
+    color: var(--ring-error-color);
   }
 
-  &:hover,
-  &:focus {
+  &:global(.focus-visible) {
     transition: none;
   }
+}
+
+.danger:hover {
+  transition: none;
 }
 
 .text.text,
@@ -251,20 +303,35 @@
     transition: none;
   }
 
-  &:hover,
   &:active,
   &.active {
     background-color: transparent;
     box-shadow: none;
   }
 
-  &:focus {
-    box-shadow: inset 0 0 0 2px border-hover-color;
+  &:global(.focus-visible) {
+    box-shadow: inset 0 0 0 2px var(--ring-border-hover-color);
   }
 }
 
+.loader.text > .content {
+  animation-name: text-loading;
+  animation-duration: 1200ms;
+  animation-iteration-count: infinite;
+}
+
+.text.text:hover {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.withIcon.withIcon:hover {
+  background-color: transparent;
+  box-shadow: none;
+}
+
 .text {
-  color: main-color;
+  color: var(--ring-main-color);
 }
 
 .inline {
@@ -273,7 +340,7 @@
   margin: 0;
   padding: 0;
 
-  font-size: font-size;
+  font-size: var(--ring-font-size);
 }
 
 .withIcon {
@@ -282,32 +349,36 @@
 
 .withIcon,
 .text {
-  &:hover,
-  &:focus {
-    color: link-hover-color;
-  }
-
   &:active,
   &.active {
-    color: main-color;
+    color: var(--ring-main-color);
   }
+}
+
+.withIcon:hover {
+  color: var(--ring-link-hover-color);
+}
+
+.text:hover {
+  color: var(--ring-link-hover-color);
 }
 
 .onlyIcon {
-  &:hover,
-  &:focus {
-    color: border-hover-color;
+  &:global(.focus-visible) {
+    color: var(--ring-border-hover-color);
   }
 
   &:active,
   &.active {
-    color: main-color;
+    color: var(--ring-main-color);
   }
 }
 
-.icon {
-  vertical-align: 2px;
+.onlyIcon:hover {
+  color: var(--ring-border-hover-color);
+}
 
+.icon {
   color: inherit;
 
   line-height: normal;
@@ -318,18 +389,42 @@
 }
 
 .withNormalIconLight .icon {
-  transition: color ease;
+  transition: color var(--ring-ease);
 
-  color: icon-color;
+  color: var(--ring-icon-color);
 }
 
-.withNormalIconLight {
-  &:hover .icon,
-  &:focus .icon,
-  &:active .icon {
+.withNormalIconLight:active,
+.withNormalIconLight.active {
+  color: var(--ring-main-color);
+}
+
+.withNormalIconLight:global(.focus-visible),
+.withNormalIconLight:active,
+.withDangerIconLight:global(.focus-visible) {
+  & .icon {
     transition: none;
 
     color: inherit;
+  }
+}
+
+.withNormalIconLight:hover .icon {
+  transition: none;
+
+  color: inherit;
+}
+
+.withDangerIconLight:hover .icon {
+  transition: none;
+
+  color: inherit;
+}
+
+.withDangerIconLight,
+.withDangerIconLight:active {
+  & .icon {
+    color: var(--ring-icon-error-color);
   }
 }
 
@@ -356,7 +451,7 @@
 
   overflow: hidden;
 
-  border-radius: border-radius-small;
+  border-radius: var(--ring-border-radius-small);
 
   &::before {
     display: block;
@@ -386,10 +481,9 @@
 
   margin-left: 2px;
 
-  transition: color ease;
-  vertical-align: 1px;
+  transition: color var(--ring-ease);
 
-  color: dark-gray-color;
+  color: var(--ring-icon-secondary-color);
 
   line-height: normal;
 }
@@ -397,7 +491,7 @@
 .button:hover .dropdownIcon {
   transition: none;
 
-  color: main-color;
+  color: var(--ring-main-color);
 }
 
 @keyframes progress {
@@ -407,5 +501,11 @@
 
   to {
     transform: translateX(0);
+  }
+}
+
+@keyframes text-loading {
+  50% {
+    opacity: 0.5;
   }
 }

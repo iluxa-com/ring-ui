@@ -1,24 +1,47 @@
-@value unit, text-color, border-radius, border-hover-color, icon-disabled-color, dark-gray-color, link-hover-color from "../global/global.css";
-@value background-color: #e9f1f5;
+@import "../global/variables.css";
+
+@value unit, resetButton from "../global/global.css";
+@value background-color: var(--ring-tag-background-color);
 @value max-height: 20px;
 
 .tag {
-  display: inline-block;
+  composes: resetButton;
+
+  position: relative;
+  z-index: 1;
+
+  display: inline-flex;
 
   box-sizing: border-box;
+  max-width: 100%;
   height: max-height;
 
   margin-right: calc(unit / 2);
+  margin-bottom: -6px; /* it needs to fix vertical alignment broken by "overflow: hidden" */
   padding: 1px unit;
 
-  color: text-color;
+  vertical-align: top;
 
-  border: 1px solid background-color;
-  border-radius: border-radius;
+  color: var(--ring-text-color);
+
+  border: none;
+  border-radius: var(--ring-border-radius);
   background-color: background-color;
 
   font-size: 12px;
-  line-height: 15px;
+  line-height: var(--ring-line-height-lower);
+}
+
+.withRemove {
+  padding-right: 22px;
+}
+
+.container {
+  position: relative;
+
+  display: inline-block;
+
+  white-space: nowrap;
 }
 
 .focused,
@@ -26,7 +49,49 @@
   position: relative;
 
   outline: none;
-  box-shadow: 0 0 0 2px border-hover-color;
+  box-shadow: 0 0 0 2px var(--ring-border-hover-color);
+}
+
+.tagAngled {
+  margin-left: unit;
+  padding-left: calc(unit / 2);
+
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+
+  &::before {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 0;
+
+    box-sizing: border-box;
+    width: 12px;
+    height: 12px;
+
+    content: '';
+    transform: scaleY(1.177) rotate(45deg);
+    transform-origin: 0 0;
+
+    border: none;
+
+    background-color: background-color;
+  }
+
+  &.focused,
+  &:focus {
+    box-shadow: 0 0 0 1px var(--ring-border-hover-color) inset, 0 0 0 1px var(--ring-border-hover-color);
+  }
+
+  &:focus::before {
+    box-shadow:
+      1px -1px var(--ring-border-hover-color) inset,
+      -0.8px 0.8px 0 0.5px var(--ring-border-hover-color);
+  }
+}
+
+.content {
+  composes: ellipsis from "../global/global.css";
 }
 
 .disabled {
@@ -34,49 +99,43 @@
 }
 
 .remove {
-  margin-right: calc(unit * -0.5);
+  position: absolute;
+  z-index: 1;
+  top: -1px;
+  right: 4px;
+
   padding: 0 calc(unit / 2);
+}
 
-  cursor: pointer;
-
-  color: dark-gray-color;
-
-  & svg {
-    vertical-align: -1px;
-  }
-
-  &:hover {
-    color: border-hover-color;
-  }
+.removeIcon.removeIcon {
+  color: var(--ring-icon-secondary-color);
 }
 
 .icon {
   margin-right: 6px;
 
-  color: dark-gray-color;
+  color: var(--ring-icon-secondary-color);
 
   & svg {
-    vertical-align: -2px;
+    vertical-align: -3px;
   }
 }
 
 .avatarContainer {
-  position: relative;
-  top: -2px;
-  left: -9px;
-
   display: inline-block;
   overflow: hidden;
 
   box-sizing: border-box;
   width: max-height;
   height: max-height;
-  margin-right: -4px;
+  margin-top: -1px;
+  margin-right: calc(unit / 2);
+  margin-left: calc(0 - unit);
 
   vertical-align: top;
 
-  border-top-left-radius: border-radius;
-  border-bottom-left-radius: border-radius;
+  border-top-left-radius: var(--ring-border-radius);
+  border-bottom-left-radius: var(--ring-border-radius);
 }
 
 .customIcon {

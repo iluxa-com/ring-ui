@@ -7,7 +7,6 @@ import {shallow, mount} from 'enzyme';
 import List from '../list/list';
 import Input from '../input/input';
 import sniffr from '../global/sniffer';
-import Icon from '../icon';
 import simulateCombo from '../../test-helpers/simulate-combo';
 
 import Select from './select';
@@ -24,6 +23,8 @@ function simulateInput(target, value) {
     Simulate.input(target, {target: {value}});
   }
 }
+
+const selectedIconSelector = `.${styles.selectedIcon.split(/\s/)[0]}`;
 
 describe('Select', () => {
   const testData = [
@@ -224,136 +225,88 @@ describe('Select', () => {
     instance._popup.props.hidden.should.be.false;
   });
 
-  describe('componentWillReceiveProps', () => {
+  describe('Derived state', () => {
 
     let wrapper;
-    let instance;
     beforeEach(() => {
       wrapper = shallowSelect();
-      instance = wrapper.instance();
     });
-
-
-    beforeEach(() => {
-      sandbox.stub(instance, 'setState');
-      sandbox.stub(instance, '_handleMultipleToggling');
-    });
-
 
     it('Should update shown data', () => {
-      instance.componentWillReceiveProps({data: []});
+      const {shownData} = wrapper.state();
+      wrapper.setProps({data: []});
 
-      instance.setState.should.be.calledWithMatch({shownData: []});
+      wrapper.state().shownData.should.deep.equal([]);
+      wrapper.state().shownData.should.not.equal(shownData);
     });
 
     it('Should not update shown data if data is not passed', () => {
-      instance.componentWillReceiveProps({});
+      const {shownData} = wrapper.state();
+      wrapper.setProps({});
 
-      instance.setState.should.not.be.calledWithMatch({shownData: sandbox.match.defined});
+      wrapper.state().shownData.should.equal(shownData);
     });
 
     it('Should not update shown data if data the same as previous', () => {
-      instance.componentWillReceiveProps({data: instance.props.data});
+      const {shownData} = wrapper.state();
+      wrapper.setProps({data: testData});
 
-      instance.setState.should.not.be.calledWithMatch({shownData: sandbox.match.defined});
+      wrapper.state().shownData.should.equal(shownData);
     });
 
-    it('Should toggle multiple state', () => {
-      const newMultiple = !instance.props.multiple;
-      instance.componentWillReceiveProps({multiple: newMultiple});
+    it('Should reset selection when toggling multiple state', () => {
+      wrapper.setProps({multiple: true});
+      wrapper.state().selected.should.deep.equal([]);
 
-      instance._handleMultipleToggling.should.be.calledWith(newMultiple);
+      wrapper.setProps({multiple: false});
+      should.equal(wrapper.state().selected, null);
     });
 
-    it('Should not toggle multiple state if value the same as previous', () => {
-      const newMultiple = instance.props.multiple;
-      instance.componentWillReceiveProps({multiple: newMultiple});
+    it('Should not reset selection if mulitiple prop is the same as previous', () => {
+      const {selected} = wrapper.state();
+      wrapper.setProps({multiple: false});
 
-      instance._handleMultipleToggling.should.not.be.called;
+      wrapper.state().selected.should.equal(selected);
     });
 
     it('Should update selected index for select', () => {
       const selectedItem = createItem();
 
-      instance.props = {multiple: false, selected: null, data: [selectedItem, createItem()]};
-
-      instance.componentWillReceiveProps({selected: selectedItem, data: instance.props.data});
-
-      instance.setState.should.be.calledWithMatch({selectedIndex: sandbox.match.defined});
-    });
-
-    it('Should not update selected index if selected is the same as previous', () => {
-      const selectedItem = createItem();
-
-      instance.props = {
-        multiple: false,
+      wrapper.setProps({
         selected: selectedItem,
-        data: [selectedItem, createItem()]
-      };
+        data: [createItem(), selectedItem]
+      });
 
-      instance.componentWillReceiveProps({selected: selectedItem, data: instance.props.data});
-
-      instance.setState.should.not.be.calledWithMatch({selectedIndex: sandbox.match.defined});
+      wrapper.state().selectedIndex.should.equal(1);
     });
 
     it('Should update selected index for multiple select if selected is changed', () => {
       const selectedItem = createItem();
 
-      instance.props = {multiple: true, selected: [], data: [selectedItem]};
+      wrapper.setProps({
+        multiple: true,
+        selected: [selectedItem],
+        data: [createItem(), selectedItem]
+      });
 
-      instance.componentWillReceiveProps({selected: [selectedItem]});
-
-      instance.setState.should.be.calledWithMatch({selectedIndex: 0});
+      wrapper.state().selectedIndex.should.equal(1);
     });
 
     it('Should update selected index for multiple select if selected is changed but count of element is the same', () => {
-      const selectedItem = createItem();
+      const firstItem = createItem();
+      const secondItem = createItem();
 
-      instance.props = {multiple: true, selected: [], data: [selectedItem, createItem()]};
-
-      instance.componentWillReceiveProps({selected: [selectedItem, createItem()]});
-
-      instance.setState.should.be.calledWithMatch({selectedIndex: 0});
-    });
-
-    it('Should not update selected index for multiple select if selected is not changed', () => {
-      const selectedItem = createItem();
-
-      instance.props = {multiple: true, selected: [], data: [selectedItem]};
-
-      instance.componentWillReceiveProps({});
-
-      instance.setState.should.not.be.calledWithMatch({selectedIndex: sandbox.match.defined});
-    });
-
-    it('Should not update selected index for multiple select if items inside the selected list are the same and order is same', () => {
-      const selectedItem1 = createItem();
-      const selectedItem2 = createItem();
-
-      instance.props = {
+      wrapper.setProps({
         multiple: true,
-        selected: [selectedItem1, selectedItem2],
-        data: [selectedItem1, createItem(), selectedItem2]
-      };
+        selected: [secondItem],
+        data: [firstItem, secondItem]
+      });
 
-      instance.componentWillReceiveProps({selected: [selectedItem1, selectedItem2]});
+      wrapper.setProps({
+        selected: [firstItem]
+      });
 
-      instance.setState.should.not.be.calledWithMatch({selectedIndex: sandbox.match.defined});
-    });
-
-    it('Should not update selected index for multiple select if items inside the selected list are the same but order is changed', () => {
-      const selectedItem1 = createItem();
-      const selectedItem2 = createItem();
-
-      instance.props = {
-        multiple: true,
-        selected: [selectedItem1, selectedItem2],
-        data: [selectedItem1, createItem(), selectedItem2]
-      };
-
-      instance.componentWillReceiveProps({selected: [selectedItem2, selectedItem1]});
-
-      instance.setState.should.not.be.calledWithMatch({selectedIndex: sandbox.match.defined});
+      wrapper.state().selectedIndex.should.equal(0);
     });
 
     function createItem() {
@@ -401,12 +354,12 @@ describe('Select', () => {
           icon: 'fakeImageUrl'
         }
       });
-      wrapper.should.have.descendants(`.${styles.selectedIcon}`);
+      wrapper.should.have.descendants(selectedIconSelector);
     });
 
     it('Should not display selected item icon if it is not provided', () => {
       const wrapper = shallowSelect({selected: {key: 1, label: 'test', icon: null}});
-      wrapper.should.not.have.descendants(`.${styles.selectedIcon}`);
+      wrapper.should.not.have.descendants(selectedIconSelector);
     });
 
     it('Should display selected item icon', () => {
@@ -417,7 +370,7 @@ describe('Select', () => {
           icon: 'http://fake.image/'
         }
       });
-      const icon = wrapper.find(`.${styles.selectedIcon}`).getDOMNode();
+      const icon = wrapper.find(selectedIconSelector).getDOMNode();
       icon.style.backgroundImage.should.contain('http://fake.image/');
     });
 
@@ -430,8 +383,7 @@ describe('Select', () => {
       const wrapper = shallowSelect();
       const instance = wrapper.instance();
       sandbox.spy(instance, '_showPopup');
-      wrapper.simulate('mousedown');
-      wrapper.simulate('click');
+      wrapper.find('button').simulate('click');
 
       instance._showPopup.should.be.called;
     });
@@ -593,7 +545,7 @@ describe('Select', () => {
 
       instance.getListItems('foo');
 
-      instance._addButton.label.should.equal('foo');
+      wrapper.state().addButton.label.should.equal('foo');
     });
   });
 
@@ -676,7 +628,7 @@ describe('Select', () => {
       instance.filter.value.should.equal('test');
     });
 
-    it('Should clear fiter value when closing', () => {
+    it('Should clear filter value when closing', () => {
       const wrapper = mountSelect();
       const instance = wrapper.instance();
       instance.filterValue('test');
@@ -706,17 +658,15 @@ describe('Select', () => {
       return mountWrapper;
     };
 
-    it('Should fill _multipleMap on initialization', () => {
+    it('Should fill multipleMap on initialization', () => {
       const wrapper = mountSelectMultiple();
-      const instance = wrapper.instance();
-      instance._multipleMap['1'].should.be.true;
+      wrapper.state().multipleMap.should.deep.equal({1: true, 2: true});
     });
 
-    it('Should fill _multipleMap on _rebuildMultipleMap', () => {
+    it('Should fill multipleMap on selection change', () => {
       const wrapper = mountSelectMultiple();
-      const instance = wrapper.instance();
-      instance._rebuildMultipleMap(testData.slice(1, 2));
-      instance._multipleMap['2'].should.be.true;
+      wrapper.setProps({selected: testData.slice(1, 2)});
+      wrapper.state().multipleMap.should.deep.equal({2: true});
     });
 
     it('Should construct label from selected array', () => {
@@ -785,18 +735,42 @@ describe('Select', () => {
 
       it('Should add item to multiple map on selecting item', () => {
         instance._listSelectHandler(testData[3]);
-        instance._multipleMap['4'].should.be.true;
+        wrapper.state().multipleMap['4'].should.be.true;
       });
 
-      it('Should add item to selected on selecting item', () => {
+      it('Should select just picked item on selecting by clicking item', () => {
         const lengthBefore = testData.slice(0, 2).length;
         instance._listSelectHandler(testData[3]);
         wrapper.state('selected').length.should.equal(lengthBefore + 1);
       });
 
-      it('Should not close popup on selecting', () => {
+      it('Should add item to selection on clicking by checkbox', () => {
+        const lengthBefore = testData.slice(0, 2).length;
+        instance._listSelectHandler(testData[3], {
+          originalEvent: {
+            target: {
+              matches: () => true
+            }
+          }
+        });
+        wrapper.state('selected').length.should.equal(lengthBefore + 1);
+      });
+
+      it('Should close popup on selecting by item', () => {
         instance._hidePopup = sandbox.spy();
-        instance._listSelectHandler(testData[3]);
+        instance._listSelectHandler(testData[3], {
+          originalEvent: {
+            target: {
+              matches: () => false
+            }
+          }
+        });
+        instance._hidePopup.should.have.been.called;
+      });
+
+      it('Should not close popup on selecting by checkbox', () => {
+        instance._hidePopup = sandbox.spy();
+        instance._listSelectHandler(testData[3], {}, {tryKeepOpen: true});
         instance._hidePopup.should.not.be.called;
       });
 
@@ -905,6 +879,76 @@ describe('Select', () => {
     });
   });
 
+  describe('On select all', () => {
+    it('Should react on select all action', () => {
+      const wrapper = shallowSelect();
+      const instance = wrapper.instance();
+      instance.setState = sandbox.spy();
+
+      instance._listSelectAllHandler();
+
+      instance.setState.should.be.called;
+    });
+
+    it('Should react on select all action with false flag', () => {
+      const wrapper = shallowSelect();
+      const instance = wrapper.instance();
+      instance.setState = sandbox.spy();
+
+      instance._listSelectAllHandler(false);
+
+      instance.setState.should.be.called;
+    });
+
+    it('Should set selected on selecting all', () => {
+      const wrapper = mountSelect({
+        onSelect: sandbox.spy(),
+        multiple: true,
+        selected: [],
+        data: testData
+      });
+      const instance = wrapper.instance();
+      instance._listSelectAllHandler();
+      wrapper.state().selected.should.be.eql(testData);
+    });
+
+    it('Should set call onSelect on selecting', () => {
+      const wrapper = mountSelect({
+        onSelect: sandbox.spy(),
+        multiple: true,
+        selected: [testData[0]],
+        data: testData
+      });
+      const instance = wrapper.instance();
+      instance._listSelectAllHandler();
+      wrapper.prop('onSelect').should.be.calledThrice;
+    });
+
+    it('Should set call onDeselect on call handler with false flag', () => {
+      const wrapper = mountSelect({
+        onDeselect: sandbox.spy(),
+        multiple: true,
+        selected: [testData[0], testData[1], testData[2]],
+        data: testData
+      });
+      const instance = wrapper.instance();
+      instance._listSelectAllHandler(false);
+      wrapper.prop('onDeselect').should.be.calledThrice;
+    });
+
+    it('Should set call onChange on selecting', () => {
+      const wrapper = mountSelect({
+        onChange: sandbox.spy(),
+        multiple: true,
+        selected: [testData[0]],
+        data: testData
+      });
+      const instance = wrapper.instance();
+      instance._listSelectAllHandler(testData[1]);
+      wrapper.prop('onChange').should.be.calledOnce;
+    });
+  });
+
   describe('Popup', () => {
     let container;
     const mountSelectToContainer = props => {
@@ -986,14 +1030,15 @@ describe('Select', () => {
 
     describe('Focus after close', () => {
       let instance;
+      let targetInput;
       beforeEach(() => {
-        this.targetInput = document.createElement('input');
-        document.body.appendChild(this.targetInput);
+        targetInput = document.createElement('input');
+        document.body.appendChild(targetInput);
 
         mountSelectToContainer({
           data: testData,
           filter: true,
-          targetElement: this.targetInput
+          targetElement: targetInput
         });
         instance = mountWrapper.instance();
 
@@ -1001,52 +1046,35 @@ describe('Select', () => {
       });
 
       afterEach(() => {
-        document.body.removeChild(this.targetInput);
-        this.targetInput = null;
+        document.body.removeChild(targetInput);
+        targetInput = null;
       });
 
       it('Should restore focus on provided target element after closing popup', () => {
         instance._hidePopup(true);
 
-        this.targetInput.should.equal(document.activeElement);
+        targetInput.should.equal(document.activeElement);
       });
 
       it('Should restore focus on provided target element after closing popup with keyboard', () => {
         simulateCombo('esc');
-        this.targetInput.should.equal(document.activeElement);
+        targetInput.should.equal(document.activeElement);
       });
 
       it('Should not restore focus on provided target element after closing popup with not keyboard event', () => {
         Simulate.click(document.body);
 
-        this.targetInput.should.not.equal(document.activeElement);
+        targetInput.should.not.equal(document.activeElement);
       });
 
       it('Should not restore focus on provided target element after closing popup', () => {
         instance._hidePopup();
 
-        this.targetInput.should.not.equal(document.activeElement);
+        targetInput.should.not.equal(document.activeElement);
       });
     });
 
   });
-
-  describe('_resetMultipleSelectionMap', () => {
-    let instance;
-    beforeEach(() => {
-      instance = shallowSelect().instance();
-    });
-
-    it('should reset map', () => {
-      instance._multipleMap[0] = true;
-
-      instance._resetMultipleSelectionMap();
-
-      Object.keys(instance._multipleMap).length.
-        should.be.equal(0);
-    });
-  });
-
 
   describe('_getResetOption', () => {
     let instance;
@@ -1059,7 +1087,6 @@ describe('Select', () => {
           label: labelMock,
           glyph: 'glyph',
           rgItemType: List.ListProps.Type.LINK,
-          iconSize: Icon.Size.Size14,
           className: 'cssClass',
           onClick: () => {}
         }
@@ -1072,7 +1099,6 @@ describe('Select', () => {
       const resetOption = instance._getResetOption();
 
       resetOption.rgItemType.should.be.equal(List.ListProps.Type.ITEM);
-      resetOption.iconSize.should.be.equal(Icon.Size.Size14);
       resetOption.glyph.should.be.equal(tagsMock.reset.glyph);
       resetOption.onClick.should.be.an.instanceof(Function);
     });

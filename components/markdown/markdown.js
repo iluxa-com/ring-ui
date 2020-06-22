@@ -2,6 +2,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import classNames from 'classnames';
+import RemarkBreaks from 'remark-breaks';
 
 import normalizeIndent from '../global/normalize-indent';
 import trivialTemplateTag from '../global/trivial-template-tag';
@@ -13,12 +14,6 @@ import styles from './markdown.css';
 
 /**
   * @name Markdown
-  * @category Components
-  * @tags Ring UI Language
-  * @framework React
-  * @constructor
-  * @description Renders Markdown.
-  * @example-file ./markdown.examples.html
 */
 
 export default class Markdown extends PureComponent {
@@ -41,6 +36,7 @@ export default class Markdown extends PureComponent {
       <ReactMarkdown
         className={classes}
         source={normalizeIndent(source)}
+        plugins={[RemarkBreaks]}
         renderers={{
           link: Link,
           linkReference: Link,

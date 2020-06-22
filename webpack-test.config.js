@@ -9,17 +9,7 @@ const helpersPath = path.join(__dirname, 'test-helpers');
 
 loaders.babelLoader.include.push(helpersPath);
 
-config.module.rules.push({
-  test: /\.js$/,
-  include: path.join(__dirname, 'node_modules/chai-as-promised'),
-  use: {
-    loader: 'babel-loader',
-    options: {
-      presets: ['@jetbrains/jetbrains'],
-      babelrc: false
-    }
-  }
-});
+config.mode = 'development';
 
 config.resolve = {
   alias: {
@@ -34,10 +24,6 @@ config.output = {
 config.devtool = 'source-map';
 
 config.plugins = [
-  new webpack.ProvidePlugin({
-    fetch: '!exports-loader?self.fetch!imports-loader' +
-    '?self=>{},Promise=core-js/es6/promise!whatwg-fetch'
-  }),
   new webpack.DefinePlugin({
     'process.env': {
       NODE_ENV: '"development"'

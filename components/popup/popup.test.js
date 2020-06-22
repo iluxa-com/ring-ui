@@ -67,8 +67,7 @@ describe('Popup', () => {
     it('should be closed by click outside the element after show', () => {
       const onCloseAttempt = sandbox.stub();
       const wrapper = mountPopup({
-        onCloseAttempt,
-        ...this.state
+        onCloseAttempt
       });
 
       wrapper.setProps({hidden: false}, () => {
@@ -113,6 +112,25 @@ describe('Popup', () => {
         should.equal(elementOffset.left + elementOffset.width - popupElement.clientWidth);
       parseInt(getStyles(popupElement).top, 10).
         should.equal(elementOffset.top - popupElement.clientHeight);
+    });
+
+    it('should limit top by sidePadding if opens to the top', () => {
+      const SIDE_PADDING = 8;
+      const element = document.createElement('div');
+      element.setAttribute(
+        'style',
+        'position: absolute; top: 10px; left: 15px; width: 50px; height: 50px;'
+      );
+      document.body.append(element);
+
+      const instance = mountPopup({
+        directions: [Popup.PopupProps.Directions.TOP_LEFT],
+        anchorElement: element,
+        sidePadding: SIDE_PADDING,
+        children: <div style={{height: '300px'}}>{'foo'}</div>
+      }).instance();
+
+      getStyles(instance.popup).top.should.equal(`${SIDE_PADDING}px`);
     });
 
     it('bottom-right corner', () => {

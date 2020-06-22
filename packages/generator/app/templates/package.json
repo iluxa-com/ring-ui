@@ -6,9 +6,8 @@
     "dist": "./dist"
   },
   "scripts": {
-    "postinstall": "npm rebuild node-sass",
     "create-component": "yo @jetbrains/ring-ui:react --path $npm_package_config_components",
-    "build": "webpack -p --devtool sourcemap",
+    "build": "webpack --mode=production --devtool sourcemap",
     "test": "karma start",
     "lint": "eslint . && npm run stylelint",
     "stylelint": "stylelint --ignore-path .gitignore **/*.css",
@@ -16,56 +15,63 @@
     "start": "webpack-dev-server -d --history-api-fallback --inline --hot --colors --port <%= port %>"
   },
   "babel": {
-    "presets": "@jetbrains/jetbrains"
+    "presets": [
+      [
+        "@jetbrains/jetbrains",
+        {
+          "useBuiltIns": "usage"
+        }
+      ]
+    ]
   },
   "dependencies": {
-    "@jetbrains/babel-preset-jetbrains": "1.1.1",
-    "babel-core": "6.26.3",
-    "babel-loader": "7.1.4",
-    "babel-polyfill": "6.26.0",
-    "css-loader": "0.28.11",
-    "file-loader": "1.1.11",
-    "html-loader": "0.5.5",
-    "html-webpack-plugin": "3.2.0",
-    "postcss-cssnext": "3.1.0",
-    "postcss-loader": "2.1.5",
-    "postcss-modules-values-replace": "3.0.1",
-    "prop-types": "15.6.1",
-    "react": "16.4.0",
-    "react-dom": "16.4.0",
-    "redbox-react": "1.6.0",
-    "webpack": "3.12.0",
-    "webpack-dev-server": "2.11.2"
+    "@babel/core": "^7.7.7",
+    "@jetbrains/babel-preset-jetbrains": "^2.1.4",
+    "babel-loader": "^8.0.6",
+    "copy-webpack-plugin": "^5.1.1",
+    "css-loader": "^3.4.0",
+    "json-loader": "^0.5.7",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "postcss-import": "^12.0.1",
+    "postcss-loader": "^3.0.0",
+    "postcss-preset-env": "^6.7.0",
+    "prop-types": "^15.7.2",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "redbox-react": "^1.6.0",
+    "webpack": "^4.41.4",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.10.1"
   },
   "devDependencies": {
-    "@jetbrains/eslint-config": "2.0.0",
-    "@jetbrains/stylelint-config": "1.3.3",
-    "babel-eslint": "8.2.3",
-    "chai": "4.1.2",
-    "chai-as-promised": "7.1.1",
-    "chai-dom": "1.8.0",
-    "chai-enzyme": "1.0.0-beta.0",
-    "electron": "2.0.1",
-    "enzyme": "3.3.0",
-    "enzyme-adapter-react-16": "1.1.1",
-    "eslint": "4.19.1",
-    "karma": "2.0.2",
-    "karma-chai-plugins": "0.9.0",
-    "karma-electron-launcher": "0.2.0",
-    "karma-mocha": "1.3.0",
-    "karma-sourcemap-loader": "0.3.7",
-    "karma-teamcity-reporter": "1.1.0",
-    "karma-webpack": "3.0.0",
-    "mocha": "5.1.1",
-    "node-sass": "^4.9.0",
-    "react-test-renderer": "16.4.0",
-    "sinon": "5.1.1",
-    "sinon-chai": "3.2.0",
-    "stylelint": "9.2.1",
-    "xvfb-maybe": "0.2.1",
-    "yo": "2.0.2"
+    "@jetbrains/eslint-config": "^4.0.6",
+    "@jetbrains/stylelint-config": "^2.0.0",
+    "babel-eslint": "^10.0.3",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-dom": "^1.8.1",
+    "chai-enzyme": "1.0.0-beta.1",
+    "electron": "^7.1.7",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "^1.15.2",
+    "eslint": "^6.7.2",
+    "karma": "^4.4.1",
+    "karma-chai-plugins": "^0.9.0",
+    "karma-electron": "^6.3.0",
+    "karma-mocha": "^1.3.0",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-teamcity-reporter": "^1.1.0",
+    "karma-webpack": "^4.0.2",
+    "mocha": "^6.2.2",
+    "react-test-renderer": "^16.12.0",
+    "sinon": "^7.5.0",
+    "sinon-chai": "^3.3.0",
+    "stylelint": "^12.0.0",
+    "xvfb-maybe": "^0.2.1",
+    "yo": "^3.1.1"
   },
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   }
 }

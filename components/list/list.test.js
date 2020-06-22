@@ -1,6 +1,6 @@
 import React from 'react';
 import {shallow, mount} from 'enzyme';
-import VirtualizedList from 'react-virtualized/dist/commonjs/List';
+import VirtualizedList from 'react-virtualized/dist/es/List';
 
 import getUID from '../global/get-uid';
 import Icon, {CheckmarkIcon} from '../icon';
@@ -201,7 +201,7 @@ describe('List', () => {
           {}
         ]
       }).instance();
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
       firstItemWrapper.should.have.className(styles.action);
       firstItemWrapper.should.have.text('');
     });
@@ -226,7 +226,7 @@ describe('List', () => {
 
       const firstItemWrapper = mountFirstItem(instance).find(ListLink);
       firstItemWrapper.should.exist;
-      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link');
+      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link ring-list-item');
       firstItemWrapper.should.have.text('Hello!');
       firstItemWrapper.should.have.tagName('a');
       firstItemWrapper.should.have.attr('href', 'http://www.jetbrains.com');
@@ -241,7 +241,7 @@ describe('List', () => {
 
       const firstItemWrapper = mountFirstItem(instance).find(ListLink);
       firstItemWrapper.should.exist;
-      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link');
+      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link ring-list-item');
       firstItemWrapper.should.have.text('Hello!');
       firstItemWrapper.should.have.tagName('a');
       firstItemWrapper.should.have.attr('href', 'http://www.jetbrains.com');
@@ -250,7 +250,7 @@ describe('List', () => {
     it('should render separator', () => {
       const instance = shallowList({
         data: [
-          {rgItemType: List.ListProps.Type.SEPARATOR}
+          {rgItemType: List.ListProps.Type.SEPARATOR, label: 'test'}
         ]
       }).instance();
 
@@ -280,7 +280,7 @@ describe('List', () => {
 
       const firstItemWrapper = mountFirstItem(instance).find(ListLink);
       firstItemWrapper.should.exist;
-      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link');
+      firstItemWrapper.should.have.data('test', 'ring-link ring-list-link ring-list-item');
       firstItemWrapper.should.have.text('Hello!');
       firstItemWrapper.should.have.tagName('button');
     });
@@ -305,23 +305,6 @@ describe('List', () => {
 
       const icon = mountFirstItem(instance).find(`.${styles.icon}`);
       icon.prop('style').backgroundImage.should.contain('http://some.url');
-    });
-
-    it('should render icon of a custom size', () => {
-      const customIconSize = Icon.Size.Size12;
-      const instance = shallowList({
-        data: [
-          {
-            iconSize: customIconSize,
-            label: 'Hello!',
-            glyph: CheckmarkIcon,
-            type: List.ListProps.Type.ITEM
-          }
-        ]
-      }).instance();
-
-      const icon = mountFirstItem(instance).find(Icon);
-      icon.should.have.prop('size', customIconSize);
     });
 
     it('should not render glyph if not provided', () => {
@@ -365,7 +348,7 @@ describe('List', () => {
         ]
       }).instance();
 
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
       firstItemWrapper.simulate('click');
       clicked.should.have.been.called;
     });
@@ -378,7 +361,7 @@ describe('List', () => {
         data: [{label: 'Hello!'}]
       }).instance();
 
-      const firstItemWrapper = mountFirstItem(instance).find(ListItem);
+      const firstItemWrapper = mountFirstItem(instance).find(ListItem).find('button');
       firstItemWrapper.simulate('click');
       onSelect.should.have.been.called;
     });
@@ -388,6 +371,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM
           }
         ]
@@ -403,6 +387,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM,
             onClick
           }
@@ -419,6 +404,7 @@ describe('List', () => {
         data: [
           {
             template: React.createElement('span', {}, 'custom item'),
+            key: 1,
             rgItemType: List.ListProps.Type.CUSTOM,
             disabled: true
           }

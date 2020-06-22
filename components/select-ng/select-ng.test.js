@@ -61,6 +61,12 @@ describe('Select Ng', () => {
       return _ctrl.selectInstance.props.selected;
     }
 
+    it('Should unmount react component on destroy', () => {
+      initializeReactSelect(element[0]);
+      ctrl.$onDestroy();
+      should.not.exist(ctrl.selectInstance.node);
+    });
+
     it('Should receive ngModel controller', () => {
       ctrl.ngModelCtrl.should.exist;
     });
@@ -114,6 +120,14 @@ describe('Select Ng', () => {
       ctrl.selectInstance.props.data[0].key.should.equal(fakeItems[0].id);
       ctrl.selectInstance.props.data[0].label.should.equal(fakeItems[0].name);
     });
+
+    it('Should reject promise on loading error', inject($q => {
+      const onError = sandbox.spy();
+      sandbox.stub(ctrl, 'getOptions').returns($q.reject());
+      ctrl.loadOptionsToSelect().catch(onError);
+      scope.$digest();
+      onError.should.be.called;
+    }));
 
     it('Should use default type "Button" if type is not passed', () => {
       compileTemplate('<rg-select options="item.name for item in items track by item.id" ng-model="selectedItem"></rg-select>');
@@ -232,6 +246,28 @@ describe('Select Ng', () => {
       scope.dataSource.should.have.been.calledWith('test');
     });
 
+    it('Should reload options with a controller query', () => {
+      const queryMock = 'query';
+      ctrl.query = queryMock;
+      sandbox.spy(ctrl, 'loadOptionsToSelect');
+
+      ctrl.config.reloadOptions();
+      scope.$digest();
+
+      ctrl.loadOptionsToSelect.should.have.been.calledWith(queryMock);
+    });
+
+    it('Should reload options with a provided query parameter', () => {
+      const queryMock = 'query';
+      ctrl.query = 'ctrlQuery';
+      sandbox.spy(ctrl, 'loadOptionsToSelect');
+
+      ctrl.config.reloadOptions(queryMock);
+      scope.$digest();
+
+      ctrl.loadOptionsToSelect.should.have.been.calledWith(queryMock);
+    });
+
     it('If externalFilter enabled should provide custom filter.fn which should always return true', () => {
       compileTemplate('<rg-select options="item.name for item in items track by item.id" external-filter="true" ng-model="selectedItem"></rg-select>');
 
@@ -302,13 +338,29 @@ describe('Select Ng', () => {
     });
 
     it('Should rerender with new config if config changed and autosync enabled', () => {
-      compileTemplate('<rg-select options="item.name for item in items track by item.id" ng-model="selectedItem" config-auto-update="true"></rg-select>');
+      scope.config = {};
+      compileTemplate('<rg-select options="item.name for item in items track by item.id" ng-model="selectedItem" config="config" config-auto-update="true"></rg-select>');
 
       sandbox.spy(ctrl.selectInstance, 'rerender');
-      ctrl.config.add = {label: 'fooo'};
+      scope.config.add = {label: 'fooo'};
       scope.$digest();
 
       ctrl.selectInstance.rerender.should.have.been.calledWith(sinon.match({add: {label: 'fooo'}}));
+    });
+
+
+    it('Should correctly reinitialize select with config', () => {
+      const template = '<rg-select type="dropdown" options="item.name for item in items track by item.id" ng-model="selectedItem" config="config" config-auto-update="true"></rg-select>';
+      scope.config = {};
+
+      compileTemplate(template);
+      initializeReactSelect(element[0]);
+      scope.$digest();
+      ctrl.$onDestroy();
+
+      compileTemplate(template);
+      initializeReactSelect(element[0]);
+      scope.$digest();
     });
 
 
@@ -552,4 +604,17 @@ describe('Select Ng', () => {
       should.not.exist(ctrl.query);
     });
   });
+
+  function initializeReactSelect(node) {
+    simulateClick(findContainerNode(node));
+  }
+
+  function simulateClick(node) {
+    const clickEvent = new CustomEvent('click');
+    node.dispatchEvent(clickEvent);
+  }
+
+  function findContainerNode(node) {
+    return node.querySelector('span');
+  }
 });

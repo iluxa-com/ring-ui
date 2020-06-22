@@ -1,4 +1,6 @@
-@value unit, white-color, icon-color, borders-color, main-color, main-hover-color, border-hover-color from  "../global/global.css";
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 @value padding: 2px;
 @value disabled-line-color: rgba(255, 255, 255, 0.9);
 @value duration: 300ms;
@@ -9,7 +11,7 @@
 
   &:hover {
     & .switch {
-      background-color: border-hover-color;
+      background-color: var(--ring-border-hover-color);
     }
   }
 
@@ -20,6 +22,30 @@
 
 .label {
   margin-left: calc(unit / 2);
+}
+
+.leftLabel {
+  margin-right: calc(unit / 2);
+}
+
+.light {
+  & .switch {
+    background-color: var(--ring-icon-color);
+
+    &::before {
+      background-color: var(--ring-content-background-color);
+    }
+  }
+}
+
+.dark {
+  & .switch {
+    background-color: var(--ring-hint-color);
+
+    &::before {
+      background-color: var(--ring-navigation-background-color);
+    }
+  }
 }
 
 .switchWrapper {
@@ -57,7 +83,10 @@
   transition: background-color timing-function duration;
 
   border-radius: unit;
-  background-color: icon-color;
+
+  @nest .input:focus + & {
+    box-shadow: inset 0 0 0 1px var(--ring-border-hover-color), 0 0 0 1px var(--ring-border-hover-color);
+  }
 
   &::before {
     position: absolute;
@@ -74,12 +103,11 @@
     transform: translateX(padding);
 
     border-radius: calc(unit * 0.75);
-    background-color: white-color;
   }
 }
 
 .input:checked + .switch {
-  background-color: main-color;
+  background-color: var(--ring-main-color);
 }
 
 .input:checked + ::before {
@@ -113,10 +141,10 @@
   background-size: 4px 4px;
 }
 
-.paleSwitch {
-  background-color: borders-color;
+.paleSwitch.paleSwitch {
+  background-color: var(--ring-pale-control-color);
 }
 
 .input:checked + .paleSwitch {
-  background-color: border-hover-color;
+  background-color: var(--ring-border-hover-color);
 }

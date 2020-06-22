@@ -5,10 +5,6 @@ import {encodeURL, joinBaseURLAndPath} from '../global/url';
 
 /**
  * @name HTTP
- * @tags Ring UI Language
- * @category Utilities
- * @description Provides a way to perform authorized network requests.
- * @example-file ./http.examples.html
  */
 
 const TOKEN_TYPE = 'Bearer';
@@ -37,6 +33,7 @@ export const CODE = {
 
 export default class HTTP {
   baseUrl = null;
+  _requestsMeta = new WeakMap();
 
   constructor(auth, baseUrl, fetchConfig = {}) {
     if (auth) {
@@ -76,21 +73,35 @@ export default class HTTP {
   }
 
   _performRequest(url, token, params = {}) {
-    const {headers, body, query = {}, ...fetchConfig} = params;
+    const {headers, body, query = {}, sendRawBody, ...fetchConfig} = params;
+
+    const combinedHeaders = {
+      ...this.fetchConfig.headers,
+      ...(token ? {Authorization: `${TOKEN_TYPE} ${token}`} : {}),
+      ...headers
+    };
+
+    Object.keys(combinedHeaders).forEach(key => {
+      if (combinedHeaders[key] === null || combinedHeaders[key] === undefined) {
+        Reflect.deleteProperty(combinedHeaders, key);
+      }
+    });
 
     return this._fetch(
       this._makeRequestUrl(url, query),
       {
         ...this.fetchConfig,
-        headers: {
-          ...this.fetchConfig.headers,
-          Authorization: `${TOKEN_TYPE} ${token}`,
-          ...headers
-        },
+        headers: combinedHeaders,
         ...fetchConfig,
-        body: body ? JSON.stringify(body) : body
+        body: body && !sendRawBody ? JSON.stringify(body) : body
       }
     );
+  }
+
+  _storeRequestMeta(parsedResponse, rawResponse) {
+    const {headers, ok, redirected, status, statusText, type, url} = rawResponse;
+    this._requestsMeta.
+      set(parsedResponse, {headers, ok, redirected, status, statusText, type, url});
   }
 
   async _processResponse(response) {
@@ -109,7 +120,9 @@ export default class HTTP {
     }
 
     try {
-      return await (isJson ? response.json() : response.text());
+      const parsedResponse = await (isJson ? response.json() : {data: await response.text()});
+      this._storeRequestMeta(parsedResponse, response);
+      return parsedResponse;
     } catch (err) {
       return response;
     }
@@ -165,6 +178,8 @@ export default class HTTP {
       throw error;
     }
   }
+
+  getMetaForResponse = response => this._requestsMeta.get(response);
 
   get = (url, params) => (
     this.request(url, {

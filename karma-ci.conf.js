@@ -18,7 +18,9 @@ module.exports = config => {
       mocha: {
         timeout: 60000
       }
-    }
+    },
+    browserDisconnectTimeout: 15000,
+    browserDisconnectTolerance: 3
   });
 
   config.set(configCIDev);

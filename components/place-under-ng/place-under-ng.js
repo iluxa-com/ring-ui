@@ -1,14 +1,9 @@
 /**
  * @name Place Under Ng
- * @tags Ring UI Language
- * @category Legacy Angular
- * @description Displays a sidebar that fills the entire right half of its container.
- * To make sidebar have fixed positioning under some other element (e.g. toolbar),
- * a selector for that element should be passed as placeUnderSibling parameter.
- * @example-file ./place-under-ng.examples.html
  */
 
 import angular from 'angular';
+
 import 'dom4';
 import debounce from 'just-debounce-it';
 import createResizeDetector from 'element-resize-detector';
@@ -19,6 +14,7 @@ const resizeDetector = createResizeDetector();
 
 const angularModule = angular.module('Ring.place-under', []);
 angularModule.directive('rgPlaceUnder',
+  // eslint-disable-next-line angular/di-unused
   function rgPlaceUnderDirective($window, getClosestElementWithCommonParent, rgPlaceUnderHelper) {
     return {
       restrict: 'A',

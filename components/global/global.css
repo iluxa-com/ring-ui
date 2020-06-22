@@ -1,48 +1,10 @@
-@value unit: 8px;
-
 /* https://readymag.com/artemtiunov/RingUILanguage/colours/ */
 
-@value line-color: #DFE5EB;
-@value dark-line-color: #263B4C;
-@value borders-color: #CFDBE5;
-@value icon-color: #B8D1E5;
-@value icon-disabled-color: #DBDBDB;
-@value border-hover-color: #80C6FF;
-@value main-color: #008EFF;
-@value main-hover-color: #007EE5;
-@value search-color: #669ECC;
-@value hint-color: #7D9AB3;
-@value link-color: #0F5B99;
-@value link-hover-color: #FF008C;
-@value error-color: #E50000;
-@value success-color: #4DA400;
-@value text-color: #444;
-@value heading-color: #222;
-@value darker-gray-color: #888; /* headers & actions on black background */
-@value dark-gray-color: #999; /* headers & actions */
-@value gray-color: #BBB; /* disabled text & hints */
-@value light-gray-color: #CCC; /* active items on black background */
-@value white-color: #FFF;
-@value sidebar-background-color: #F7F9FA;
-@value selected-background-color: #E5F4FF;
-@value dark-selected-background-color: #001526;
-@value message-background-color: rgba(0, 21, 38, 0.9);
-@value black-color: #000;
-@value border-radius: 3px;
-@value border-radius-small: 2px;
-@value popup-border-color: rgba(0, 42, 76, 0.1);
-@value font-size-larger: 14px;
-@value font-size: 13px;
-@value font-size-smaller: 12px;
-@value line-height-taller: 21px;
-@value line-height: 20px;
-@value line-height-lower: 18px;
-@value line-height-lowest: 16px;
-@value ease: 0.3s ease-out;
-@value fast-ease: 0.15s ease-out;
-
-/* This is a carefully tested set of fonts, do not touch without consulting with UI designers */
-@value font-family -apple-system, BlinkMacSystemFont, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+/*
+Unit shouldn't be CSS custom property because it is not intended to change
+Also it won't form in FF47 https://bugzilla.mozilla.org/show_bug.cgi?id=594933
+*/
+@value unit: 8px;
 
 .clearfix {
   &::after {
@@ -54,59 +16,52 @@
 }
 
 .font {
-  font-family: font-family;
-  font-size: font-size;
-  line-height: line-height;
+  font-family: var(--ring-font-family);
+  font-size: var(--ring-font-size);
+  line-height: var(--ring-line-height);
 }
 
 .font-lower {
   composes: font;
 
-  line-height: line-height-lower;
+  line-height: var(--ring-line-height-lower);
 }
 
 .font-smaller {
   composes: font-lower;
 
-  font-size: font-size-smaller;
+  font-size: var(--ring-font-size-smaller);
 }
 
 .font-smaller-lower {
   composes: font-smaller;
 
-  line-height: line-height-lowest;
+  line-height: var(--ring-line-height-lowest);
 }
 
 .font-larger-lower {
   composes: font-lower;
 
-  font-size: font-size-larger;
+  font-size: var(--ring-font-size-larger);
 }
 
 .font-larger {
   composes: font-larger-lower;
 
-  line-height: line-height-taller;
+  line-height: var(--ring-line-height-taller);
 }
 
 /* To be used at large sizes */
 /* As close as possible to Helvetica Neue Thin (to replace Gotham) */
 .thin-font {
   font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: font-size;
+  font-size: var(--ring-font-size);
   font-weight: 100; /* Renders Helvetica Neue UltraLight on OS X  */
 }
 
-@value font-family-monospace: Menlo, "Bitstream Vera Sans Mono", "Ubuntu Mono", Consolas, "Courier New", Courier, monospace;
-
 .monospace-font {
-  font-family: font-family-monospace;
-  font-size: font-size-smaller;
-}
-
-.input-disabled {
-  border-color: #dedede;
-  background-color: #f8f8f8;
+  font-family: var(--ring-font-family-monospace);
+  font-size: var(--ring-font-size-smaller);
 }
 
 .ellipsis {
@@ -116,23 +71,29 @@
   text-overflow: ellipsis;
 }
 
-/* Common z-index-values */
+.resetButton {
+  overflow: visible;
 
-/* Invisible element is an absolutely positioned element which should be below */
-/* all other elements on the page */
-@value invisible-element-z-index: -1;
+  padding: 0;
 
-/* z-index for position: fixed elements */
-@value fixed-z-index: 1;
+  text-align: left;
 
-/* Elements that should overlay all other elements on the page */
-@value overlay-z-index: 5;
+  color: inherit;
+  border: 0;
 
-/* Alerts should de displayed above overlays */
-@value alert-z-index: 6;
+  background: transparent;
+
+  font: inherit;
+
+  &::-moz-focus-inner {
+    padding: 0;
+
+    border: 0;
+  }
+}
 
 /* Note: footer also has top margin which isn't taken into account here */
-@value footer-height: calc(unit*8);
+@value footer-height: calc(unit * 8);
 
 /* Media breakpoints (minimal values) */
 @value breakpoint-small: 640px;

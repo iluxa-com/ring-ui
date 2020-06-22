@@ -34,7 +34,7 @@
     display: inline-block;
     height: $ring-unit*2;
     line-height: 14px;
-    font-size: $ring-font-size;
+    font-size: var(--ring-font-size);
   }
 }
 
@@ -68,7 +68,7 @@
   width: 50 * $ring-unit;
   padding-left: 2 * $ring-unit;
 
-  font-size: $ring-font-size;
+  font-size: var(--ring-font-size);
   line-height: 16px;
 }
 
@@ -78,5 +78,5 @@
 .ring-breadcrumb__sep__icon {
   margin: 0 2px;
   margin-top: -14px;
-  color: #DBDBDB;
+  color: var(--ring-icon-disabled-color);
 }

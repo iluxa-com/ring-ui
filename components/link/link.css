@@ -1,11 +1,13 @@
-@value link-color, link-hover-color, fast-ease from "../global/global.css";
+@import "../global/variables.css";
 
 .link {
   & {
-    cursor: pointer;
-    transition: color fast-ease;
+    composes: link from "../alert/alert.css"; /* To override link stiles inside alert */
 
-    color: link-color;
+    cursor: pointer;
+    transition: color var(--ring-fast-ease);
+
+    color: var(--ring-link-color);
   }
 
   &,
@@ -17,7 +19,7 @@
   &.hover {
     transition: none;
 
-    color: link-hover-color;
+    color: var(--ring-link-hover-color);
   }
 
   &:hover .inner {

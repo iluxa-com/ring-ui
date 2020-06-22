@@ -19,6 +19,14 @@ describe('Link', () => {
     shallowLink({href: '/'}).should.have.type(ClickableLink);
   });
 
+  it('should wrap children with ClickableLink if href is empty string', () => {
+    shallowLink({href: ''}).should.have.type(ClickableLink);
+  });
+
+  it('should wrap children with button if no href', () => {
+    shallowLink({}).should.have.type('button');
+  });
+
   it('should use passed className', () => {
     shallowLink({className: 'test-class'}).should.have.className('test-class');
   });
@@ -66,7 +74,7 @@ describe('Link', () => {
 
   describe('ClickableLink', () => {
     it('should render "a" tag', () => {
-      shallow(<ClickableLink href="/"/>).should.containMatchingElement(<a href="/"/>);
+      shallow(<ClickableLink href="/">{'foo'}</ClickableLink>).should.containMatchingElement(<a href="/">{'foo'}</a>);
     });
 
     describe('events', () => {
@@ -95,7 +103,8 @@ describe('Link', () => {
             onClick={onClick}
             onConditionalClick={onConditionalClick}
             onPlainLeftClick={onPlainLeftClick}
-          />
+            href="/"
+          >{'foo'}</ClickableLink>
         );
       });
 

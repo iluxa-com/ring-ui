@@ -1,9 +1,11 @@
-@value unit, font, line-color, main-color, link-hover-color, text-color, gray-color, white-color, darker-gray-color, dark-line-color from "../global/global.css";
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 @value line-shadow: inset 0 -1px 0 0;
 @value selected-line-shadow: inset 0 -3px 0 0;
 
 .tabs {
-  composes: font;
+  composes: font from "../global/global.css";
 }
 
 .titles {
@@ -13,15 +15,15 @@
 }
 
 .light .titles {
-  box-shadow: line-shadow line-color;
+  box-shadow: line-shadow var(--ring-line-color);
 }
 
 .dark .titles {
-  box-shadow: line-shadow dark-line-color;
+  box-shadow: line-shadow var(--ring-dark-line-color);
 }
 
 .title {
-  composes: font;
+  composes: font from "../global/global.css";
 
   position: relative;
 
@@ -38,9 +40,12 @@
 
   line-height: calc(unit * 4);
 
-  &:hover:not(.selected) {
-    color: link-hover-color;
-    box-shadow: inset 0 -1px 0 0 link-hover-color;
+  &:hover:not(.selected),
+  &:focus:not(.selected),
+  &:active:not(.selected) {
+    color: var(--ring-link-hover-color);
+    outline-style: none;
+    box-shadow: inset 0 -1px 0 0 var(--ring-link-hover-color);
   }
 
   &[disabled] {
@@ -54,29 +59,32 @@
 
 .light .title {
   &[disabled] {
-    color: gray-color;
+    color: var(--ring-disabled-color);
   }
 }
 
 .dark .title {
-  color: darker-gray-color;
+  color: var(--ring-dark-secondary-color);
 
   &[disabled] {
-    color: text-color;
+    color: var(--ring-text-color);
   }
 }
 
 .selected {
   cursor: default;
 
-  box-shadow: selected-line-shadow text-color;
+  outline: none;
+  box-shadow: selected-line-shadow var(--ring-text-color);
 
   font-weight: bold;
 }
 
 .dark .selected {
-  color: white-color;
-  box-shadow: selected-line-shadow main-color;
+  &.selected {
+    color: var(--ring-dark-text-color);
+    box-shadow: selected-line-shadow var(--ring-main-color);
+  }
 }
 
 .visible {
@@ -98,7 +106,7 @@
 .tabCounter {
   padding-left: 8px;
 
-  color: #999;
+  color: var(--ring-secondary-color);
 
   font-size: 12px;
   font-weight: normal;

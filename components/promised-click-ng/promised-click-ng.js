@@ -2,53 +2,18 @@ import angular from 'angular';
 import 'dom4';
 
 import buttonStyles from '../button/button.css';
+import {applyMethodToClasses} from '../global/dom';
 
 import RingAngularComponent from '../global/ring-angular-component';
-
+import {LOADER_BACKGROUND_SELECTOR} from '../button-ng/button-ng';
 /**
  * @name Promised Click Ng
- * @category Legacy Angular
- * @tags Ring UI Language
- * @description Controls the active state of a button.
- * @example
-    <example name="Promised Click Ng">
-      <file name="index.html">
-        <div class="button-example" ng-app="button-test" ng-strict-di ng-controller="testController as ctrl">
-          <rg-button rg-promised-click="ctrl.onClick()">Simple use</rg-button>
-          <rg-button rg-promised-click="ctrl.onClick()" promised-mode="loader">Simple use loader mode</rg-button>
-          <rg-button rg-promised-click test-directive>Via controller</rg-button>
-          <rg-button rg-promised-click="ctrl.onClick()">Ring button</rg-button>
-        </div>
-      </file>
-      <file name="index.js" webpack="true">
-        import angular from 'angular';
-        import PromisedClickNG from '@jetbrains/ring-ui/components/promised-click-ng/promised-click-ng';
-        import ButtonNG from '@jetbrains/ring-ui/components/button-ng/button-ng';
-
-        var buttonTestModule = angular.module('button-test', [PromisedClickNG, ButtonNG]);
-
-        buttonTestModule.controller('testController', function($scope, $timeout) {
-          this.onClick = function () {
-            return $timeout(angular.noop, 5000);
-          };
-        });
-
-        buttonTestModule.directive('testDirective', ['$timeout', function($timeout) {
-          return {
-            require: 'rgPromisedClick',
-            link: function (scope, iElement, iAttrs, rgPromisedClick) {
-              rgPromisedClick.onClick(function () {
-                return $timeout(angular.noop, 1000);
-              });
-            }
-          }
-        }]);
-      </file>
-    </example>
 */
 
 
 const angularModule = angular.module('Ring.promised-click', []);
+
+const DEFAULT_MODE = 'active';
 
 class PromisedClickController extends RingAngularComponent {
   static $inject = ['$scope', '$element', '$attrs', '$parse'];
@@ -65,27 +30,39 @@ class PromisedClickController extends RingAngularComponent {
 
     let currentMode = null;
 
-    const setModeParams = mode => {
-      currentMode = mode;
-      switch (mode) {
-        case 'loader':
-          this.activeClass = buttonStyles.loader;
-          break;
-        default:
-        case 'active':
-          this.activeClass = buttonStyles.active;
-          break;
+    this.toggleActive = enable => {
+      if (currentMode === 'loader') {
+        applyMethodToClasses(enable ? 'add' : 'remove')(
+          this.element.classList,
+          buttonStyles.loader
+        );
+
+        const loaderNode = this.element.querySelector(LOADER_BACKGROUND_SELECTOR);
+        if (loaderNode) {
+          applyMethodToClasses(enable ? 'add' : 'remove')(
+            this.element.querySelector(LOADER_BACKGROUND_SELECTOR).classList,
+            buttonStyles.loaderBackground
+          );
+        }
+      } else if (currentMode === 'active') {
+        applyMethodToClasses(enable ? 'add' : 'remove')(
+          this.element.classList,
+          buttonStyles.active
+        );
       }
     };
 
-    setModeParams($attrs.promisedMode);
+    const setModeParams = mode => {
+      currentMode = mode;
+    };
+
+    setModeParams($attrs.promisedMode || DEFAULT_MODE);
 
     if ($attrs.promisedMode && $attrs.promisedMode.indexOf('{{') !== -1) {
       $attrs.$observe('promisedMode', newMode => {
         if (newMode !== currentMode) {
-          this.active && this.element.classList.remove(this.activeClass);
+          this.toggleActive(false);
           setModeParams(newMode);
-          this.active && this.element.classList.add(this.activeClass);
         }
       });
     }
@@ -120,11 +97,11 @@ class PromisedClickController extends RingAngularComponent {
   activate() {
     this.active = true;
 
-    this.element.classList.add(this.activeClass);
+    this.toggleActive(true);
 
     const done = () => {
       this.active = false;
-      this.element.classList.remove(this.activeClass);
+      this.toggleActive(false);
     };
 
     this.promise.then(done, done);

@@ -1,13 +1,11 @@
-import 'babel-polyfill';
 import React from 'react';
 import {render} from 'react-dom';
 import RedBox from 'redbox-react';
 
 import AppRoot from './app-root';
-import styles from './app.css';
+import './app.css';
 
-const appEl = document.querySelector('.<%= camelCaseName %>');
-appEl.classList.add(...styles.<%= camelCaseName %>.split(' '));
+const appEl = document.querySelector('.app-root');
 const rootEl = document.createElement('div');
 
 let renderApp = () => {
@@ -18,7 +16,6 @@ let renderApp = () => {
 };
 
 /* Hot Replacement support, won't be bundled to production */
-/* eslint-disable modules/no-exports-typo */
 if (module.hot) {
   const renderAppHot = renderApp;
   const renderError = error => {

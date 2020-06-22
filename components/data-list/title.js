@@ -1,51 +1,54 @@
-/* @flow */
-import React, {PureComponent, Element} from 'react';
+import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 import focusSensorHOC from '../global/focus-sensor-hoc';
 import Checkbox from '../checkbox/checkbox';
 
+import getUID from '../global/get-uid';
+
 import styles from './data-list.css';
 
-type Props = {
-  className?: string,
-  title: string,
-  offset: number,
-  selectable: boolean,
-  selected: boolean,
-  onSelect: (selected: boolean) => void,
-  showFocus: boolean,
-  collapserExpander: any,
-
-  // focusSensorHOC
-  onFocusRestore: () => void
-};
 
 class Title extends PureComponent {
+  static propTypes = {
+    className: PropTypes.string,
+    title: PropTypes.node,
+    offset: PropTypes.number,
+    selectable: PropTypes.bool,
+    selected: PropTypes.bool,
+    onSelect: PropTypes.func,
+    showFocus: PropTypes.bool,
+    collapserExpander: PropTypes.node,
+
+    // focusSensorHOC
+    onFocusRestore: PropTypes.func
+  };
+
   static defaultProps = {
     selectable: false,
     selected: false,
     showFocus: false
   };
 
-  props: Props;
+  id = getUID('data-list-title');
 
-  onCheckboxFocus = (): void => {
+  onCheckboxFocus = () => {
     this.props.onFocusRestore();
   };
 
-  onCheckboxChange = (): void => {
+  onCheckboxChange = () => {
     this.toggleSelection();
   };
 
-  toggleSelection(): void {
+  toggleSelection() {
     const {selectable, selected, onSelect} = this.props;
     if (selectable) {
       onSelect(!selected);
     }
   }
 
-  render(): Element<any> {
+  render() {
     const {
       className, title, offset, showFocus,
       selectable, selected, collapserExpander
@@ -59,6 +62,7 @@ class Title extends PureComponent {
 
     return (
       <div
+        id={this.id}
         className={classes}
         style={{paddingLeft: offset}}
       >
@@ -67,6 +71,7 @@ class Title extends PureComponent {
             (
               <div className={styles.checkboxBox}>
                 <Checkbox
+                  aria-labelledby={this.id}
                   className={showFocus ? 'ring-checkbox_focus' : ''}
                   checked={selected}
                   onFocus={this.onCheckboxFocus}

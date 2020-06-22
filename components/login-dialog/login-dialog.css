@@ -1,4 +1,6 @@
-@value unit from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .iFrame {
   overflow: hidden;
@@ -11,7 +13,7 @@
 }
 
 .nonOpaqueLoader {
-  background-color: #fff;
+  background-color: var(--ring-content-background-color);
 }
 
 .fallbackLinkContainer {

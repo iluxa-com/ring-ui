@@ -6,18 +6,20 @@ import Auth, {
   LOGOUT_POSTPONED_EVENT,
   USER_CHANGE_POSTPONED_EVENT
 } from '../auth/auth';
+import alertService from '../alert-service/alert-service';
 
 import Profile from './profile';
 
-export default class SmartProfile extends PureComponent {
-  static Size = Profile.Size;
+const CERTIFICATE_MISMATCH_HEADER = 'x-client-certificate-token-mismatch';
 
+export default class SmartProfile extends PureComponent {
   static propTypes = {
     auth: PropTypes.instanceOf(Auth).isRequired,
     className: PropTypes.string,
-    translations: Profile.propTypes.translations,
+    translations: PropTypes.object,
     profileUrl: PropTypes.string,
-    size: Profile.propTypes.size
+    size: Profile.propTypes.size,
+    round: Profile.propTypes.round
   };
 
   state = {
@@ -30,6 +32,8 @@ export default class SmartProfile extends PureComponent {
   componentDidMount() {
     this.requestUser();
   }
+
+  static Size = Profile.Size;
 
   login = async () => {
     this.setState({loading: true});
@@ -60,6 +64,7 @@ export default class SmartProfile extends PureComponent {
     try {
       const {auth} = this.props;
       const user = await auth.requestUser();
+      this.checkUserCertificateMismatch(user);
       this.setState({user});
 
       auth.addListener(USER_CHANGED_EVENT, newUser => {
@@ -79,6 +84,15 @@ export default class SmartProfile extends PureComponent {
       });
     } catch (e) {
       // noop
+    }
+  }
+
+  checkUserCertificateMismatch(user) {
+    const {auth, translations} = this.props;
+    const userMeta = auth.http.getMetaForResponse(user);
+    if (userMeta?.headers?.has(CERTIFICATE_MISMATCH_HEADER)) {
+      const message = translations?.certificateMismatch || `You are authenticated as ${user.login || user.name}. To authenticate with the client certificate for your account, log out, then click the "Log in with certificate" option on the login page.`;
+      alertService.warning(message, 0);
     }
   }
 

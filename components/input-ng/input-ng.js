@@ -1,23 +1,19 @@
 /**
  * @name Input Ng
- * @category Legacy Angular
- * @tags Ring UI Language
- * @framework Angular
- * @constructor
- * @description Text input fields of varying size.
- * @example-file ./input-ng.examples.html
  */
 import angular from 'angular';
+
 import classNames from 'classnames';
-import CloseIcon from '@jetbrains/icons/close.svg';
+import closeIcon from '@jetbrains/icons/close.svg';
 
 import RingAngularComponent from '../global/ring-angular-component';
 import styles from '../input/input.css';
 import Theme from '../global/theme';
+import ButtonNg from '../button-ng/button-ng';
 
 import styleOverrides from './input-ng.css';
 
-const angularModule = angular.module('Ring.input', []);
+const angularModule = angular.module('Ring.input', [ButtonNg]);
 
 class RingInputComponent extends RingAngularComponent {
   static $inject = ['$element'];
@@ -48,6 +44,7 @@ class RingInputComponent extends RingAngularComponent {
   };
 
   $onInit() {
+    this.closeIcon = closeIcon;
     if (!this.ngModelCtrl) {
       return;
     }
@@ -81,6 +78,10 @@ class RingInputComponent extends RingAngularComponent {
     }
   }
 
+  onClear() {
+    this.value = '';
+  }
+
   getContainerClasses() {
     return classNames(
       styles.container,
@@ -98,11 +99,12 @@ class RingInputComponent extends RingAngularComponent {
   }
 
   static template = `
-<div 
+<div
   data-test="ring-input-container"
   ng-class="$ctrl.getContainerClasses()"
 >
-  <input 
+  <input
+    aria-label="{{$ctrl.label || $ctrl.placeholder}}"
     type="text"
     data-test="ring-input"
     class="${styles.input}"
@@ -117,8 +119,9 @@ class RingInputComponent extends RingAngularComponent {
     ng-change="$ctrl.onInputChange()"
     ng-keyup="$ctrl.onKeyUp()"
   />
-  
+
   <textarea
+    aria-label="{{$ctrl.label || $ctrl.placeholder}}"
     data-test="ring-input"
     ng-if="$ctrl.multiline"
     class="${styles.input}"
@@ -133,20 +136,20 @@ class RingInputComponent extends RingAngularComponent {
     ng-change="$ctrl.onInputChange()"
     ng-keyup="$ctrl.onKeyUp()"
   ></textarea>
-  
+
   <rg-button
     ng-if="$ctrl.clearable"
     data-test="ring-input-clear"
-    class="${styles.clear}"
-    icon="${CloseIcon}"
-    icon-size="14"
+    class="${styles.clear} ${styleOverrides.clear}"
+    icon="{{:: $ctrl.closeIcon}}"
+    ng-click="$ctrl.onClear()"
   ></rg-button>
-  
+
   <label
     ng-if="!$ctrl.borderless"
     class="${styles.label}"
   >{{$ctrl.label}}</label>
-  
+
   <div ng-if="!$ctrl.borderless" class="${styles.underline}"></div>
   <div ng-if="!$ctrl.borderless" class="${styles.focusUnderline}"></div>
   <div ng-if="!$ctrl.borderless" class="${styles.errorUnderline}"></div>

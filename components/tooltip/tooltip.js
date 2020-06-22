@@ -3,50 +3,26 @@ import PropTypes from 'prop-types';
 
 import Popup from '../popup/popup';
 import {Listeners} from '../global/dom';
+import dataTests from '../global/data-tests';
 
-import './tooltip.scss';
+import styles from './tooltip.css';
 
 /**
  * @name Tooltip
- * @category Components
- * @constructor
- * @description Displays a tooltip.
- * @extends {ReactComponent}
- * @example
-   <example name="Tooltip">
-     <file name="index.html">
-       <div id="tooltip"></div>
-     </file>
-
-     <file name="index.js" webpack="true">
-       import React from 'react';
-       import {render} from 'react-dom';
-
-       import Tooltip from '@jetbrains/ring-ui/components/tooltip/tooltip';
-       import Button from '@jetbrains/ring-ui/components/button/button';
-
-       const buttonWithTooltip = (
-         <Tooltip title="Explanation">
-           <Button>Button that requires an explanation</Button>
-         </Tooltip>
-       );
-
-       render(buttonWithTooltip, document.getElementById('tooltip'));
-     </file>
-   </example>
  */
 export default class Tooltip extends Component {
   static propTypes = {
     delay: PropTypes.number,
+    selfOverflowOnly: PropTypes.bool,
     popupProps: PropTypes.object,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-    children: PropTypes.node
+    children: PropTypes.node,
+    'data-test': PropTypes.string
   };
-
-  static PopupProps = Popup.PopupProps;
 
   static defaultProps = {
     title: '',
+    selfOverflowOnly: false,
     popupProps: {}
   };
 
@@ -67,8 +43,11 @@ export default class Tooltip extends Component {
   }
 
   componentWillUnmount() {
+    clearTimeout(this.timeout);
     this.listeners.removeAll();
   }
+
+  static PopupProps = Popup.PopupProps;
 
   listeners = new Listeners();
   containerRef = el => {
@@ -76,13 +55,35 @@ export default class Tooltip extends Component {
   };
 
   showPopup = () => {
-    const {delay, title} = this.props;
+    const {delay, title, selfOverflowOnly} = this.props;
 
     if (!title) {
       return;
     }
 
     const showPopup = () => {
+      if (selfOverflowOnly) {
+        const {containerNode} = this;
+
+        // rare cases when containerNode is null are possible;
+        // probably the collision is due to the asynchronous nature of the code,
+        // i.e. this code runs after the component is unmounted,
+        // although at first glance it looks unlikely.
+        if (!containerNode) {
+          return;
+        }
+
+        // inline element?
+        if (containerNode.clientWidth === 0 && containerNode.clientHeight === 0) {
+          return;
+        }
+        if (
+          containerNode.scrollWidth <= containerNode.clientWidth &&
+          containerNode.scrollHeight <= containerNode.clientHeight
+        ) {
+          return;
+        }
+      }
       this.setState({showPopup: true});
     };
 
@@ -109,16 +110,21 @@ export default class Tooltip extends Component {
   };
 
   render() {
-    const {children, title, delay, popupProps, ...restProps} = this.props; // eslint-disable-line no-unused-vars
+    const {children, 'data-test': dataTest,
+      title, delay, selfOverflowOnly, popupProps, ...restProps} = this.props;
 
     return (
-      <span {...restProps} ref={this.containerRef}>
+      <span
+        {...restProps}
+        ref={this.containerRef}
+        data-test={dataTests('ring-tooltip', dataTest)}
+      >
         {children}
         <Popup
           hidden={!this.state.showPopup}
           onCloseAttempt={this.hidePopup}
           maxHeight={400}
-          className="ring-tooltip"
+          className={styles.tooltip}
           attached={false}
           top={4}
           dontCloseOnAnchorClick

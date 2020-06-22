@@ -5,64 +5,77 @@ import classNames from 'classnames';
 import memoize from '../global/memoize';
 
 import Theme from '../global/theme';
+import dataTests from '../global/data-tests';
 
 import styles from './tabs.css';
-import Tab from './tab';
+
+import TabLink from './tab-link';
+
+export const CustomItem = ({children}) => children;
+CustomItem.propTypes = {
+  children: PropTypes.node.isRequired
+};
 
 export default class Tabs extends PureComponent {
-  static Theme = Theme;
   static propTypes = {
     theme: PropTypes.string,
     selected: PropTypes.string,
     className: PropTypes.string,
-    children: PropTypes.arrayOf(PropTypes.element).isRequired,
-    onSelect: PropTypes.func
-  }
+    href: PropTypes.string,
+    children: PropTypes.node.isRequired,
+    onSelect: PropTypes.func,
+    'data-test': PropTypes.string
+  };
 
   static defaultProps = {
     theme: Theme.LIGHT,
     onSelect() {}
-  }
+  };
+
+  static Theme = Theme;
 
   handleSelect = memoize(key => () => this.props.onSelect(key));
 
-  render() {
-    const {className, children, selected, theme} = this.props;
-    const classes = classNames(styles.tabs, className, styles[theme]);
+  getTabTitle = (child, i) => {
+    if (child == null || typeof child !== 'object' || child.type === CustomItem) {
+      return child;
+    }
+
+    const {selected} = this.props;
+    const {title, id, disabled, href} = child.props;
+    const key = id || String(i);
+    const isSelected = key === selected;
+    const titleClasses = classNames(styles.title, {
+      [styles.selected]: isSelected
+    });
 
     return (
-      <div className={classes}>
+      <TabLink
+        title={title}
+        isSelected={isSelected}
+        active
+        key={key}
+        href={href}
+        innerClassName={titleClasses}
+        className={titleClasses}
+        disabled={disabled}
+        onPlainLeftClick={this.handleSelect(key)}
+      />
+    );
+  };
+
+  render() {
+    const {className, children, selected, theme, 'data-test': dataTest} = this.props;
+    const classes = classNames(styles.tabs, className, styles[theme]);
+    const childrenArray = React.Children.toArray(children).filter(Boolean);
+
+    return (
+      <div className={classes} data-test={dataTests('ring-dumb-tabs', dataTest)}>
         <div className={styles.titles}>
-          {children.map(({props}, i) => {
-            const {title, id, disabled} = props;
-            const key = id || String(i);
-            const isSelected = key === selected;
-            const titleClasses = classNames(styles.title, {
-              [styles.selected]: isSelected
-            });
-
-            const renderTitle = () => Tab.renderTitle(title, isSelected);
-
-            return (
-              <button
-                type="button"
-                key={key}
-                className={titleClasses}
-                disabled={disabled}
-                onClick={this.handleSelect(key)}
-              >
-                <span className={styles.visible}>{renderTitle()}</span>
-                {/* hack for preserving constant tab width*/}
-                <span className={styles.hidden}>{renderTitle()}</span>
-              </button>
-            );
-          })}
+          {childrenArray.map(this.getTabTitle)}
         </div>
         <div className={styles.tab}>
-          {children.filter(({props}, i) => {
-            const key = props.id || String(i);
-            return key === selected;
-          })[0]}
+          {childrenArray.find(({props}, i) => (props.id || String(i)) === selected)}
         </div>
       </div>
     );

@@ -1,9 +1,9 @@
-@value global: '../global/global.css';
-@value unit, main-color, text-color, border-hover-color, line-height-lower, dark-gray-color, darker-gray-color, line-color, sidebar-background-color, selected-background-color, font-smaller-lower, fast-ease, fixed-z-index, ellipsis, font-size from global;
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 @value height: calc(4 * unit);
 @value compensate: 2px;
 @value compensated: calc(height - compensate);
-@value hover-color: #f2f9ff;
 
 .tableWrapper {
   position: relative;
@@ -21,7 +21,7 @@
 
 .headerCell {
   & {
-    composes: font-smaller-lower;
+    composes: font-smaller-lower from "../global/global.css";
 
     box-sizing: border-box;
     height: calc(unit * 3);
@@ -30,7 +30,7 @@
     text-align: left;
     white-space: nowrap;
 
-    color: dark-gray-color;
+    color: var(--ring-secondary-color);
 
     font-weight: 200;
   }
@@ -70,10 +70,11 @@
   &.headerCellSortable .sorter {
     display: inline-block;
   }
+}
 
-  & .sorter .icon {
-    top: -2px;
-  }
+.sortedUp .icon {
+  transform: rotate(180deg);
+  transform-origin: center 53%;
 }
 
 .caption {
@@ -82,12 +83,12 @@
 
   text-transform: capitalize;
 
-  color: text-color;
+  color: var(--ring-text-color);
   border-bottom: none;
 
-  font-size: font-size;
+  font-size: var(--ring-font-size);
   font-weight: bold;
-  line-height: line-height-lower;
+  line-height: var(--ring-line-height-lower);
 }
 
 .tableHead {
@@ -100,7 +101,7 @@
 
     content: "";
 
-    background-color: line-color;
+    background-color: var(--ring-line-color);
   }
 }
 
@@ -113,7 +114,7 @@
 
     content: "";
 
-    background-color: line-color;
+    background-color: var(--ring-line-color);
   }
 }
 
@@ -126,10 +127,11 @@
 
 .subHeaderFixed {
   position: fixed;
-  z-index: fixed-z-index;
+  z-index: var(--ring-fixed-z-index);
   top: 0;
 
-  background-color: rgba(256, 256, 256, 0.95);
+  opacity: 0.9;
+  background-color: var(--ring-content-background-color);
 
   &::after {
     right: 0;
@@ -145,17 +147,21 @@
   }
 
   @nest .table:not(.disabledHover) &:hover {
-    background-color: hover-color;
+    background-color: var(--ring-hover-background-color);
   }
 }
 
 .rowSelected {
-  background-color: selected-background-color;
+  background-color: var(--ring-selected-background-color);
 }
 
 .rowFocused {
-  background-color: hover-color;
-  box-shadow: inset 2px 0 main-color;
+  background-color: var(--ring-hover-background-color);
+
+  /* stylelint-disable-next-line selector-max-specificity */
+  & .cell:nth-child(1) {
+    box-shadow: inset 2px 0 var(--ring-main-color);
+  }
 }
 
 .loadingOverlay {
@@ -174,7 +180,7 @@
 
 .cell {
   & {
-    composes: ellipsis;
+    composes: ellipsis from "../global/global.css";
 
     box-sizing: content-box;
 
@@ -184,7 +190,7 @@
     padding: 0;
     padding-right: calc(unit * 5);
 
-    color: text-color;
+    color: var(--ring-text-color);
   }
 
   &:first-child {
@@ -232,7 +238,7 @@
   }
 }
 
-@value top: -5px;
+@value top: -3px;
 
 .dragHandle {
   top: top;
@@ -262,7 +268,9 @@
 }
 
 .draggingRow {
-  background-color: hover-color;
+  z-index: var(--ring-overlay-z-index);
+
+  background-color: var(--ring-hover-background-color);
 
   & .dragHandle {
     cursor: grabbing;
@@ -270,7 +278,7 @@
     opacity: 1;
 
     & svg {
-      color: main-color;
+      color: var(--ring-main-color);
     }
   }
 }

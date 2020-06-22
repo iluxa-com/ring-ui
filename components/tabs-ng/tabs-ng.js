@@ -1,4 +1,5 @@
 import angular from 'angular';
+
 import className from 'classnames';
 
 import styles from '../tabs/tabs.css';
@@ -6,10 +7,6 @@ import Theme from '../global/theme';
 
 /**
  * @name Tabs Ng
- * @category Legacy Angular
- * @tags Ring UI Language
- * @description Displays a tabset.
- * @example-file ./tabs-ng.examples.html
  */
 
 const angularModule = angular.module('Ring.tabs', []);

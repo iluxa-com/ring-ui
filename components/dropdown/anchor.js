@@ -1,28 +1,31 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import chevronDown from '@jetbrains/icons/chevron-10px.svg';
+import classNames from 'classnames';
 
-import {ChevronDownIcon} from '../icon';
+import Icon from '../icon';
 
 import Button from '../button/button';
 
 import styles from './dropdown.css';
 
-export default function Anchor({children, ...restProps}) {
+export default function Anchor({children, className, ...restProps}) {
   return (
     <Button
       text
-      className={styles.anchor}
+      className={classNames(styles.anchor, className)}
       {...restProps}
     >
       {children}
-      <ChevronDownIcon
+      <Icon
+        glyph={chevronDown}
         className={styles.chevron}
-        size={ChevronDownIcon.Size.Size12}
       />
     </Button>
   );
 }
 
 Anchor.propTypes = {
-  children: PropTypes.node
+  children: PropTypes.node,
+  className: PropTypes.string
 };

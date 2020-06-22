@@ -6,11 +6,6 @@ import getUID from '../global/get-uid';
 
 /**
  * @name Radio Ng
- * @category Legacy Angular
- * @tags Ring UI Language
- * @framework Angular
- * @description Provides an Radio component.
- * @example-file ./radio-ng.examples.html
  */
 const angularModule = angular.module('Ring.radio', []);
 
@@ -32,8 +27,8 @@ angularModule.directive('rgRadio', function rgCheckboxDirective() {
           data-proxy-value
           data-proxy-ng-value
         />
-        <span class="${styles.circle}"></span>
-        <span class="${styles.label}" ng-transclude></span>
+        <span class="${styles.circle}"></span><span
+         class="${styles.label}" ng-transclude></span>
       </label>
 
 `),

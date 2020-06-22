@@ -1,4 +1,6 @@
-@value unit, font-size, text-color, main-color, gray-color, borders-color, white-color, border-hover-color, ease, fast-ease from "../global/global.css";
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 @value radio-size: calc(2 * unit);
 
 .radio {
@@ -8,13 +10,13 @@
 
   text-align: left;
 
-  color: text-color;
+  color: var(--ring-text-color);
   outline: none;
 
   &:hover .circle {
     transition: none;
 
-    border-color: border-hover-color;
+    border-color: var(--ring-border-hover-color);
   }
 }
 
@@ -29,13 +31,13 @@
   height: radio-size;
 
   user-select: none;
-  transition: border-color ease, box-shadow ease;
+  transition: border-color var(--ring-ease), box-shadow var(--ring-ease);
   vertical-align: middle;
   pointer-events: none;
 
-  border: 1px solid borders-color;
+  border: 1px solid var(--ring-borders-color);
   border-radius: unit;
-  background-color: white-color;
+  background-color: var(--ring-content-background-color);
 
   &::after {
     position: absolute;
@@ -47,14 +49,14 @@
 
     content: "";
 
-    transition: opacity fast-ease, transform fast-ease;
+    transition: opacity var(--ring-fast-ease), transform var(--ring-fast-ease);
 
     transform: scale(0);
 
     opacity: 0;
 
     border-radius: calc(unit / 2);
-    background-color: main-color;
+    background-color: var(--ring-main-color);
   }
 }
 
@@ -72,11 +74,11 @@
   opacity: 0;
 
   &[disabled] + .circle {
-    border-color: borders-color;
+    border-color: var(--ring-borders-color);
   }
 
   &:checked + .circle {
-    border-color: border-hover-color;
+    border-color: var(--ring-border-hover-color);
 
     /* stylelint-disable-next-line selector-max-specificity */
     &::after {
@@ -90,8 +92,8 @@
 
   &:focus + .circle,
   &.focus + .circle {
-    border-color: border-hover-color;
-    box-shadow: 0 0 0 1px border-hover-color;
+    border-color: var(--ring-border-hover-color);
+    box-shadow: 0 0 0 1px var(--ring-border-hover-color);
   }
 
   &[disabled] {
@@ -104,7 +106,7 @@
   }
 
   &[disabled] ~ .label {
-    color: gray-color;
+    color: var(--ring-disabled-color);
   }
 }
 

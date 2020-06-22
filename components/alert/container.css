@@ -1,9 +1,11 @@
-@value unit, alert-z-index from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 @value alert from './alert.css';
 
 .alertContainer {
   position: fixed;
-  z-index: alert-z-index;
+  z-index: var(--ring-alert-z-index);
   right: calc(unit * 2);
   bottom: calc(unit);
 

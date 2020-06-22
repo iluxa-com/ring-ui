@@ -1,11 +1,13 @@
-@value unit, dark-gray-color from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .pager {
   user-select: none;
 }
 
 .links {
-  margin-bottom: calc(unit);
+  margin-bottom: calc(unit * 2);
 }
 
 .link {
@@ -15,11 +17,5 @@
 }
 
 .linkDisabled {
-  color: dark-gray-color;
-}
-
-.chevron {
-  vertical-align: 2px;
-
-  line-height: normal;
+  color: var(--ring-secondary-color);
 }

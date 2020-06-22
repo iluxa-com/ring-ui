@@ -66,7 +66,7 @@ describe('Auth', () => {
 
       auth.config.userParams.should.deep.equal({
         query: {
-          fields: 'guest,id,name,profile/avatar/url,profile/email'
+          fields: 'guest,id,name,login,profile/avatar/url,profile/email'
         }
       });
     });
@@ -173,7 +173,8 @@ describe('Auth', () => {
       token.should.be.deep.equal({
         accessToken: '2YotnFZFEjr1zCsicMWpAA',
         scopes: ['0-0-0-0-0'],
-        expires: frozenTime + HOUR
+        expires: frozenTime + HOUR,
+        lifeTime: 3600
       });
     });
 
@@ -611,7 +612,7 @@ describe('Auth', () => {
       HTTP.prototype.authorizedFetch.should.have.been.calledOnce;
       const matchParams = sinon.match({
         query: {
-          fields: 'guest,id,name,profile/avatar/url'
+          fields: 'guest,id,name,login,profile/avatar/url'
         }
       });
       HTTP.prototype.authorizedFetch.should.have.been.

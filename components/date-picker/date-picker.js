@@ -5,39 +5,57 @@ import classNames from 'classnames';
 import rerenderHOC from '../global/rerender-hoc';
 
 import Popup from '../popup/popup';
-import Dropdown from '../dropdown/dropdown';
+import Dropdown, {Anchor} from '../dropdown/dropdown';
 
 import DatePopup from './date-popup';
 import {dateType, parseDate} from './consts';
 import styles from './date-picker.css';
 
+const PopupComponent = ({
+  hidden,
+  className,
+  popupRef,
+  onClear,
+  datePopupProps,
+  onComplete,
+  ...restProps
+}) => (
+  <Popup
+    hidden={hidden}
+    keepMounted
+    className={className}
+    ref={popupRef}
+    directions={[
+      Popup.PopupProps.Directions.BOTTOM_RIGHT,
+      Popup.PopupProps.Directions.BOTTOM_LEFT,
+      Popup.PopupProps.Directions.TOP_LEFT,
+      Popup.PopupProps.Directions.TOP_RIGHT
+    ]}
+    {...restProps}
+  >
+    <DatePopup
+      onClear={onClear}
+      {...datePopupProps}
+      onComplete={onComplete}
+      hidden={hidden}
+    />
+  </Popup>
+);
+
+PopupComponent.propTypes = {
+  hidden: PropTypes.bool,
+  className: PropTypes.string,
+  popupRef: PropTypes.func,
+  onClear: PropTypes.func,
+  datePopupProps: PropTypes.shape(DatePopup.propTypes),
+  onComplete: PropTypes.func
+};
+
 /**
  * @name Date Picker
- * @category Components
- * @tags Ring UI Language
- * @framework React
- * @constructor
- * @description Allows picking a date or a date range. Uses [moment.js](http://momentjs.com/) under the hood. You may want to either [bundle only the needed locales](https://webpack.js.org/plugins/context-replacement-plugin/#newcontentresource-newcontentrecursive-newcontentregexp) or even to [ignore all of them](https://webpack.js.org/plugins/ignore-plugin/#ignore-moment-locales).
- * @example-file ./date-picker.examples.html
  */
 
 export default class DatePicker extends PureComponent {
-  static defaultProps = {
-    className: '',
-    date: null,
-    range: false,
-    from: null,
-    to: null,
-    clear: false,
-    displayFormat: 'D MMM YYYY',
-    displayMonthFormat: 'D MMM',
-    displayDayFormat: 'D',
-    inputFormat: 'D MMM YYYY',
-    datePlaceholder: 'Set a date',
-    rangePlaceholder: 'Set a period',
-    onChange() {}
-  };
-
   static propTypes = {
     className: PropTypes.string,
     popupClassName: PropTypes.string,
@@ -52,7 +70,29 @@ export default class DatePicker extends PureComponent {
     inputFormat: PropTypes.string,
     datePlaceholder: PropTypes.string,
     rangePlaceholder: PropTypes.string,
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    dropdownProps: PropTypes.object,
+    disabled: PropTypes.bool,
+    minDate: dateType,
+    maxDate: dateType
+  };
+
+  static defaultProps = {
+    className: '',
+    date: null,
+    range: false,
+    from: null,
+    to: null,
+    clear: false,
+    displayFormat: 'D MMM YYYY',
+    displayMonthFormat: 'D MMM',
+    displayDayFormat: 'D',
+    inputFormat: 'D MMM YYYY',
+    datePlaceholder: 'Set a date',
+    rangePlaceholder: 'Set a period',
+    minDate: null,
+    maxDate: null,
+    onChange() {}
   };
 
   clear = () => {
@@ -71,28 +111,16 @@ export default class DatePicker extends PureComponent {
     this.popup._onCloseAttempt();
   };
 
-  render() {
-    const {
-      className,
-      popupClassName,
-      displayMonthFormat,
-      displayDayFormat,
-      datePlaceholder,
-      rangePlaceholder,
-      clear,
-      ...datePopupProps
-    } = this.props;
-
+  getAnchorText = () => {
     const {
       range,
       displayFormat,
-      inputFormat
-    } = datePopupProps;
-
-    const classes = classNames(
-      styles.datePicker,
-      className
-    );
+      inputFormat,
+      displayMonthFormat,
+      displayDayFormat,
+      datePlaceholder,
+      rangePlaceholder
+    } = this.props;
 
     const parse = text => parseDate(
       text,
@@ -123,28 +151,42 @@ export default class DatePicker extends PureComponent {
       text = `${to.format(displayFormat)}`;
     }
 
+    return text;
+  };
+
+  render() {
+    const text = this.getAnchorText();
+
+    if (this.props.disabled) {
+      return <Anchor disabled>{text}</Anchor>;
+    }
+
+    const {
+      className,
+      popupClassName,
+      clear,
+      dropdownProps,
+      ...datePopupProps
+    } = this.props;
+
+    const classes = classNames(
+      styles.datePicker,
+      className
+    );
+
     return (
       <Dropdown
         className={classes}
         anchor={text}
+        {...dropdownProps}
       >
-        <Popup
-          keepMounted
+        <PopupComponent
           className={popupClassName}
-          ref={this.popupRef}
-          directions={[
-            Popup.PopupProps.Directions.BOTTOM_RIGHT,
-            Popup.PopupProps.Directions.BOTTOM_LEFT,
-            Popup.PopupProps.Directions.TOP_LEFT,
-            Popup.PopupProps.Directions.TOP_RIGHT
-          ]}
-        >
-          <DatePopup
-            onClear={clear ? this.clear : null}
-            {...datePopupProps}
-            onComplete={this.closePopup}
-          />
-        </Popup>
+          popupRef={this.popupRef}
+          onClear={clear ? this.clear : null}
+          datePopupProps={datePopupProps}
+          onComplete={this.closePopup}
+        />
       </Dropdown>
     );
   }

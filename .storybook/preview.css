@@ -1,0 +1,18 @@
+@import "../components/global/variables.css";
+
+body {
+  box-sizing: border-box;
+
+  color: var(--ring-text-color);
+
+  font-family: var(--ring-font-family);
+  font-size: var(--ring-font-size);
+  line-height: var(--ring-line-height);
+}
+
+.blockAnimations *,
+.blockAnimations *::before,
+.blockAnimations *::after {
+  transition: none !important;
+  animation: none !important;
+}

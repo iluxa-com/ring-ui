@@ -1,8 +1,10 @@
-@value unit, gray-color, link-hover-color, overlay-z-index, border-radius, popup-border-color, icon-color, border-hover-color, main-color from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .container {
   position: fixed;
-  z-index: overlay-z-index;
+  z-index: var(--ring-overlay-z-index);
   top: 0;
   right: 0;
   bottom: 0;
@@ -10,10 +12,19 @@
 
   display: flex;
   overflow: auto;
+  align-items: center;
+  justify-content: center;
 
   padding: calc(unit * 4) unit;
 
   background-color: rgba(255, 255, 255, 0.4);
+}
+
+.innerContainer {
+  display: flex;
+  flex-direction: column;
+
+  max-height: 100%;
 }
 
 .content {
@@ -21,7 +32,6 @@
 
   width: calc(unit * 58);
   min-height: calc(unit * 15);
-  max-height: 100%;
   margin: auto;
 
   cursor: default;
@@ -44,45 +54,58 @@
 }
 
 .content.content {
-  box-shadow: 0 2px 16px color(popup-border-color a(0.15));
+  box-shadow: 0 2px 16px var(--ring-popup-shadow-color);
 }
 
 .clickableOverlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
   cursor: pointer;
 }
 
-.clickableOverlay:hover .closeIcon {
-  color: border-hover-color;
-}
-
-.content:hover .closeIcon {
-  color: icon-color;
+.clickableOverlay:hover + * .closeIcon {
+  color: var(--ring-border-hover-color);
 }
 
 .closeButton:hover .closeIcon {
-  color: border-hover-color;
+  color: var(--ring-border-hover-color);
 }
 
-.clickableOverlay:active .closeIcon {
-  color: main-color;
-}
-
-.content:active .closeIcon {
-  color: icon-color;
+.clickableOverlay:active + * .closeIcon {
+  color: var(--ring-main-color);
 }
 
 .closeButton:active .closeIcon {
-  color: main-color;
+  color: var(--ring-main-color);
 }
 
 .closeButton {
   position: absolute;
   top: 0;
-  right: calc(unit * -5);
+  right: calc(unit * -4);
 }
 
 .bodyWithoutScroll {
   overflow: hidden;
 
   height: 100%;
+}
+
+.popupTarget {
+  position: fixed;
+  z-index: var(--ring-overlay-z-index);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  pointer-events: none;
+
+  & > :not(.popupTarget) {
+    pointer-events: initial;
+  }
 }

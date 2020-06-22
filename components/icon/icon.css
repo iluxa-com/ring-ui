@@ -1,47 +1,81 @@
-@value gray-color, icon-hover-color, success-color, link-hover-color, error-color, main-color, white-color from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
 
 .icon {
-  position: relative;
-
   display: inline-block;
 
-  vertical-align: middle;
   fill: currentColor;
 }
 
 .glyph {
-  display: inline-block;
+  display: inline-flex;
 
-  vertical-align: middle;
+  margin-right: -1px;
+  margin-left: -1px;
+
   pointer-events: none;
+
+  &[width='10'] {
+    vertical-align: -1px;
+  }
+
+  &[width='14'] {
+    margin-right: -2px;
+    margin-left: 0;
+
+    vertical-align: -3px;
+  }
+
+  &[width='16'] {
+    vertical-align: -3px;
+  }
+
+  &[width='20'] {
+    vertical-align: -2px;
+  }
+
+  &.compatibilityMode {
+    width: calc(unit * 2);
+    height: calc(unit * 2);
+    margin-right: 0;
+    margin-left: 0;
+  }
+}
+
+/* HACK: This media query hack makes styles applied for WebKit browsers only */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .glyph {
+    width: auto; /* Safari size bug workaround, see https://youtrack.jetbrains.com/issue/RG-1983 */
+  }
 }
 
 .gray {
-  color: gray-color;
+  color: var(--ring-icon-secondary-color);
 }
 
 .hover {
-  color: icon-hover-color;
+  color: var(--ring-icon-hover-color);
 }
 
 .green {
-  color: success-color;
+  color: var(--ring-icon-success-color);
 }
 
 .magenta {
-  color: link-hover-color;
+  color: var(--ring-link-hover-color);
 }
 
 .red {
-  color: error-color;
+  color: var(--ring-icon-error-color);
 }
 
 .blue {
-  color: main-color;
+  color: var(--ring-main-color);
 }
 
 .white {
-  color: white-color;
+  color: var(--ring-dark-text-color);
 }
 
 .loading {

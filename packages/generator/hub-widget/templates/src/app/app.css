@@ -1,17 +1,17 @@
-@value unit, font, font-size from "@jetbrains/ring-ui/components/global/global.css";
+@import "@jetbrains/ring-ui/components/global/variables.css";
 
-:global(.widget-body) {
+.widget-body {
   margin: 0;
-  padding: calc(unit * 2);
+  padding: calc(var(--ring-unit) * 2);
 
-  background: #fff;
+  background: var(--ring-content-background-color);
 
-  font-size: font-size;
+  font-family: var(--ring-font-family);
+  font-size: var(--ring-font-size);
+  line-height: var(--ring-line-height);
 }
 
 .widget {
-  composes: font;
-
   margin: 0;
   padding: 0;
 }

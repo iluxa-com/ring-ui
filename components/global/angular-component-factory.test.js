@@ -1,5 +1,6 @@
 /* global inject: false */
 import angular from 'angular';
+
 import 'angular-mocks';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
@@ -24,7 +25,8 @@ class TestComponent extends PureComponent {
   render() {
     const {id, someObj, className} = this.props;
     return (
-      <div
+      <button
+        type="button"
         id={id}
         data-some-obj={someObj.foo}
         onClick={this.handleClick}
@@ -79,21 +81,6 @@ describe('angularComponentFactory', () => {
     };
     $rootScope.$digest();
     component.should.have.attribute('data-some-obj', 'test value');
-  });
-
-  it('should warn if one modify inner properties of passed object', () => {
-    sandbox.stub(console, 'warn');
-
-    $rootScope.testObj = {
-      foo: 'bar'
-    };
-
-    $compile('<rg-test-component some-obj="testObj"></rg-test-component>')($rootScope);
-
-    $rootScope.testObj.foo = 'test-value';
-
-    // eslint-disable-next-line no-console
-    console.warn.should.have.been.called;
   });
 
   it('should use string binding for string props', () => {

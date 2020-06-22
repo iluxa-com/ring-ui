@@ -1,3 +1,5 @@
+@import "../global/variables.css";
+
 .dropdown {
   display: inline-block;
 }
@@ -11,8 +13,6 @@
 
 .chevron {
   margin-left: 2px;
-
-  vertical-align: 1px;
 
   line-height: normal;
 }

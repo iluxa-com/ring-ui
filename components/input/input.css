@@ -1,8 +1,10 @@
-@value unit, font-lower, font-size-smaller, line-height-lowest, line-color, dark-line-color, white-color, gray-color, dark-gray-color, darker-gray-color, main-color, error-color, text-color, ease, fast-ease from  "../global/global.css";
-@value text-shadow: 0 0 0;
+@import "../global/variables.css";
+
+@value unit from "../global/global.css";
+@value iconOffset: calc(unit * 3 - 2px);
 
 .container {
-  composes: font-lower;
+  composes: font-lower from  "../global/global.css";
 
   position: relative;
 
@@ -15,7 +17,7 @@
   }
 }
 
-.borderless {
+.compact {
   min-height: calc(unit * 4);
   padding: 0;
 }
@@ -30,27 +32,31 @@
   background: transparent;
 
   font: inherit;
-  caret-color: main-color;
+  caret-color: var(--ring-main-color);
 
   @nest .clearable & {
     padding-right: calc(unit * 3);
+
+    @nest [dir=rtl] & {
+      padding-right: 0;
+      padding-left: calc(unit * 3);
+    }
   }
 
   @nest .light & {
-    color: text-color;
+    color: var(--ring-text-color);
   }
 
   @nest .dark & {
-    color: white-color;
+    color: var(--ring-dark-text-color);
   }
 
   &::placeholder {
     color: transparent;
-    text-shadow: none;
   }
 
   &[disabled] {
-    color: gray-color;
+    color: var(--ring-disabled-color);
   }
 
   /*
@@ -67,7 +73,7 @@
     & ~ .label {
       top: calc(unit / 2);
 
-      font-size: font-size-smaller;
+      font-size: var(--ring-font-size-smaller);
     }
   }
 
@@ -77,10 +83,41 @@
   }
 }
 
-.clear {
+.withIcon .input,
+.withIcon .label {
+  padding-left: iconOffset;
+
+  @nest [dir=rtl] & {
+    padding-right: iconOffset;
+    padding-left: 0;
+  }
+}
+
+.icon,
+/* override Button */
+.clear.clear {
   position: absolute;
   top: 17px;
 
+  line-height: calc(unit * 4);
+
+  @nest .compact & {
+    top: 1px;
+  }
+}
+
+.icon {
+  left: 0;
+
+  color: var(--ring-icon-color);
+
+  @nest [dir=rtl] & {
+    right: 0;
+    left: auto;
+  }
+}
+
+.clear {
   right: 0;
 
   padding-right: 0;
@@ -89,14 +126,10 @@
     display: none;
   }
 
-  @nest .borderless & {
-    top: 0;
+  @nest [dir=rtl] & {
+    right: auto;
+    left: 0;
   }
-}
-
-/* override Button */
-.clear.clear {
-  line-height: calc(unit * 4);
 }
 
 textarea.input {
@@ -110,51 +143,51 @@ textarea.input {
 
 .label {
   position: absolute;
-  top: calc(unit * 3 - 3px);
+  top: calc(unit * 3 - 1px);
   left: 0;
 
-  transition: transform fast-ease, color fast-ease;
+  transition: transform var(--ring-fast-ease), color var(--ring-fast-ease);
   transform-origin: top left;
   pointer-events: none;
 
   @nest .light & {
-    color: dark-gray-color;
+    color: var(--ring-secondary-color);
   }
 
   @nest .dark & {
-    color: darker-gray-color;
+    color: var(--ring-dark-secondary-color);
   }
 }
 
 .input:focus ~ .label,
 .container.active > .label,
 .container:not(.empty) > .label {
-  transform: translateY(calc(unit * -2 - 1px)) scale(calc(12 / 13));
+  transform: translateY(calc(unit * -2.5)) scale(calc(12 / 13));
 }
 
 .noLabel ::placeholder,
 .input:focus::placeholder {
-  transition: text-shadow ease;
+  transition: color var(--ring-fast-ease);
 }
 
 .light.noLabel ::placeholder,
 .light :focus::placeholder {
-  text-shadow: text-shadow gray-color;
+  color: var(--ring-disabled-color);
 }
 
 /* stylelint-disable-next-line selector-max-specificity */
 .dark.noLabel ::placeholder,
 /* stylelint-disable-next-line selector-max-specificity */
 .dark :focus::placeholder {
-  text-shadow: text-shadow text-color;
+  color: var(--ring-secondary-color);
 }
 
 .input:focus ~ .label {
-  color: main-color;
+  color: var(--ring-main-color);
 }
 
 .error > :focus ~ .label {
-  color: error-color;
+  color: var(--ring-error-color);
 }
 
 .underline {
@@ -164,11 +197,11 @@ textarea.input {
   border-bottom-style: solid;
 
   @nest .light & {
-    border-color: line-color;
+    border-color: var(--ring-borders-color);
   }
 
   @nest .dark & {
-    border-color: dark-line-color;
+    border-color: var(--ring-dark-borders-color);
   }
 }
 
@@ -188,13 +221,17 @@ textarea.input {
 .focusUnderline {
   margin-top: -1px;
 
-  background: main-color;
+  background: var(--ring-main-color);
 }
 
 .errorUnderline {
   margin-top: -2px;
 
-  background: error-color;
+  background: var(--ring-icon-error-color);
+
+  @nest .dark & {
+    background: var(--ring-error-color);
+  }
 }
 
 .input:focus ~ .focusUnderline,
@@ -213,10 +250,10 @@ textarea.input {
 
   transition: height 0.3s ease-out;
 
-  color: error-color;
+  color: var(--ring-error-color);
 
-  font-size: font-size-smaller;
-  line-height: line-height-lowest;
+  font-size: var(--ring-font-size-smaller);
+  line-height: var(--ring-line-height-lowest);
 }
 
 .sizeS {

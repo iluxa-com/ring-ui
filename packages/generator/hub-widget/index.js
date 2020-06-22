@@ -14,6 +14,7 @@ const packages = [
   '@jetbrains/logos',
   '@jetbrains/icons',
   '@jetbrains/generator-ring-ui',
+  '@jetbrains/hub-widget-ui',
   'hub-dashboard-addons'
 ];
 const BASE_GENERATOR_PATH = path.resolve(
@@ -26,7 +27,12 @@ const INDENT = 2;
 const additionalDevServerOptions = `
     headers: {
       'Access-Control-Allow-Origin': '*'
-    },`;
+    },
+    disableHostCheck: true,`;
+
+const additionalWebpackPlugins = `,
+    new (require('copy-webpack-plugin'))(['manifest.json'], {})
+`;
 
 module.exports = class HubWidgetGenerator extends Generator {
   prompting() {
@@ -65,8 +71,11 @@ module.exports = class HubWidgetGenerator extends Generator {
           projectName,
           camelCaseName,
           additionalDevServerOptions,
+          additionalWebpackPlugins,
           port
         }, answers, versions);
+
+        console.log('Generating package with given parameters:', this.props);
       }).
       then(() => {
         if (spinner) {
@@ -103,7 +112,6 @@ module.exports = class HubWidgetGenerator extends Generator {
       this.destinationPath('package.json'),
       {
         process: content => {
-          console.log('>>>', this.props);
           const packageJson = processPackageJson(
             this.props,
             JSON.parse(content)
@@ -113,7 +121,12 @@ module.exports = class HubWidgetGenerator extends Generator {
               components: './src'
             }),
             dependencies: Object.assign({}, packageJson.dependencies, {
-              'hub-dashboard-addons': this.props.hubDashboardAddons
+              'hub-dashboard-addons': this.props.hubDashboardAddons,
+              '@jetbrains/hub-widget-ui': this.props.jetbrainsHubWidgetUi
+            }),
+            scripts: Object.assign({}, packageJson.scripts, {
+              build: 'webpack -p', // Widgets with sourcemaps take to much space
+              dist: `npm run build && rm -f ${this.props.projectName}.zip && zip -r -j ${this.props.projectName}.zip ./dist`
             })
           });
           return JSON.stringify(newPackageJson, null, INDENT);

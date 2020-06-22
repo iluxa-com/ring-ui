@@ -1,7 +1,6 @@
-/* eslint-env node */
-/* eslint-disable import/no-commonjs */
-const path = require('path');
 const fs = require('fs');
+
+const path = require('path');
 
 const glob = require('glob');
 const changeCase = require('change-case');
@@ -12,12 +11,19 @@ const generate = (packageName, output, suffix = 'Icon') => {
     // TODO: add deduplication instead
     filter(filename => !/apple-mask-icon\.svg$/.test(filename)).
     map(filename => ({
-      importPath: path.join(packageName, filename),
+      importPath: path.posix.join(packageName, filename),
       // eslint-disable-next-line no-magic-numbers
       name: changeCase.camelCase(path.basename(filename).slice(0, -4), null, true)
     }));
 
-  let source =
+  let source = '';
+
+  // Suppress the max-len check when it's known to fail
+  if (packageName === '@jetbrains/icons') {
+    source += '/* eslint-disable max-len */\n';
+  }
+
+  source +=
     '/* This is a generated file. If you want to change it, edit generate-exports instead. */\n\n';
   icons.forEach(({importPath, name}) => {
     source += `import ${name} from '${importPath}';\n`;
@@ -25,7 +31,7 @@ const generate = (packageName, output, suffix = 'Icon') => {
   source += "\nimport {iconHOC} from './icon';\n\n";
   icons.forEach(({name}) => {
     const displayName = changeCase.pascalCase(name) + suffix;
-    source += `export const ${displayName} = iconHOC(${name}.toString(), '${displayName}');\n`;
+    source += `export const ${displayName} = iconHOC(${name}, '${displayName}');\n`;
   });
 
   fs.writeFileSync(path.resolve(__dirname, output), source);

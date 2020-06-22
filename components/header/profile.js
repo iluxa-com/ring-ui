@@ -12,8 +12,6 @@ import styles from './header.css';
 const rgItemType = PopupMenu.ListProps.Type.LINK;
 
 export default class Profile extends PureComponent {
-  static Size = Size;
-
   static propTypes = {
     className: PropTypes.string,
     closeOnSelect: PropTypes.bool,
@@ -38,34 +36,53 @@ export default class Profile extends PureComponent {
     }),
     user: PropTypes.shape({
       guest: PropTypes.bool,
-      profile: PropTypes.object
+      profile: PropTypes.object,
+      name: PropTypes.string
     }),
     size: PropTypes.number,
+    round: PropTypes.bool,
     showLogIn: PropTypes.bool,
     showLogOut: PropTypes.bool,
     showSwitchUser: PropTypes.bool,
     showApplyChangedUser: PropTypes.bool,
-    onRevertPostponement: PropTypes.func
+    onRevertPostponement: PropTypes.func,
+    renderGuest: PropTypes.func
   };
 
   static defaultProps = {
     closeOnSelect: true,
     renderPopupItems: items => items,
     translations: {},
-    size: Size.Size32
+    size: Size.Size32,
+    renderGuest: ({loading, onLogin, className, translations}) => (
+      <div
+        className={classNames(styles.profileEmpty, className)}
+      >
+        <Button
+          theme={Button.Theme.DARK}
+          primary
+          data-test="ring-header-login-button"
+          disabled={loading}
+          loader={loading}
+          onClick={onLogin}
+        >
+          {translations.login || 'Log in...'}
+        </Button>
+      </div>
+    )
   };
+
+  static Size = Size;
 
   render() {
     const {
       className,
       closeOnSelect,
       hasUpdates,
-      loading,
+      onLogout,
       user,
       profileUrl,
       LinkComponent,
-      onLogin,
-      onLogout,
       onSwitchUser,
       renderPopupItems,
       onRevertPostponement,
@@ -73,8 +90,11 @@ export default class Profile extends PureComponent {
       showLogIn,
       showLogOut,
       showSwitchUser,
+      renderGuest,
       translations,
       size,
+      round,
+      loading, onLogin,
       ...props
     } = this.props;
 
@@ -84,28 +104,13 @@ export default class Profile extends PureComponent {
           {...props}
           className={classNames(styles.profileEmpty, className)}
         >
-          <Avatar size={size}/>
+          <Avatar size={size} round={round}/>
         </div>
       );
     }
 
     if (user.guest) {
-      return (
-        <div
-          className={classNames(styles.profileEmpty, className)}
-        >
-          <Button
-            theme={Button.Theme.DARK}
-            primary
-            data-test="ring-header-login-button"
-            disabled={loading}
-            loader={loading}
-            onClick={onLogin}
-          >
-            {translations.login || 'Log in...'}
-          </Button>
-        </div>
-      );
+      return renderGuest(this.props);
     }
 
     const anchorClassName = classNames(styles.avatarWrapper, {
@@ -113,12 +118,13 @@ export default class Profile extends PureComponent {
     });
 
     const anchor = (
-      <div className={anchorClassName}>
+      <button type="button" className={anchorClassName}>
         <Avatar
           url={user.profile && user.profile.avatar && user.profile.avatar.url}
           size={size}
+          round={round}
         />
-      </div>
+      </button>
     );
 
     const items = [
@@ -167,8 +173,8 @@ export default class Profile extends PureComponent {
         <PopupMenu
           closeOnSelect={closeOnSelect}
           data={renderPopupItems(items)}
+          left={-2}
           top={-8}
-          left={-16}
           sidePadding={32}
         />
       </Dropdown>

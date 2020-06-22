@@ -1,18 +1,14 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import checkmarkIcon from '@jetbrains/icons/checkmark.svg';
 
-import {CheckmarkIcon} from '../icon';
+import Icon from '../icon/icon';
 
 import styles from './checkbox.css';
 
 /**
  * @name Checkbox
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @extends {ReactComponent}
- * @example-file ./checkbox.examples.html
  */
 export default class Checkbox extends PureComponent {
 
@@ -51,9 +47,9 @@ export default class Checkbox extends PureComponent {
           className={classes}
         />
         <span className={styles.cell}>
-          <CheckmarkIcon
+          <Icon
+            glyph={checkmarkIcon}
             className={styles.icon}
-            size={CheckmarkIcon.Size.Size14}
           />
         </span>
         <span className={styles.label}>{label || children}</span>

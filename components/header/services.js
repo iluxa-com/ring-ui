@@ -1,7 +1,6 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-
-import {ServicesIcon} from '../icon';
+import servicesIcon from '@jetbrains/icons/services-20px.svg';
 
 import Dropdown from '../dropdown/dropdown';
 import Popup from '../popup/popup';
@@ -15,7 +14,8 @@ const makeAnchor = loading => {
     <TrayIcon
       loader={loading}
       active={active}
-      icon={ServicesIcon}
+      icon={servicesIcon}
+      aria-label="Services"
     />
   );
 
@@ -27,6 +27,14 @@ const makeAnchor = loading => {
 };
 
 export default class Services extends PureComponent {
+  static sort = (a, b) => {
+    const aApplicationName = a.applicationName || '';
+    const bApplicationName = b.applicationName || '';
+
+    return aApplicationName.localeCompare(bApplicationName) ||
+      a.name.localeCompare(b.name);
+  };
+
   static propTypes = {
     className: PropTypes.string,
     clientId: PropTypes.string,
@@ -37,18 +45,10 @@ export default class Services extends PureComponent {
   };
 
   static Link = ServicesLink;
-  static sort = (a, b) => {
-    const aApplicationName = a.applicationName || '';
-    const bApplicationName = b.applicationName || '';
-
-    return aApplicationName.localeCompare(bApplicationName) ||
-      a.name.localeCompare(b.name);
-  };
 
   serviceIsActive = service => service.id === this.props.clientId;
 
   render() {
-    // eslint-disable-next-line no-unused-vars
     const {clientId, loading, services, initShown, ...props} = this.props;
 
     if (!services) {
@@ -57,7 +57,8 @@ export default class Services extends PureComponent {
           {...props}
           loader={loading}
           active={loading}
-          icon={ServicesIcon}
+          icon={servicesIcon}
+          aria-label="Services"
         />
       );
     }

@@ -1,4 +1,4 @@
-import React, {PureComponent} from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import gift from '@jetbrains/icons/gift.svg';
@@ -11,40 +11,6 @@ import styles from './message.css';
 
 /**
   * @name Message
-  * @category Components
-  * @tags Ring UI Language
-  * @framework React
-  * @constructor
-  * @description Popup with message
-  * @example
-    <example name="message">
-      <file name="index.html">
-        <div id="message"></div>
-      </file>
-
-      <file name="index.js">
-        import React from 'react';
-        import {render} from 'react-dom';
-        import Message from '@jetbrains/ring-ui/components/message/message';
-
-        const container = document.getElementById('message');
-
-        render(
-          <div style={{padding: 200}}>
-            <span>
-              Anchor
-              <Message
-                title="This is title"
-                tailOffset={32}
-              >
-                This is long long long long long long long long long long long long long long long long long long description
-              </Message>
-            </span>
-          </div>,
-          container
-        );
-      </file>
-    </example>
   */
 
 const {Directions} = Popup.PopupProps;
@@ -66,26 +32,48 @@ const getTailOffsets = offset => ({
   [Directions.LEFT_CENTER]: {top: offset, right: -UNIT, transform: 'rotate(-90deg)'}
 });
 
-export default class Message extends PureComponent {
+export default class Message extends Component {
   static propTypes = {
     children: PropTypes.node,
     className: PropTypes.string,
     title: PropTypes.string.isRequired,
-    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
+    directions: PropTypes.arrayOf(PropTypes.string),
     direction: PropTypes.string,
     popupProps: PropTypes.object,
+    buttonProps: PropTypes.object,
     tailOffset: PropTypes.number,
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
+    onDismiss: PropTypes.func,
+    translations: PropTypes.object
   };
 
   static defaultProps = {
     icon: gift,
-    direction: Directions.TOP_RIGHT,
-    tailOffset: 56
+    directions: [
+      Directions.TOP_RIGHT, Directions.TOP_LEFT, Directions.TOP_CENTER,
+      Directions.BOTTOM_RIGHT, Directions.BOTTOM_LEFT, Directions.BOTTOM_CENTER,
+      Directions.RIGHT_TOP, Directions.RIGHT_BOTTOM, Directions.RIGHT_CENTER,
+      Directions.LEFT_TOP, Directions.LEFT_BOTTOM, Directions.LEFT_CENTER
+    ],
+    tailOffset: 56,
+    translations: {
+      gotIt: 'Got it',
+      dismiss: 'Dismiss'
+    }
   };
+
+  state = {};
 
   static Directions = Directions;
   static PopupProps = Popup.PopupProps;
+
+  _onDirectionChange = direction =>
+    this.setState({direction});
+
+  popupRef = el => {
+    this.popup = el;
+  };
 
   render() {
     const {
@@ -93,26 +81,43 @@ export default class Message extends PureComponent {
       className,
       title,
       icon,
-      direction,
       tailOffset,
       popupProps,
-      onClose
+      buttonProps,
+      onClose,
+      onDismiss,
+      translations
     } = this.props;
     const classes = classNames(styles.message, className);
+    const popupDirections = this.props.direction
+      ? [this.props.direction]
+      : this.props.directions;
+
+    const {direction} = this.state;
 
     return (
       <Popup
+        ref={this.popupRef}
         hidden={false}
-        directions={[direction]}
+        directions={popupDirections}
         className={classes}
         offset={UNIT * 2}
+        onDirectionChange={this._onDirectionChange}
         {...popupProps}
       >
-        <div className={styles.tail} style={getTailOffsets(tailOffset)[direction]}/>
-        {icon && <Icon className={styles.icon} glyph={icon} size={Icon.Size.Size16}/>}
+        {direction && <div className={styles.tail} style={getTailOffsets(tailOffset)[direction]}/>}
+        {icon && <Icon className={styles.icon} glyph={icon}/>}
         <h1 className={styles.title}>{title}</h1>
-        {children && <p className={styles.description}>{children}</p>}
-        <Button className={styles.button} onClick={onClose} primary>{'Got it'}</Button>
+        {children && <div className={styles.description}>{children}</div>}
+        {(onClose || buttonProps) && (
+          <Button
+            className={styles.button}
+            onClick={onClose}
+            primary
+            {...buttonProps}
+          >{translations.gotIt}</Button>
+        )}
+        {onDismiss && <Button onClick={onDismiss} text>{translations.dismiss}</Button>}
       </Popup>
     );
   }

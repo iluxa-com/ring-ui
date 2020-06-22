@@ -1,7 +1,8 @@
+import 'focus-visible';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import chevronDown from '@jetbrains/icons/chevron-down.svg';
+import chevronDown from '@jetbrains/icons/chevron-10px.svg';
 
 import Icon, {Size} from '../icon';
 import Theme from '../global/theme';
@@ -11,17 +12,8 @@ import styles from './button.css';
 
 /**
  * @name Button
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @description Provides styled buttons.
- * @extends {PureComponent}
- * @example-file ./button.examples.html
  */
 export default class Button extends PureComponent {
-  static IconSize = Size;
-  static Theme = Theme;
-
   static propTypes = {
     theme: PropTypes.string,
     active: PropTypes.bool,
@@ -42,26 +34,22 @@ export default class Button extends PureComponent {
 
     href: PropTypes.string,
 
-    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
     iconSize: PropTypes.number,
     iconClassName: PropTypes.string,
+    iconSuppressSizeWarning: PropTypes.bool,
 
     className: PropTypes.string,
-    onMouseDown: PropTypes.func,
 
     children: PropTypes.node
   };
 
   static defaultProps = {
-    theme: Theme.LIGHT,
-    iconSize: Size.Size16,
-    onMouseDown() {}
+    theme: Theme.LIGHT
   };
 
-  onMouseDown = e => {
-    e.preventDefault();
-    this.props.onMouseDown(e);
-  };
+  static IconSize = Size;
+  static Theme = Theme;
 
   render() {
     const {
@@ -82,9 +70,9 @@ export default class Button extends PureComponent {
       icon,
       iconSize,
       iconClassName,
+      iconSuppressSizeWarning,
       className,
       children,
-      onMouseDown, // eslint-disable-line no-unused-vars
       ...props
     } = this.props;
 
@@ -100,6 +88,9 @@ export default class Button extends PureComponent {
         [styles.onlyIcon]: icon && !children,
         [styles.withNormalIconLight]: (
           icon && !active && !danger && !primary && theme === Theme.LIGHT
+        ),
+        [styles.withDangerIconLight]: (
+          icon && danger && theme === Theme.LIGHT
         ),
         [styles.loader]: loader && !icon,
         [styles.primary]: primary || blue,
@@ -117,6 +108,7 @@ export default class Button extends PureComponent {
               glyph={icon}
               size={iconSize}
               loading={loader}
+              suppressSizeWarning={iconSuppressSizeWarning}
             />
           </span>
         )}
@@ -126,7 +118,6 @@ export default class Button extends PureComponent {
         {dropdown && (
           <Icon
             glyph={chevronDown}
-            size={Icon.Size.Size14}
             className={styles.dropdownIcon}
           />
         )}
@@ -140,10 +131,9 @@ export default class Button extends PureComponent {
         tabIndex={loader ? -1 : 0}
         type={isLink ? null : 'button'}
         {...props}
-        onMouseDown={this.onMouseDown}
         className={classes}
       >
-        {loader && !icon && <div className={styles.loaderBackground}/>}
+        {loader && !text && !icon && <div className={styles.loaderBackground}/>}
         {content}
       </Tag>
     );

@@ -8,11 +8,6 @@ import style from './badge.css';
 
 /**
  * @name Badge
- * @category Components
- * @constructor
- * @description Displays a badge.
- * @extends {PureComponent}
- * @example-file ./badge.examples.html
  */
 export default class Badge extends PureComponent {
   static propTypes = {

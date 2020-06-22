@@ -1,8 +1,6 @@
-@value unit, gray-color, borders-color, blue-color, main-color, line-color, input-disabled from '../global/global.css';
+@import "../global/variables.css";
 
 .tagsInput {
-  overflow: hidden;
-
   padding-top: 2px;
   padding-bottom: 2px;
 
@@ -13,10 +11,12 @@
   padding-top: 0;
   padding-bottom: 1px;
 
-  border: 1px solid borders-color;
-  background-color: #fff;
+  border: 1px solid var(--ring-borders-color);
+  background-color: var(--ring-content-background-color);
 
   & .tagsList {
+    padding-top: 1px;
+
     line-height: 20px;
   }
 
@@ -28,7 +28,7 @@
 .tagsInputDisabled {
   pointer-events: none;
 
-  color: gray-color;
+  color: var(--ring-disabled-color);
 
   & .underline {
     border-bottom-style: dashed;
@@ -36,15 +36,17 @@
 }
 
 .tagsInputFocused {
-  border-color: main-color;
+  border-color: var(--ring-main-color);
 }
 
 .tagsList {
   display: inline-block;
 
+  width: 100%;
+
   padding-left: 2px;
 
-  line-height: 24px;
+  line-height: 22px;
 }
 
 .tagsSelect {
@@ -62,8 +64,7 @@
 .underline {
   height: 1px;
 
-  border-color: line-color;
-  border-bottom: line-color 1px solid;
+  border-bottom: var(--ring-borders-color) 1px solid;
 }
 
 .focusUnderline {
@@ -74,7 +75,7 @@
 
   transition: width 0.15s ease-out;
 
-  background: main-color;
+  background: var(--ring-main-color);
 
   @nest .tagsInputFocused & {
     width: 100%;

@@ -1,4 +1,6 @@
-@value unit, border-radius, line-color, dark-gray-color, error-color, text-color, selected-background-color, white-color, font-size, font-size-smaller, line-height-lower, line-height-lowest, fast-ease from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit, resetButton from "../global/global.css";
 @value listSpacing: unit;
 
 .list {
@@ -6,7 +8,7 @@
 
   z-index: 1;
 
-  border-radius: border-radius;
+  border-radius: var(--ring-border-radius);
 
   line-height: normal;
 }
@@ -22,16 +24,18 @@
 .separator {
   display: block;
 
+  min-height: listSpacing;
+
   margin-top: listSpacing;
   padding: 0 calc(unit * 2) 1px;
 
   text-align: right;
 
-  color: dark-gray-color;
-  border-top: 1px solid line-color;
+  color: var(--ring-secondary-color);
+  border-top: 1px solid var(--ring-line-color);
 
-  font-size: font-size-smaller;
-  line-height: line-height-lower;
+  font-size: var(--ring-font-size-smaller);
+  line-height: var(--ring-line-height-lower);
 }
 
 .separator_first {
@@ -42,7 +46,13 @@
 }
 
 .item {
+  composes: resetButton;
+
   display: block;
+
+  box-sizing: border-box;
+
+  width: 100%;
 
   text-align: left;
   vertical-align: bottom;
@@ -51,12 +61,16 @@
 
   outline: none;
 
-  font-size: font-size;
+  font-size: var(--ring-font-size);
   line-height: calc(unit * 3);
 }
 
 .item.item {
   padding: 3px calc(unit * 2) 5px;
+}
+
+.itemContainer {
+  position: relative;
 }
 
 .compact {
@@ -71,7 +85,7 @@
   &:hover,
   &:focus,
   &:visited {
-    color: error-color;
+    color: var(--ring-error-color);
   }
 }
 
@@ -99,6 +113,12 @@
 
   text-align: left;
   white-space: nowrap;
+  text-overflow: ellipsis;
+
+  @nest [dir=rtl] & {
+    text-align: right;
+    direction: ltr;
+  }
 }
 
 .description {
@@ -111,11 +131,11 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 
-  color: dark-gray-color;
+  color: var(--ring-secondary-color);
 
-  font-size: font-size-smaller;
-  font-weight: 200;
-  line-height: line-height-lowest;
+  font-size: var(--ring-font-size-smaller);
+  font-weight: 400;
+  line-height: var(--ring-line-height-lowest);
 }
 
 .right {
@@ -131,10 +151,10 @@
 
   white-space: normal;
 
-  color: dark-gray-color;
+  color: var(--ring-secondary-color);
 
-  font-size: font-size-smaller;
-  line-height: line-height-lowest;
+  font-size: var(--ring-font-size-smaller);
+  line-height: var(--ring-line-height-lowest);
 }
 
 .padded {
@@ -145,16 +165,16 @@
 .hint.hint {
   margin-bottom: 0;
 
-  border-top: 1px solid #e5dcb8;
-  background-color: #fff5cd;
+  border-top: 1px solid var(--ring-line-color);
+  background-color: var(--ring-sidebar-background-color);
 
-  font-size: font-size-smaller;
+  font-size: var(--ring-font-size-smaller);
 }
 
 .action {
   cursor: pointer;
 
-  color: text-color;
+  color: var(--ring-text-color);
 }
 
 /* override link */
@@ -163,14 +183,14 @@
 }
 
 .hover:not(.error) {
-  background-color: selected-background-color;
+  background-color: var(--ring-selected-background-color);
 }
 
 .icon {
   display: inline-block;
 
-  width: calc(unit * 2);
-  height: calc(unit * 2);
+  width: 20px;
+  height: 20px;
   margin-left: calc(unit * 2);
 
   background-repeat: no-repeat;
@@ -180,33 +200,26 @@
 }
 
 .highlight {
-  color: #d800ff;
+  color: var(--ring-link-hover-color);
 }
 
 .service {
-  color: #b4b4b4;
+  color: var(--ring-secondary-color);
 }
 
 .glyph {
-  position: relative;
-  top: -2px;
-
   float: left;
 
   width: 20px;
   margin-right: unit;
 
-  color: dark-gray-color;
+  color: var(--ring-icon-secondary-color);
 }
 
 .avatar {
   composes: glyph;
 
   top: 0;
-}
-
-.hidden {
-  visibility: hidden;
 }
 
 .rightGlyph {
@@ -218,12 +231,21 @@
   margin-left: calc(unit * 2);
 }
 
-.checkbox {
-  composes: rightGlyph;
+.checkboxContainer {
+  position: absolute;
+  top: 7px;
+  left: 19px;
 
-  width: auto;
+  width: 20px;
+  height: 20px;
+  margin-right: unit;
+}
 
-  color: text-color;
+.compact .checkboxContainer {
+  top: 0;
+
+  width: calc(unit * 2);
+  height: calc(unit * 2);
 }
 
 .title {
@@ -234,6 +256,11 @@
   padding: listSpacing calc(unit * 2) 0;
 
   text-align: left;
+
+  @nest [dir=rtl] & {
+    text-align: right;
+    direction: ltr;
+  }
 }
 
 .title_first {
@@ -244,9 +271,9 @@
   letter-spacing: 1.5px;
   text-transform: uppercase;
 
-  color: dark-gray-color;
+  color: var(--ring-secondary-color);
 
-  font-size: font-size-smaller;
+  font-size: var(--ring-font-size-smaller);
 }
 
 .fade {
@@ -258,5 +285,11 @@
 
   pointer-events: none;
 
-  background: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.8), white-color);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--ring-content-background-color));
+}
+
+.disabled {
+  pointer-events: none;
+
+  color: var(--ring-disabled-color);
 }

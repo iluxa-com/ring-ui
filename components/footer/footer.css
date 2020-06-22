@@ -1,7 +1,9 @@
-@value unit, fixed-z-index, footer-height, font, font-size-smaller, line-color from  "../global/global.css";
+@import "../global/variables.css";
+
+@value unit, footer-height from "../global/global.css";
 
 .footer {
-  composes: font;
+  composes: font from "../global/global.css";
 
   position: relative;
 
@@ -12,16 +14,16 @@
 
   text-align: center;
 
-  border-top: 1px solid line-color;
+  border-top: 1px solid var(--ring-line-color);
 
-  font-size: font-size-smaller;
+  font-size: var(--ring-font-size-smaller);
 }
 
 .footerFloating {
   composes: footer;
 
   position: absolute;
-  z-index: fixed-z-index;
+  z-index: var(--ring-fixed-z-index);
   bottom: 0;
 
   width: 100%;

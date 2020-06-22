@@ -1,6 +1,4 @@
-/* @flow */
 /* eslint-disable react/jsx-no-literals */
-/* eslint-disable react/self-closing-comp */
 import React from 'react';
 
 import Link from '../link/link';

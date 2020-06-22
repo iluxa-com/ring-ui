@@ -1,42 +1,41 @@
 import angular from 'angular';
 
 import IconNG from '../icon-ng/icon-ng';
+import LinkNG from '../link-ng/link-ng';
 
-import '../error-message-ng/error-message-ng.scss';
+import styles from '../error-message/error-message.css';
 
 /**
  * @name Error Message Ng
- * @category Legacy Angular
- * @description Displays an error message.
- * @example
-  <example name="Error Message Ng">
-    <file name="index.html" disable-auto-size>
-      <div ng-app="ExampleApp" ng-strict-di ng-controller="DemoCtrl">
-        <rg-error-message code="Disconnected" message="No, no one\'s there." icon="{{errorIcon}}" links="[{href:'.',text:'home'}]">
-          Service backend isn't available
-        </rg-error-message>
-      </div>
-    </file>
-    <file name="index.js">
-      import angular from 'angular';
-      import errorMessageNg from '@jetbrains/ring-ui/components/error-message-ng/error-message-ng';
-      import {FrownIcon} from '@jetbrains/ring-ui/components/icon';
-
-      angular.module('ExampleApp', [errorMessageNg]).
-        controller('DemoCtrl', function($scope) {
-          $scope.errorIcon = FrownIcon;
-        });
-     </file>
-  </example>
  */
 
-const angularModule = angular.module('Ring.error-message', [IconNG]);
+const angularModule = angular.module('Ring.error-message', [IconNG, LinkNG]);
 
 angularModule.directive('rgErrorMessage', function rgErrorMessageDirective() {
   return {
     replace: true,
     transclude: true,
-    template: require('./error-message-ng.html'),
+    template: `
+<div class="${styles.errorMessage}" data-test="ring-error-message">
+
+    <rg-icon class="${styles.icon}" glyph="{{icon}}" color="gray" size="64"></rg-icon>
+    
+    <div class="${styles.content}">
+      <div class="${styles.title}" data-test="ring-error-message-title"
+      ><span ng-if="code">{{ code }}:</span> {{ message }}</div>
+      
+      <div class="${styles.description}" ng-transclude></div>
+      
+      
+       <div ng-if="links">
+          <span ng-repeat="link in links">
+            <rg-link ng-if="link.target" ng-href="{{link.href}}" target="{{link.target}}">{{link.text}}</rg-link><rg-link
+            ng-if="!link.target" ng-href="{{link.href}}">{{link.text}}</rg-link>{{$last ? '' : ','}}
+          </span>
+        </div>
+    </div>
+</div>
+    `,
     restrict: 'E',
 
     scope: {

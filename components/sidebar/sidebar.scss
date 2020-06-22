@@ -23,9 +23,11 @@
   padding-top: 2*$ring-unit;
 
   box-sizing: border-box;
+  border: solid 1px var(--ring-line-color);
+  border-right-width: 0;
 
   overflow: hidden;
-  background: #FFF;
+  background: var(--ring-content-background-color);
   transition: right 0.5s ease, visibility 0.5s;
   visibility: hidden;
 }
@@ -45,7 +47,7 @@
 }
 
 .ring-sidebar__toggle-icon {
-  color: $ring-dark-gray-color;
+  color: var(--ring-icon-secondary-color);
 }
 
 .ring-sidebar__avatar {
@@ -60,7 +62,7 @@
   margin: 0;
   padding-left: 4*$ring-unit;
 
-  color: #222;
+  color: var(--ring-heading-color);
   vertical-align: middle;
   font-size: 3*$ring-unit;
   font-weight: normal;
@@ -83,14 +85,14 @@
 
 .ring-sidebar__section-title {
   display: inline-block;
-  font-size: $ring-font-size;
+  font-size: var(--ring-font-size);
   font-weight: bold;
-  color: $ring-text-color;
+  color: var(--ring-text-color);
 }
 
 .ring-sidebar__section-text {
-  font-size: $ring-font-size;
-  color: $ring-text-color;
+  font-size: var(--ring-font-size);
+  color: var(--ring-text-color);
   line-height: 3*$ring-unit;
 
   &_multiline {
@@ -110,7 +112,7 @@
 
   width: 4*$ring-unit;
 
-  color: $ring-dark-gray-color;
+  color: var(--ring-icon-secondary-color);
   font-size: 12px;
   text-align: center;
 }
@@ -122,12 +124,12 @@
 
 .ring-sidebar__empty-icon {
   font-size: 100px;
-  color: $ring-gray-color;
+  color: var(--ring-disabled-color);
 }
 
 .ring-sidebar__empty-description {
   margin-top: $ring-unit*2;
-  color: $ring-text-color;
+  color: var(--ring-text-color);
   font-size: 12px;
 
   line-height: 18px;

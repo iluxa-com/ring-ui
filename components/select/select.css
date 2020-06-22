@@ -1,4 +1,6 @@
-@value unit, font, font-size, font-size-smaller, line-height-lowest, text-color, line-color, main-color, dark-gray-color, selected-background-color, gray-color, ellipsis, blue-caret, ease from "../global/global.css";
+@import "../global/variables.css";
+
+@value unit, resetButton from "../global/global.css";
 
 .select {
   position: relative;
@@ -7,11 +9,11 @@
 
   white-space: nowrap;
 
-  color: text-color;
+  color: var(--ring-text-color);
 }
 
 .toolbar {
-  border-top: 1px solid line-color;
+  border-top: 1px solid var(--ring-line-color);
 }
 
 .button {
@@ -21,16 +23,21 @@
   padding: 0 calc(2 * unit);
 
   text-align: left;
+
+  @nest [dir=rtl] & {
+    text-align: right;
+    direction: ltr;
+  }
 }
 
 .icons {
   position: absolute;
-  top: -4px;
+  top: -2px;
   right: 0;
 
-  transition: color ease;
+  transition: color var(--ring-ease);
 
-  color: dark-gray-color;
+  color: var(--ring-icon-secondary-color);
 
   line-height: calc(unit * 4);
 
@@ -43,23 +50,23 @@
   @nest .inputMode & {
     top: 12px;
 
-    font-size: font-size;
+    font-size: var(--ring-font-size);
   }
 
   @nest .buttonMode & {
-    top: -6px;
+    top: -4px;
     right: unit;
   }
 }
 
 .selectedIcon {
+  composes: resetButton;
+
   display: inline-block;
 
   width: calc(2 * unit);
   height: calc(2 * unit);
   margin: 0 4px;
-
-  vertical-align: middle;
 
   background-repeat: no-repeat;
   background-position: center;
@@ -70,11 +77,11 @@
 .clearIcon {
   padding: 0 3px;
 
-  vertical-align: -2px;
+  vertical-align: -1px;
 }
 
 .clearIcon.clearIcon > span > span {
-  color: dark-gray-color;
+  color: var(--ring-icon-secondary-color);
 }
 
 .sizeS {
@@ -101,8 +108,8 @@
 }
 
 .value {
-  composes: ellipsis;
-  composes: font;
+  composes: ellipsis from "../global/global.css";
+  composes: font from "../global/global.css";
 
   display: inline-block;
 
@@ -112,17 +119,19 @@
   padding: 0 0 3px;
 
   cursor: pointer;
-  transition: color ease, border-color ease;
+  transition: color var(--ring-ease), border-color var(--ring-ease);
   text-align: left;
   vertical-align: top;
 
+  color: var(--ring-text-color);
+
   border: none;
-  border-bottom: 1px solid line-color;
+  border-bottom: 1px solid var(--ring-borders-color);
   outline: none;
   background: transparent;
 
   &:focus {
-    border-color: main-color;
+    border-color: var(--ring-main-color);
   }
 
   &.open,
@@ -139,28 +148,29 @@
 }
 
 .buttonValue {
-  composes: ellipsis;
+  composes: ellipsis from "../global/global.css";
 
   width: 100%;
 
   text-align: left;
+  vertical-align: calc(0 - unit);
 }
 
 .buttonValueOpen {
-  border-color: selected-background-color;
-  background-color: selected-background-color;
+  border-color: var(--ring-selected-background-color);
+  background-color: var(--ring-selected-background-color);
 
   & .icons {
     transition: none;
 
-    color: main-color;
+    color: var(--ring-main-color);
   }
 }
 
 .label {
   position: relative;
 
-  color: dark-gray-color;
+  color: var(--ring-secondary-color);
 }
 
 .select:hover .value,
@@ -171,16 +181,16 @@
 .open + .icons {
   transition: none;
 
-  color: main-color;
+  color: var(--ring-main-color);
 }
 
 .disabled {
   pointer-events: none;
 
-  color: gray-color;
+  color: var(--ring-disabled-color);
 
   & .value {
-    color: gray-color;
+    color: var(--ring-disabled-color);
     border-bottom-style: dashed;
   }
 }
@@ -189,10 +199,10 @@
   position: absolute;
   top: calc(unit * -1.5);
 
-  color: dark-gray-color;
+  color: var(--ring-secondary-color);
 
-  font-size: font-size-smaller;
-  line-height: line-height-lowest;
+  font-size: var(--ring-font-size-smaller);
+  line-height: var(--ring-line-height-lowest);
 }
 
 .avatar {
@@ -204,4 +214,18 @@
 .popup {
   min-width: calc(unit * 30);
   max-width: calc(unit * 40);
+}
+
+.chevron.chevron {
+  padding: 0;
+
+  transition: none;
+
+  color: inherit;
+}
+
+.chevronIcon.chevronIcon {
+  transition: none;
+
+  color: inherit;
 }

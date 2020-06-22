@@ -10,20 +10,14 @@ import injectStyles from './inject-styles';
 
 /**
  * @name Loader Inline
- * @category Components
- * @tags Ring UI Language
- * @constructor
- * @description Displays a small animated loader, shown inline with text. Use case: contextual loading animation.
- * @extends {ReactComponent}
- * @example-file ./loader-inline.examples.html
  */
 
 export default class LoaderInline extends PureComponent {
-  static Theme = Theme;
   static propTypes = {
     theme: PropTypes.oneOf(Object.values(Theme)),
     className: PropTypes.string,
-    'data-test': PropTypes.string
+    'data-test': PropTypes.string,
+    children: PropTypes.node
   };
 
   static defaultProps = {
@@ -34,8 +28,10 @@ export default class LoaderInline extends PureComponent {
     injectStyles();
   }
 
+  static Theme = Theme;
+
   render() {
-    const {className, theme, 'data-test': dataTest, ...restProps} = this.props;
+    const {className, theme, 'data-test': dataTest, children, ...restProps} = this.props;
 
     const classes = classNames(
       styles.loader,
@@ -43,12 +39,19 @@ export default class LoaderInline extends PureComponent {
       `${styles.loader}_${theme}`
     );
 
-    return (
+    const loader = (
       <div
         {...restProps}
         data-test={dataTests('ring-loader-inline', dataTest)}
         className={classes}
       />
     );
+
+    return children ? (
+      <>
+        {loader}
+        <span className={styles.children}>{children}</span>
+      </>
+    ) : loader;
   }
 }

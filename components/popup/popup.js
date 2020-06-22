@@ -1,16 +1,12 @@
 /**
  * @name Popup
- * @category Components
- * @tags Ring UI Language
- * @description Displays a popup.
  */
 
-import React, {Component} from 'react';
+import React, {createContext, forwardRef, PureComponent} from 'react';
 import {createPortal} from 'react-dom';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import 'dom4';
-import 'core-js/modules/es7.array.includes';
 
 import getUID from '../global/get-uid';
 import scheduleRAF from '../global/schedule-raf';
@@ -31,17 +27,42 @@ import styles from './popup.css';
 
 const stop = e => e.stopPropagation();
 
+const PopupTargetContext = createContext();
+export const PopupTarget = forwardRef(
+  function PopupTarget({id, children, ...restProps}, ref) {
+    const isFunctionChild = typeof children === 'function';
+    const target = (
+      <div
+        {...restProps}
+        data-portaltarget={id}
+        ref={ref}
+      >
+        {!isFunctionChild && children}
+      </div>
+    );
+    return (
+      <PopupTargetContext.Provider value={id}>
+        {isFunctionChild ? children(target) : target}
+      </PopupTargetContext.Provider>
+    );
+  }
+);
+PopupTarget.propTypes = {
+  id: PropTypes.string.isRequired,
+  children: PropTypes.oneOfType([PropTypes.node, PropTypes.func])
+};
+
 /**
  * @constructor
  * @name Popup
  * @extends {ReactComponent}
- * @example-file ./popup.examples.html
  */
-export default class Popup extends Component {
+export default class Popup extends PureComponent {
   static propTypes = {
     anchorElement: PropTypes.instanceOf(Node),
     target: PropTypes.string,
     className: PropTypes.string,
+    style: PropTypes.object,
     hidden: PropTypes.bool.isRequired,
     onOutsideClick: PropTypes.func,
     onEscPress: PropTypes.func,
@@ -56,9 +77,11 @@ export default class Popup extends Component {
     shortcuts: PropTypes.bool,
     keepMounted: PropTypes.bool, // pass this prop to preserve the popup's DOM state while hidden
     'data-test': PropTypes.string,
+    client: PropTypes.bool, // true means that it's never used in SSR
 
     directions: PropTypes.arrayOf(PropTypes.string),
     autoPositioning: PropTypes.bool,
+    autoCorrectTopOverflow: PropTypes.bool,
     left: PropTypes.number,
     top: PropTypes.number,
     maxHeight: PropTypes.number,
@@ -71,15 +94,9 @@ export default class Popup extends Component {
     onMouseUp: PropTypes.func,
     onMouseOver: PropTypes.func,
     onMouseOut: PropTypes.func,
-    onContextMenu: PropTypes.func
-  };
-
-  static contextTypes = {
-    ringPopupTarget: PropTypes.string
-  };
-
-  static childContextTypes = {
-    ringPopupTarget: PropTypes.string
+    onContextMenu: PropTypes.func,
+    onDirectionChange: PropTypes.func,
+    onShow: PropTypes.func
   };
 
   static defaultProps = {
@@ -93,6 +110,7 @@ export default class Popup extends Component {
 
     directions: DEFAULT_DIRECTIONS,
     autoPositioning: true,
+    autoCorrectTopOverflow: true,
     left: 0,
     top: 0,
     offset: 0,
@@ -103,48 +121,38 @@ export default class Popup extends Component {
     legacy: false
   };
 
-  static PopupProps = {
-    Directions,
-    Dimension,
-    MinWidth,
-    MaxHeight
-  };
-
   state = {
-    shortcuts: this.props.shortcuts && !this.props.hidden,
     display: Display.SHOWING
   };
 
-  getChildContext() {
-    return {
-      ringPopupTarget: this.uid
-    };
-  }
-
   componentDidMount() {
-    // eslint-disable-next-line react/no-did-mount-set-state
-    this.setState({client: true});
+    if (!this.props.client) {
+      // eslint-disable-next-line react/no-did-mount-set-state
+      this.setState({client: true});
+    }
     if (!this.props.hidden) {
       this._setListenersEnabled(true);
     }
   }
 
-  componentWillUpdate(nextProps) {
-    const shortcuts = nextProps.shortcuts && !nextProps.hidden;
-    if (this.state.shortcuts !== shortcuts) {
-      this.setState({shortcuts});
-    }
-  }
-
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
+    const {hidden} = this.props;
     if (this.props !== prevProps) {
-      const {hidden} = this.props;
 
       if (prevProps.hidden !== hidden) {
         this._setListenersEnabled(!hidden);
       }
 
       this._redraw();
+    }
+
+    if (
+      this.props.onShow &&
+      !hidden &&
+      this.state.display === Display.SHOWN &&
+      (prevProps.hidden || prevState.display !== Display.SHOWN)
+    ) {
+      this.props.onShow();
     }
   }
 
@@ -153,8 +161,13 @@ export default class Popup extends Component {
     this.popup = null;
   }
 
+  shouldUseShortcuts() {
+    const {shortcuts, hidden} = this.props;
+    return shortcuts && !hidden;
+  }
+
   listeners = new Listeners();
-  redrawScheduler = scheduleRAF();
+  redrawScheduler = scheduleRAF(true);
   uid = getUID('popup-');
   calculateDisplay = prevState => ({
     ...prevState,
@@ -162,6 +175,13 @@ export default class Popup extends Component {
       ? Display.SHOWING
       : Display.SHOWN
   });
+
+  static PopupProps = {
+    Directions,
+    Dimension,
+    MinWidth,
+    MaxHeight
+  };
 
   portalRef = el => {
     this.node = el;
@@ -181,7 +201,7 @@ export default class Popup extends Component {
   };
 
   getContainer() {
-    const target = this.props.target || this.context.ringPopupTarget;
+    const target = this.props.target || this.ringPopupTarget;
     return target && document.querySelector(`[data-portaltarget=${target}]`);
   }
 
@@ -200,10 +220,20 @@ export default class Popup extends Component {
     });
   }
 
+  _updateDirection = newDirection => {
+    if (this.state.direction !== newDirection) {
+      this.setState({direction: newDirection});
+      if (this.props.onDirectionChange) {
+        this.props.onDirectionChange(newDirection);
+      }
+    }
+  };
+
   _updatePosition = () => {
     if (this.popup) {
+      this.popup.style.position = 'absolute';
       if (this.isVisible()) {
-        const style = this.position();
+        const {styles: style, direction} = this.position();
         Object.keys(style).forEach(key => {
           const value = style[key];
           if (typeof value === 'number') {
@@ -212,6 +242,7 @@ export default class Popup extends Component {
             this.popup.style[key] = value.toString();
           }
         });
+        this._updateDirection(direction);
       }
       this.setState(this.calculateDisplay);
     }
@@ -303,7 +334,7 @@ export default class Popup extends Component {
 
   render() {
     const {
-      className, hidden, attached, keepMounted,
+      className, style, hidden, attached, keepMounted, client,
       onMouseDown, onMouseUp, onMouseOver, onMouseOut, onContextMenu, 'data-test': dataTest
     } = this.props;
     const showing = this.state.display === Display.SHOWING;
@@ -314,43 +345,61 @@ export default class Popup extends Component {
       [styles.showing]: showing
     });
 
-    return (
-      <span
-        // prevent bubbling through portal
-        onClick={stop}
-        ref={this.portalRef}
-      >
-        {this.state.shortcuts &&
-          (
-            <Shortcuts
-              map={this.shortcutsMap}
-              scope={this.shortcutsScope}
-            />
-          )
-        }
+    const direction = (this.state.direction || '').
+      toLowerCase().replace(/[_]/g, '-');
 
-        {this.state.client && (keepMounted || !hidden) && createPortal(
-          <div
-            data-portaltarget={this.uid}
-            ref={this.containerRef}
-            onMouseOver={onMouseOver}
-            onMouseOut={onMouseOut}
-            onContextMenu={onContextMenu}
-          >
-            <div
-              data-test={dataTests('ring-popup', dataTest)}
-              data-test-shown={!hidden && !showing}
-              ref={this.popupRef}
-              className={classes}
-              onMouseDown={onMouseDown}
-              onMouseUp={onMouseUp}
+    return (
+      <PopupTargetContext.Consumer>
+        {value => {
+          this.ringPopupTarget = value;
+          return (
+            <span
+              // prevent bubbling through portal
+              onClick={stop}
+              // This handler only blocks bubbling through React portal
+              role="presentation"
+              ref={this.portalRef}
             >
-              {this.getInternalContent()}
-            </div>
-          </div>,
-          this.getContainer() || document.body
-        )}
-      </span>
+              {this.shouldUseShortcuts() &&
+                (
+                  <Shortcuts
+                    map={this.shortcutsMap}
+                    scope={this.shortcutsScope}
+                  />
+                )
+              }
+
+              {(client || this.state.client) && (keepMounted || !hidden) && createPortal(
+                <PopupTarget
+                  id={this.uid}
+                  ref={this.containerRef}
+                  onMouseOver={onMouseOver}
+                  onFocus={onMouseOver}
+                  onMouseOut={onMouseOut}
+                  onBlur={onMouseOut}
+                  onContextMenu={onContextMenu}
+                >
+                  <div
+                    data-test={dataTests('ring-popup', dataTest)}
+                    data-test-shown={!hidden && !showing}
+                    data-test-direction={direction}
+                    ref={this.popupRef}
+                    className={classes}
+                    style={style}
+                    onMouseDown={onMouseDown}
+                    onMouseUp={onMouseUp}
+                    // mouse handlers are used to track clicking on inner elements
+                    role="presentation"
+                  >
+                    {this.getInternalContent()}
+                  </div>
+                </PopupTarget>,
+                this.getContainer() || document.body
+              )}
+            </span>
+          );
+        }}
+      </PopupTargetContext.Consumer>
     );
   }
 }

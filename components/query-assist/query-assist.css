@@ -1,59 +1,59 @@
-@value unit, font, main-color, black-color, white-color, gray-color, dark-gray-color, borders-color, search-color, hint-color, link-hover-color, font-size from '../global/global.css';
+@import "../global/variables.css";
+
+@value unit, resetButton from "../global/global.css";
 @value overInputZIndex: 2;
-@value oldBlueColor: #25B7FF;
+@value inputGap: calc(unit * 3);
 
 .light {
   &.queryAssist {
     height: calc(unit * 3);
 
-    background: white-color;
+    background: var(--ring-content-background-color);
   }
 
   & .input {
     height: calc(unit * 3 - 2px);
 
-    box-shadow: 0 0 0 1px borders-color;
+    box-shadow: 0 0 0 1px var(--ring-borders-color);
 
-    &:active,
-    &:focus {
+    /* stylelint-disable-next-line selector-max-specificity */
+    &:not([disabled]):active,
+    /* stylelint-disable-next-line selector-max-specificity */
+    &:not([disabled]):focus {
       border-color: transparent;
-      box-shadow: 0 0 0 1px oldBlueColor;
+      box-shadow: 0 0 0 1px var(--ring-main-color);
     }
   }
 
   & .placeholder {
-    color: dark-gray-color;
+    color: var(--ring-secondary-color);
   }
 
   & .letter-text {
-    color: #b58900;
+    color: var(--ring-warning-color);
   }
 
   & .letterDefault,
   & .letter-field-name {
-    color: #1a1a1a;
+    color: var(--ring-text-color);
   }
 
   & .letter-field-value {
-    color: #176b8a;
+    color: var(--ring-link-color);
   }
 
   & .letter-operator {
-    color: dark-gray-color;
+    color: var(--ring-secondary-color);
   }
 
   & .letter-error {
-    padding-bottom: 2px;
+    padding-bottom: 1px;
 
-    background: url('./query-assist__error.gif') bottom repeat-x;
+    border-bottom: 1px solid var(--ring-icon-error-color);
   }
 
-  & .icon {
-    color: gray-color;
-  }
-
-  & .icon:hover {
-    color: link-hover-color;
+  & .iconInner {
+    color: var(--ring-icon-secondary-color);
   }
 
   & .highlight {
@@ -61,7 +61,7 @@
   }
 
   & .service {
-    color: dark-gray-color;
+    color: var(--ring-secondary-color);
   }
 }
 
@@ -77,25 +77,25 @@
 
     height: calc(unit * 4 - 2px);
 
-    color: search-color;
+    color: var(--ring-search-color);
 
     border-top-width: 5px;
-    background: #002a4d;
+    background: var(--ring-dark-selected-background-color);
 
     &:active,
     &:focus {
-      border-color: black-color;
+      border-color: var(--ring-navigation-background-color);
 
-      background-color: black-color;
+      background-color: var(--ring-navigation-background-color);
     }
   }
 
   & .placeholder {
     top: 6px;
 
-    color: hint-color;
+    color: var(--ring-icon-color);
 
-    @nest & _:-ms-input-placeholder,
+    @nest & :-ms-input-placeholder,
     :root & {
       top: 7px;
     }
@@ -108,40 +108,38 @@
   }
 
   & .letter-text {
-    color: #b58900;
+    color: var(--ring-warning-color);
   }
 
   & .letterDefault,
   & .letter-field-name {
-    color: search-color;
+    color: var(--ring-search-color);
   }
 
   & .letter-field-value {
-    color: white-color;
+    color: var(--ring-dark-text-color);
   }
 
   & .letter-operator {
-    color: dark-gray-color;
+    color: var(--ring-secondary-color);
   }
 
   & .letter-error {
-    padding-bottom: 2px;
+    padding-bottom: 1px;
 
-    background: url('./query-assist__error.gif') bottom repeat-x;
+    border-bottom: 1px solid var(--ring-icon-error-color);
   }
 
   & .icon {
-    top: unit;
+    top: 8px;
+  }
 
-    color: hint-color;
+  & .iconInner {
+    color: var(--ring-icon-color);
   }
 
   & .loader {
     top: 6px;
-  }
-
-  & .icon:hover {
-    color: link-hover-color;
   }
 
   & .highlight {
@@ -149,12 +147,12 @@
   }
 
   & .service {
-    color: #b4b4b4;
+    color: var(--ring-secondary-color);
   }
 }
 
 .queryAssist {
-  composes: font;
+  composes: font from '../global/global.css';
 
   position: relative;
 
@@ -192,7 +190,7 @@
     outline: 0;
   }
 
-  @nest & _:-ms-input-placeholder,
+  @nest & :-ms-input-placeholder,
   :root & {
     line-height: 17px;
   }
@@ -203,26 +201,31 @@
     }
   }
 
-  & .icon {
-    color: hint-color;
+  & .iconInner {
+    color: var(--ring-icon-color);
   }
 
   &.inputGap {
-    border-right-width: calc(unit * 3);
+    border-right-width: inputGap;
+  }
+
+  &.inputGap2 {
+    border-right-width: calc(2 * inputGap);
   }
 
   &.inputLeftGap {
-    border-left-width: calc(unit * 3);
+    border-left-width: inputGap;
   }
 
   &.inputDisabled {
-    color: #4448;
-    border-color: #dedede;
-    background-color: #f8f8f8;
+    color: var(--ring-disabled-color);
+    border-color: var(--ring-line-color);
   }
 }
 
 .placeholder {
+  composes: resetButton;
+
   position: absolute;
   top: 3px;
 
@@ -230,7 +233,11 @@
 
   display: block;
 
-  width: calc(100% - unit * 3);
+  overflow: hidden;
+
+  width: calc(100% - unit * 4);
+
+  text-overflow: ellipsis;
 
   pointer-events: none;
 
@@ -238,7 +245,7 @@
     left: calc(unit * 3 + 5px);
   }
 
-  @nest & _:-ms-input-placeholder,
+  @nest & :-ms-input-placeholder,
   :root & {
     top: 4px;
   }
@@ -254,12 +261,21 @@
   display: inline;
 }
 
+.actions {
+  position: absolute;
+  z-index: overInputZIndex;
+  top: 4px;
+  right: 1px;
+}
+
 .icon {
   position: absolute;
   z-index: overInputZIndex;
   top: 4px;
 
-  width: calc(unit * 2);
+  box-sizing: border-box;
+
+  width: calc(unit * 3);
   height: calc(unit * 2);
 
   padding: 0 4px;
@@ -267,8 +283,16 @@
   cursor: pointer;
   user-select: none;
 
+  line-height: normal;
+
   & svg {
     vertical-align: baseline;
+  }
+
+  @nest .actions & {
+    position: relative;
+    top: 0;
+    left: -1px;
   }
 }
 
@@ -278,21 +302,13 @@
   left: auto;
 }
 
-.iconClear {
-  right: 1px;
-}
-
-.iconGlass {
-  left: 1px;
-}
-
 .focusUnderline {
   width: 0;
   height: 2px;
 
   transition: width 0.15s ease-out;
 
-  background: main-color;
+  background: var(--ring-main-color);
 }
 
 .input:focus ~ .focusUnderline,

@@ -5,14 +5,12 @@
   >
     <rg-icon
       ng-show="button.model"
-      size="16"
-      glyph="/chevron-right.svg"
+      glyph="{{button.chevronRight}}"
     ></rg-icon>
 
     <rg-icon
       ng-show="!button.model"
-      size="16"
-      glyph="/chevron-left.svg"
+      glyph="{{button.chevronLeft}}"
     ></rg-icon>
 
     <span ng-transclude></span>
